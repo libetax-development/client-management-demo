@@ -1,5 +1,5 @@
 // ===========================
-// MyKomon代替ツール UIモック
+// クライアント管理システム UIモック
 // ===========================
 
 // ── ページ管理 ──
@@ -29,6 +29,10 @@ function navigateTo(pageName, params = {}) {
     'task-detail': 'タスク詳細',
     views: '管理表（ビュー）',
     staff: '職員一覧',
+    timesheet: '工数管理',
+    reports: '報告書',
+    calendar: 'カレンダー',
+    rewards: '報酬管理',
   };
   header.textContent = titles[pageName] || pageName;
 
@@ -97,6 +101,10 @@ function registerAllPages() {
   registerPage('task-detail', renderTaskDetail);
   registerPage('views', renderViews);
   registerPage('staff', renderStaff);
+  registerPage('timesheet', renderTimesheet);
+  registerPage('reports', renderReports);
+  registerPage('calendar', renderCalendar);
+  registerPage('rewards', renderRewards);
 }
 
 // ===========================
@@ -543,4 +551,339 @@ function renderStaffTable() {
       <td>${u.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>
     </tr>
   `).join('');
+}
+
+// ===========================
+// 工数管理
+// ===========================
+function renderTimesheet(el) {
+  el.innerHTML = `
+    <div class="toolbar">
+      <select class="filter-select" id="ts-user-filter">
+        <option value="">全職員</option>
+        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+      </select>
+      <input type="date" class="filter-select" id="ts-date-filter" value="2026-03-07">
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="alert('モックのため操作不可')">+ 工数入力</button>
+    </div>
+
+    <div class="stats-grid" id="ts-summary"></div>
+
+    <div class="card">
+      <div class="card-header"><h3>工数一覧</h3></div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>日付</th><th>職員</th><th>顧客</th><th>作業内容</th><th>時間</th></tr></thead>
+            <tbody id="ts-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  renderTimesheetData();
+  document.getElementById('ts-user-filter').addEventListener('change', renderTimesheetData);
+  document.getElementById('ts-date-filter').addEventListener('change', renderTimesheetData);
+}
+
+function renderTimesheetData() {
+  const userFilter = document.getElementById('ts-user-filter')?.value || '';
+  const dateFilter = document.getElementById('ts-date-filter')?.value || '';
+
+  let entries = MOCK_DATA.timeEntries.filter(e => {
+    if (userFilter && e.userId !== userFilter) return false;
+    if (dateFilter && e.date !== dateFilter) return false;
+    return true;
+  });
+
+  entries.sort((a, b) => b.date.localeCompare(a.date) || a.userId.localeCompare(b.userId));
+
+  const totalHours = entries.reduce((sum, e) => sum + e.hours, 0);
+  const uniqueUsers = new Set(entries.map(e => e.userId)).size;
+  const avgHours = uniqueUsers > 0 ? (totalHours / uniqueUsers).toFixed(1) : '0';
+
+  document.getElementById('ts-summary').innerHTML = `
+    <div class="stat-card accent-blue">
+      <div class="stat-label">合計工数</div>
+      <div class="stat-value">${totalHours.toFixed(1)}</div>
+      <div class="stat-sub">時間</div>
+    </div>
+    <div class="stat-card accent-green">
+      <div class="stat-label">入力済み人数</div>
+      <div class="stat-value">${uniqueUsers}</div>
+      <div class="stat-sub">名</div>
+    </div>
+    <div class="stat-card accent-yellow">
+      <div class="stat-label">平均工数/人</div>
+      <div class="stat-value">${avgHours}</div>
+      <div class="stat-sub">時間</div>
+    </div>
+    <div class="stat-card accent-red">
+      <div class="stat-label">件数</div>
+      <div class="stat-value">${entries.length}</div>
+      <div class="stat-sub">エントリ</div>
+    </div>
+  `;
+
+  const tbody = document.getElementById('ts-table-body');
+  tbody.innerHTML = entries.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px;">該当するデータがありません</td></tr>'
+    : entries.map(e => {
+      const user = getUserById(e.userId);
+      const client = getClientById(e.clientId);
+      return `<tr>
+        <td>${formatDate(e.date)}</td>
+        <td>${user?.name || '-'}</td>
+        <td>${client?.name || '-'}</td>
+        <td>${e.description}</td>
+        <td><strong>${e.hours.toFixed(1)}h</strong></td>
+      </tr>`;
+    }).join('');
+}
+
+// ===========================
+// 報告書
+// ===========================
+function renderReports(el) {
+  el.innerHTML = `
+    <div class="toolbar">
+      <select class="filter-select" id="rp-team-filter">
+        <option value="">全チーム</option>
+        ${MOCK_DATA.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+      </select>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="alert('モックのため操作不可')">+ 新規報告書</button>
+    </div>
+    <div id="rp-list"></div>
+  `;
+  renderReportList();
+  document.getElementById('rp-team-filter').addEventListener('change', renderReportList);
+}
+
+function renderReportList() {
+  const teamFilter = document.getElementById('rp-team-filter')?.value || '';
+  let reports = MOCK_DATA.reports.filter(r => {
+    if (teamFilter && r.teamId !== teamFilter) return false;
+    return true;
+  });
+  reports.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const container = document.getElementById('rp-list');
+  container.innerHTML = reports.length === 0
+    ? '<div class="empty-state"><div class="icon">?</div><p>報告書がありません</p></div>'
+    : reports.map(r => {
+      const author = getUserById(r.authorId);
+      const team = MOCK_DATA.teams.find(t => t.id === r.teamId);
+      return `
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <h3>${r.title}</h3>
+            <span class="status-badge status-done">${r.status}</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;gap:24px;margin-bottom:12px;font-size:12px;color:var(--gray-500);">
+              <span>作成者: ${author?.name || '-'}</span>
+              <span>チーム: ${team?.name || '-'}</span>
+              <span>作成日: ${formatDate(r.createdAt)}</span>
+            </div>
+            <p style="font-size:13px;color:var(--gray-700);line-height:1.8;">${r.content}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+// ===========================
+// カレンダー
+// ===========================
+function renderCalendar(el) {
+  const now = new Date();
+  let calYear = now.getFullYear();
+  let calMonth = now.getMonth();
+
+  el.innerHTML = `
+    <div class="toolbar">
+      <button class="btn btn-secondary" id="cal-prev">&larr; 前月</button>
+      <h3 id="cal-title" style="margin:0 16px;min-width:140px;text-align:center;"></h3>
+      <button class="btn btn-secondary" id="cal-next">次月 &rarr;</button>
+      <div class="spacer"></div>
+      <select class="filter-select" id="cal-user-filter">
+        <option value="">全担当者</option>
+        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-body" style="padding:0;">
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div>
+  `;
+
+  function draw() {
+    document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
+    const userFilter = document.getElementById('cal-user-filter')?.value || '';
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date().toISOString().slice(0, 10);
+
+    let tasks = MOCK_DATA.tasks.filter(t => {
+      if (userFilter && t.assigneeUserId !== userFilter) return false;
+      return true;
+    });
+
+    const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
+    let html = dayHeaders.map((d, i) => `<div class="cal-header ${i === 0 ? 'cal-sun' : i === 6 ? 'cal-sat' : ''}">${d}</div>`).join('');
+
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div class="cal-day cal-empty"></div>';
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isToday = dateStr === today;
+      const dow = (firstDay + d - 1) % 7;
+      const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+
+      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 0 ? 'cal-sun' : dow === 6 ? 'cal-sat' : ''}">
+        <div class="cal-date">${d}</div>
+        ${dayTasks.slice(0, 3).map(t => {
+          const client = getClientById(t.clientId);
+          return `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>`;
+        }).join('')}
+        ${dayTasks.length > 3 ? `<div class="cal-more">+${dayTasks.length - 3}件</div>` : ''}
+      </div>`;
+    }
+
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  document.getElementById('cal-prev').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } draw(); });
+  document.getElementById('cal-next').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } draw(); });
+  document.getElementById('cal-user-filter').addEventListener('change', draw);
+  draw();
+}
+
+// ===========================
+// 報酬管理
+// ===========================
+function renderRewards(el) {
+  el.innerHTML = `
+    <div class="toolbar">
+      <select class="filter-select" id="rw-month-filter">
+        <option value="2026-03">2026年3月</option>
+        <option value="2026-02">2026年2月</option>
+        <option value="2026-01">2026年1月</option>
+      </select>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="view-tabs" id="rw-tabs">
+      <button class="view-tab active" data-view="by-staff">職員別</button>
+      <button class="view-tab" data-view="by-client">顧客別</button>
+    </div>
+
+    <div class="stats-grid" id="rw-summary"></div>
+
+    <div class="card">
+      <div class="card-header"><h3 id="rw-table-title">職員別 報酬集計</h3></div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table>
+            <thead id="rw-thead"></thead>
+            <tbody id="rw-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  let activeView = 'by-staff';
+  function refresh() {
+    const month = document.getElementById('rw-month-filter')?.value || '2026-03';
+    renderRewardData(month, activeView);
+  }
+
+  document.getElementById('rw-tabs').addEventListener('click', e => {
+    if (e.target.dataset.view) {
+      activeView = e.target.dataset.view;
+      document.querySelectorAll('#rw-tabs .view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
+      refresh();
+    }
+  });
+  document.getElementById('rw-month-filter').addEventListener('change', refresh);
+  refresh();
+}
+
+function renderRewardData(month, viewType) {
+  const rewards = MOCK_DATA.rewards.filter(r => r.month === month);
+  const totalAmount = rewards.reduce((sum, r) => sum + r.amount, 0);
+  const totalClients = new Set(rewards.map(r => r.clientId)).size;
+  const totalStaff = new Set(rewards.map(r => r.userId)).size;
+
+  document.getElementById('rw-summary').innerHTML = `
+    <div class="stat-card accent-blue">
+      <div class="stat-label">報酬合計</div>
+      <div class="stat-value">${totalAmount.toLocaleString()}</div>
+      <div class="stat-sub">円</div>
+    </div>
+    <div class="stat-card accent-green">
+      <div class="stat-label">対象職員</div>
+      <div class="stat-value">${totalStaff}</div>
+      <div class="stat-sub">名</div>
+    </div>
+    <div class="stat-card accent-yellow">
+      <div class="stat-label">対象顧客</div>
+      <div class="stat-value">${totalClients}</div>
+      <div class="stat-sub">社</div>
+    </div>
+  `;
+
+  const thead = document.getElementById('rw-thead');
+  const tbody = document.getElementById('rw-tbody');
+  const title = document.getElementById('rw-table-title');
+
+  if (viewType === 'by-staff') {
+    title.textContent = '職員別 報酬集計';
+    thead.innerHTML = '<tr><th>職員名</th><th>分類</th><th>基準割合</th><th>担当顧客数</th><th>報酬計</th></tr>';
+    const grouped = {};
+    rewards.forEach(r => {
+      if (!grouped[r.userId]) grouped[r.userId] = { total: 0, clients: new Set() };
+      grouped[r.userId].total += r.amount;
+      grouped[r.userId].clients.add(r.clientId);
+    });
+
+    tbody.innerHTML = Object.entries(grouped).map(([uid, data]) => {
+      const user = getUserById(uid);
+      return `<tr>
+        <td><strong>${user?.name || '-'}</strong></td>
+        <td>${user?.staffFlag || '-'}</td>
+        <td>${user?.baseRatio != null ? user.baseRatio + '%' : '-'}</td>
+        <td>${data.clients.size}社</td>
+        <td><strong>${data.total.toLocaleString()}円</strong></td>
+      </tr>`;
+    }).join('');
+  } else {
+    title.textContent = '顧客別 報酬内訳';
+    thead.innerHTML = '<tr><th>顧客名</th><th>種別</th><th>月額報酬</th><th>担当者</th><th>配分額</th></tr>';
+    const grouped = {};
+    rewards.forEach(r => {
+      if (!grouped[r.clientId]) grouped[r.clientId] = [];
+      grouped[r.clientId].push(r);
+    });
+
+    let rows = '';
+    Object.entries(grouped).forEach(([cid, rws]) => {
+      const client = getClientById(cid);
+      rws.forEach((r, i) => {
+        const user = getUserById(r.userId);
+        rows += `<tr>
+          ${i === 0 ? `<td rowspan="${rws.length}"><strong>${client?.name || '-'}</strong></td><td rowspan="${rws.length}"><span class="type-badge ${client?.clientType === '法人' ? 'type-corp' : 'type-individual'}">${client?.clientType}</span></td><td rowspan="${rws.length}">${client?.monthlySales?.toLocaleString() || '-'}円</td>` : ''}
+          <td>${user?.name || '-'}</td>
+          <td>${r.amount.toLocaleString()}円</td>
+        </tr>`;
+      });
+    });
+    tbody.innerHTML = rows;
+  }
 }

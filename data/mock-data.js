@@ -54,6 +54,47 @@ const MOCK_DATA = {
     { id: 'tk-012', clientId: 'c-004', assigneeUserId: 'u-003', title: '中間申告準備', status: '未着手', dueDate: '2026-04-30', createdAt: '2026-03-05' },
   ],
 
+  // Phase 1: 工数データ
+  timeEntries: [
+    { id: 'te-001', userId: 'u-003', clientId: 'c-001', taskId: 'tk-001', date: '2026-03-07', hours: 3.0, description: '法人税申告書 仕訳確認' },
+    { id: 'te-002', userId: 'u-003', clientId: 'c-004', taskId: 'tk-005', date: '2026-03-07', hours: 1.5, description: '決算前打ち合わせ準備' },
+    { id: 'te-003', userId: 'u-004', clientId: 'c-002', taskId: 'tk-003', date: '2026-03-07', hours: 2.0, description: '月次記帳チェック' },
+    { id: 'te-004', userId: 'u-005', clientId: 'c-003', taskId: 'tk-004', date: '2026-03-07', hours: 4.0, description: '確定申告書 下書き作成' },
+    { id: 'te-005', userId: 'u-006', clientId: 'c-005', taskId: 'tk-006', date: '2026-03-07', hours: 2.5, description: '確定申告書 修正対応' },
+    { id: 'te-006', userId: 'u-007', clientId: 'c-006', taskId: 'tk-008', date: '2026-03-07', hours: 3.0, description: '月次記帳代行' },
+    { id: 'te-007', userId: 'u-003', clientId: 'c-001', taskId: 'tk-001', date: '2026-03-08', hours: 4.0, description: '法人税申告書 ドラフト作成' },
+    { id: 'te-008', userId: 'u-003', clientId: 'c-009', taskId: 'tk-009', date: '2026-03-08', hours: 2.0, description: '資料整理' },
+    { id: 'te-009', userId: 'u-004', clientId: 'c-007', taskId: 'tk-007', date: '2026-03-08', hours: 3.5, description: '年末調整 修正確認' },
+    { id: 'te-010', userId: 'u-006', clientId: 'c-010', taskId: 'tk-010', date: '2026-03-08', hours: 5.0, description: 'NPO決算書 作成' },
+    { id: 'te-011', userId: 'u-007', clientId: 'c-001', taskId: 'tk-002', date: '2026-03-08', hours: 2.0, description: '消費税申告 資料準備' },
+    { id: 'te-012', userId: 'u-005', clientId: 'c-003', taskId: 'tk-004', date: '2026-03-10', hours: 3.0, description: '確定申告書 最終確認' },
+    { id: 'te-013', userId: 'u-003', clientId: 'c-001', taskId: 'tk-001', date: '2026-03-10', hours: 5.0, description: '法人税申告書 最終仕上げ' },
+    { id: 'te-014', userId: 'u-008', clientId: 'c-002', taskId: null, date: '2026-03-07', hours: 6.0, description: '記帳代行（3月分）' },
+    { id: 'te-015', userId: 'u-008', clientId: 'c-007', taskId: null, date: '2026-03-08', hours: 5.5, description: '記帳代行（3月分）' },
+  ],
+
+  // Phase 1: 報告書データ
+  reports: [
+    { id: 'rp-001', title: '第1チーム 週次報告（3/7）', teamId: 't-001', authorId: 'u-002', createdAt: '2026-03-07T17:00:00', content: '今週の進捗：サンプル商事の法人税申告書は仕訳確認が完了し、ドラフト作成に着手。テスト工業の月次記帳チェックは完了。デジタルソリューションの年末調整修正対応を来週着手予定。', status: '確定' },
+    { id: 'rp-002', title: '第2チーム 週次報告（3/7）', teamId: 't-002', authorId: 'u-009', createdAt: '2026-03-07T17:30:00', content: '今週の進捗：田中一郎の確定申告書は下書き完了、来週最終確認。佐藤二郎の確定申告書は差戻し対応中。グリーンファームの月次記帳代行は順調。NPO法人サポートネットの決算書作成に着手。', status: '確定' },
+    { id: 'rp-003', title: '第1チーム 週次報告（2/28）', teamId: 't-001', authorId: 'u-002', createdAt: '2026-02-28T17:00:00', content: 'リベ不動産の決算前打ち合わせを完了。サンプル商事の申告書準備を開始。テスト工業の記帳チェックは3月上旬対応予定。', status: '確定' },
+    { id: 'rp-004', title: '第2チーム 週次報告（2/28）', teamId: 't-002', authorId: 'u-009', createdAt: '2026-02-28T17:30:00', content: '田中一郎・佐藤二郎の確定申告書作成に本格着手。グリーンファームの記帳代行は2月分完了。NPO法人の決算書準備を開始。', status: '確定' },
+  ],
+
+  // Phase 1: 報酬データ（月次）
+  rewards: [
+    { id: 'rw-001', userId: 'u-003', month: '2026-03', clientId: 'c-001', amount: 19000, type: '税務顧問' },
+    { id: 'rw-002', userId: 'u-003', month: '2026-03', clientId: 'c-004', amount: 30400, type: '税務顧問' },
+    { id: 'rw-003', userId: 'u-003', month: '2026-03', clientId: 'c-009', amount: 17100, type: '税務顧問' },
+    { id: 'rw-004', userId: 'u-004', month: '2026-03', clientId: 'c-002', amount: 11400, type: '税務顧問' },
+    { id: 'rw-005', userId: 'u-004', month: '2026-03', clientId: 'c-007', amount: 38000, type: '税務顧問' },
+    { id: 'rw-006', userId: 'u-005', month: '2026-03', clientId: 'c-003', amount: 7000, type: '税務顧問' },
+    { id: 'rw-007', userId: 'u-006', month: '2026-03', clientId: 'c-005', amount: 3450, type: '税務顧問' },
+    { id: 'rw-008', userId: 'u-006', month: '2026-03', clientId: 'c-010', amount: 4140, type: '税務顧問' },
+    { id: 'rw-009', userId: 'u-007', month: '2026-03', clientId: 'c-001', amount: 7500, type: '税務顧問' },
+    { id: 'rw-010', userId: 'u-007', month: '2026-03', clientId: 'c-006', amount: 3750, type: '税務顧問' },
+  ],
+
   notifications: [
     { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
     { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },
