@@ -34,6 +34,8 @@ function navigateTo(pageName, params = {}) {
     reports: '報告書',
     calendar: 'カレンダー',
     rewards: '報酬管理',
+    integrations: '外部連携',
+    settings: 'マイ設定',
   };
   header.textContent = titles[pageName] || pageName;
 
@@ -107,6 +109,8 @@ function registerAllPages() {
   registerPage('reports', renderReports);
   registerPage('calendar', renderCalendar);
   registerPage('rewards', renderRewards);
+  registerPage('integrations', renderIntegrations);
+  registerPage('settings', renderSettings);
 }
 
 // ===========================
@@ -1084,4 +1088,201 @@ function renderRewardData(month, viewType) {
     });
     tbody.innerHTML = rows;
   }
+}
+
+// ===========================
+// 外部連携
+// ===========================
+function renderIntegrations(el) {
+  const integrations = [
+    { id: 'int-dropbox', name: 'Dropbox', icon: '📁', description: '顧客資料フォルダとの自動連携', status: 'connected', connectedAt: '2026-01-15', account: 'libetax-office@dropbox.com' },
+    { id: 'int-freee', name: 'freee会計', icon: '📊', description: '仕訳データ・試算表の自動取込', status: 'connected', connectedAt: '2026-02-01', account: 'libetax' },
+    { id: 'int-chatwork', name: 'Chatwork', icon: '💬', description: '顧客・チーム間メッセージ連携', status: 'connected', connectedAt: '2025-12-10', account: 'libetax-team' },
+    { id: 'int-slack', name: 'Slack', icon: '📢', description: 'チーム内通知・アラート配信', status: 'disconnected', connectedAt: null, account: null },
+    { id: 'int-google', name: 'Google Workspace', icon: '📧', description: 'Gmail・カレンダー・Drive連携', status: 'connected', connectedAt: '2026-01-20', account: 'admin@libetax.jp' },
+    { id: 'int-zoom', name: 'Zoom', icon: '🎥', description: 'ミーティング予約・録画管理', status: 'disconnected', connectedAt: null, account: null },
+    { id: 'int-eltax', name: 'eLTAX', icon: '🏛️', description: '地方税電子申告連携', status: 'connected', connectedAt: '2026-03-01', account: '利用者ID: LT-XXXXX' },
+    { id: 'int-etax', name: 'e-Tax', icon: '🏛️', description: '国税電子申告連携', status: 'connected', connectedAt: '2025-11-01', account: '利用者識別番号: XXXX-XXXX' },
+  ];
+
+  const connected = integrations.filter(i => i.status === 'connected').length;
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card accent-green">
+        <div class="stat-label">接続済み</div>
+        <div class="stat-value">${connected}</div>
+        <div class="stat-sub">サービス</div>
+      </div>
+      <div class="stat-card accent-yellow">
+        <div class="stat-label">未接続</div>
+        <div class="stat-value">${integrations.length - connected}</div>
+        <div class="stat-sub">サービス</div>
+      </div>
+    </div>
+
+    <div class="int-grid">
+      ${integrations.map(i => `
+        <div class="card int-card">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+              <div style="font-size:28px;">${i.icon}</div>
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:15px;">${i.name}</div>
+                <div style="font-size:12px;color:var(--gray-500);">${i.description}</div>
+              </div>
+              <span class="status-badge ${i.status === 'connected' ? 'status-done' : 'status-todo'}">${i.status === 'connected' ? '接続済み' : '未接続'}</span>
+            </div>
+            ${i.status === 'connected' ? `
+              <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+                <div>アカウント: ${i.account}</div>
+                <div>接続日: ${formatDate(i.connectedAt)}</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="alert('同期設定画面（モック）')">設定</button>
+                <button class="btn btn-secondary btn-sm" onclick="alert('テスト接続（モック）')">テスト</button>
+                <button class="btn btn-danger btn-sm" onclick="alert('切断確認（モック）')">切断</button>
+              </div>
+            ` : `
+              <button class="btn btn-primary btn-sm" onclick="alert('OAuth認証画面（モック）')">接続する</button>
+            `}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ===========================
+// マイ設定
+// ===========================
+function renderSettings(el) {
+  const u = MOCK_DATA.currentUser;
+  const fullUser = getUserById(u.id);
+
+  el.innerHTML = `
+    <div class="detail-grid">
+      <div>
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><h3>プロフィール</h3></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+              <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:600;">${u.name[0]}</div>
+              <div>
+                <div style="font-size:18px;font-weight:600;">${u.name}</div>
+                <div style="font-size:13px;color:var(--gray-500);">${u.email} / ${getRoleBadge(u.role)}</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>表示名</label>
+              <input type="text" value="${u.name}">
+            </div>
+            <div class="form-group">
+              <label>メールアドレス</label>
+              <input type="email" value="${u.email}">
+            </div>
+            <div class="form-group">
+              <label>所属チーム</label>
+              <input type="text" value="${fullUser?.team || '（なし）'}" disabled style="background:var(--gray-50);">
+            </div>
+            <button class="btn btn-primary" onclick="alert('保存しました（モック）')">保存</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>パスワード変更</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>現在のパスワード</label>
+              <input type="password" placeholder="現在のパスワード">
+            </div>
+            <div class="form-group">
+              <label>新しいパスワード</label>
+              <input type="password" placeholder="新しいパスワード">
+            </div>
+            <div class="form-group">
+              <label>新しいパスワード（確認）</label>
+              <input type="password" placeholder="もう一度入力">
+            </div>
+            <button class="btn btn-primary" onclick="alert('パスワードを変更しました（モック）')">変更する</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><h3>通知設定</h3></div>
+          <div class="card-body">
+            <div class="settings-list">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">タスク期限通知</div>
+                  <div class="settings-desc">期限の3日前・当日に通知</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">タスク割当通知</div>
+                  <div class="settings-desc">新しいタスクが割り当てられた時</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">差戻し通知</div>
+                  <div class="settings-desc">タスクが差し戻された時</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">報告書通知</div>
+                  <div class="settings-desc">チームの報告書が作成された時</div>
+                </div>
+                <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">メール通知</div>
+                  <div class="settings-desc">重要な通知をメールでも受信</div>
+                </div>
+                <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label">Chatwork通知</div>
+                  <div class="settings-desc">Chatworkにも通知を送信</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>表示設定</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>デフォルト表示ページ</label>
+              <select>
+                <option selected>ダッシュボード</option>
+                <option>タスク一覧</option>
+                <option>進捗管理表</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>1ページあたりの表示件数</label>
+              <select>
+                <option>20件</option>
+                <option selected>50件</option>
+                <option>100件</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="alert('保存しました（モック）')">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }

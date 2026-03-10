@@ -191,6 +191,24 @@ tbody tr.clickable { cursor: pointer; }
 .alert-warning { background: var(--warning-light); color: #92400e; border: 1px solid #fde68a; }
 .alert-info { background: var(--primary-light); color: #1e40af; border: 1px solid #bfdbfe; }
 
+/* ── 外部連携 ── */
+.int-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+.int-card { transition: box-shadow .15s; }
+.int-card:hover { box-shadow: var(--shadow-lg); }
+
+/* ── 設定: トグルスイッチ ── */
+.settings-list { display: flex; flex-direction: column; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--gray-100); }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+.settings-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+.toggle { position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--gray-300); border-radius: 24px; transition: .2s; }
+.toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.toggle input:checked + .toggle-slider { background: var(--primary); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
 /* ── 進捗管理表 ── */
 .pg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .pg-progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
