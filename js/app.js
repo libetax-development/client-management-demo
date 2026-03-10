@@ -250,8 +250,15 @@ function submitNewTask() {
   else alert(`タスク「${title}」を作成しました`);
 }
 
-// ── 顧客追加モーダル ──
-function openClientModal() {
+// ── 顧客追加・編集モーダル ──
+let editingClientId = null;
+
+function openClientEditModal(clientId) {
+  openClientModal(clientId);
+}
+
+function openClientModal(clientId) {
+  editingClientId = clientId || null;
   const modal = document.getElementById('client-create-modal');
   const mainSelect = document.getElementById('new-client-main');
   const subSelect = document.getElementById('new-client-sub');
@@ -267,14 +274,35 @@ function openClientModal() {
     `<option value="${i + 1}" ${i + 1 === 3 ? 'selected' : ''}>${i + 1}月</option>`
   ).join('');
 
-  document.getElementById('new-client-name').value = '';
-  document.getElementById('new-client-type').value = '法人';
-  document.getElementById('new-client-sales').value = '';
-  document.getElementById('new-client-address').value = '';
-  document.getElementById('new-client-tel').value = '';
-  document.getElementById('new-client-industry').value = '';
-  document.getElementById('new-client-representative').value = '';
-  document.getElementById('new-client-taxoffice').value = '';
+  // モーダルタイトル更新
+  const modalTitle = modal.querySelector('.modal-header h3') || modal.querySelector('.modal-header h2');
+  if (modalTitle) modalTitle.textContent = editingClientId ? '顧客情報編集' : '新規顧客登録';
+
+  if (editingClientId) {
+    const c = getClientById(editingClientId);
+    if (c) {
+      document.getElementById('new-client-name').value = c.name || '';
+      document.getElementById('new-client-type').value = c.clientType || '法人';
+      document.getElementById('new-client-sales').value = c.monthlySales || '';
+      document.getElementById('new-client-address').value = c.address || '';
+      document.getElementById('new-client-tel').value = c.tel || '';
+      document.getElementById('new-client-industry').value = c.industry || '';
+      document.getElementById('new-client-representative').value = c.representative || '';
+      document.getElementById('new-client-taxoffice').value = c.taxOffice || '';
+      document.getElementById('new-client-main').value = c.mainUserId || '';
+      document.getElementById('new-client-sub').value = c.subUserId || '';
+      document.getElementById('new-client-fiscal').value = c.fiscalMonth || 3;
+    }
+  } else {
+    document.getElementById('new-client-name').value = '';
+    document.getElementById('new-client-type').value = '法人';
+    document.getElementById('new-client-sales').value = '';
+    document.getElementById('new-client-address').value = '';
+    document.getElementById('new-client-tel').value = '';
+    document.getElementById('new-client-industry').value = '';
+    document.getElementById('new-client-representative').value = '';
+    document.getElementById('new-client-taxoffice').value = '';
+  }
 
   modal.classList.add('show');
 }
@@ -299,33 +327,56 @@ function submitNewClient() {
   if (!name) { alert('顧客名を入力してください'); return; }
   if (!monthlySales) { alert('月額報酬を入力してください'); return; }
 
-  const nextCode = String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
-  const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
+  if (editingClientId) {
+    // 編集モード
+    const c = getClientById(editingClientId);
+    if (c) {
+      c.name = name;
+      c.clientType = clientType;
+      c.fiscalMonth = fiscalMonth;
+      c.mainUserId = mainUserId;
+      c.subUserId = subUserId;
+      c.mgrUserId = mainUserId;
+      c.monthlySales = monthlySales;
+      c.address = address;
+      c.tel = tel;
+      c.industry = industry;
+      c.representative = representative;
+      c.taxOffice = taxOffice;
+    }
+    closeClientModal();
+    navigateTo('client-detail', { id: editingClientId });
+    editingClientId = null;
+  } else {
+    // 新規作成モード
+    const nextCode = String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
+    const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
 
-  MOCK_DATA.clients.push({
-    id: newId,
-    clientCode: nextCode,
-    name,
-    clientType,
-    fiscalMonth,
-    isActive: true,
-    mainUserId,
-    subUserId,
-    mgrUserId: mainUserId,
-    monthlySales,
-    address,
-    tel,
-    industry,
-    representative,
-    taxOffice,
-    memo: '',
-    establishDate: '',
-  });
+    MOCK_DATA.clients.push({
+      id: newId,
+      clientCode: nextCode,
+      name,
+      clientType,
+      fiscalMonth,
+      isActive: true,
+      mainUserId,
+      subUserId,
+      mgrUserId: mainUserId,
+      monthlySales,
+      address,
+      tel,
+      industry,
+      representative,
+      taxOffice,
+      memo: '',
+      establishDate: '',
+    });
 
-  closeClientModal();
+    closeClientModal();
 
-  if (currentPage === 'clients') navigateTo('clients');
-  else navigateTo('client-detail', { id: newId });
+    if (currentPage === 'clients') navigateTo('clients');
+    else navigateTo('client-detail', { id: newId });
+  }
 }
 
 // ── 職員追加モーダル ──
@@ -786,10 +837,9 @@ function renderClientDetail(el, params) {
 
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('clients')">&larr; 顧客一覧に戻る</a></div>
-    <div class="alert alert-warning">この画面は閲覧専用です。編集は team_leader 以上の権限が必要です。</div>
     <div class="detail-grid">
       <div class="card">
-        <div class="card-header"><h3>基本情報</h3></div>
+        <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openClientEditModal('${c.id}')">編集</button></div>
         <div class="card-body">
           <div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>
           <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${c.name}</div></div>
@@ -1208,7 +1258,7 @@ function renderProgressDetail(el, params) {
           <td>${mgr?.name || '-'}</td>
           ${sheet.columns.map(c => {
             const val = t.steps[c] || '未着手';
-            return `<td class="pg-step-cell"><span class="status-badge ${getStatusClass(val)}" style="cursor:pointer;" onclick="event.stopPropagation();alert('ワンクリックでステータス変更（モック）')">${val}</span></td>`;
+            return `<td class="pg-step-cell"><span class="status-badge ${getStatusClass(val)}" style="cursor:pointer;" onclick="event.stopPropagation();cycleProgressStatus('${sheet.id}','${t.clientId}','${c}')">${val}</span></td>`;
           }).join('')}
           <td style="font-size:12px;color:var(--gray-500);max-width:160px;">${t.note || ''}</td>
         </tr>`;
@@ -1222,6 +1272,18 @@ function renderProgressDetail(el, params) {
   document.getElementById('pd-search').addEventListener('input', draw);
   document.getElementById('pd-incomplete-only').addEventListener('change', draw);
   draw();
+}
+
+function cycleProgressStatus(sheetId, clientId, colName) {
+  const cycle = ['未着手', '進行中', '完了', '差戻し'];
+  const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
+  if (!sheet) return;
+  const target = sheet.targets.find(t => t.clientId === clientId);
+  if (!target) return;
+  const current = target.steps[colName] || '未着手';
+  const idx = cycle.indexOf(current);
+  target.steps[colName] = cycle[(idx + 1) % cycle.length];
+  navigateTo('progress-detail', { id: sheetId });
 }
 
 // ===========================
@@ -1307,9 +1369,22 @@ function renderStaffTable() {
       <td>${getDeptName(u.deptId)}</td>
       <td>${u.position || '-'}</td>
       <td>${u.employmentType || '-'}</td>
-      <td>${u.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>
+      <td>
+        <button class="btn btn-sm ${u.isActive ? 'btn-secondary' : 'btn-primary'}" onclick="event.stopPropagation();toggleStaffActive('${u.id}')" style="font-size:11px;padding:3px 8px;">
+          ${u.isActive ? '有効 ✓' : '無効'}
+        </button>
+      </td>
     </tr>`;
   }).join('');
+}
+
+function toggleStaffActive(userId) {
+  const u = MOCK_DATA.users.find(x => x.id === userId);
+  if (!u) return;
+  const action = u.isActive ? '無効' : '有効';
+  if (!confirm(`${u.name} を${action}にしますか？`)) return;
+  u.isActive = !u.isActive;
+  renderStaffTable();
 }
 
 // ===========================
@@ -1409,6 +1484,7 @@ const rpPerPage = 20;
 let rpReadFilter = '全て';      // 全て / 未読
 let rpTypeFilter = '両方';      // 両方 / 業務報告書 / 日報
 let rpSearchState = { category: '', author: '', period: '1年以内', dateFrom: '', dateTo: '', ranks: [], attachOnly: false, draftOnly: false, keyword: '', client: '' };
+const rpExpandedSet = new Set();
 
 function renderReports(el) {
   rpPage = 1;
@@ -1558,12 +1634,13 @@ function rpRenderList() {
       const isDraft = r.readStatus === '一時保存中';
       const badgeClass = isUnread ? 'rp-badge-unread' : isDraft ? 'rp-badge-draft' : 'rp-badge-read';
       const badgeText = isUnread ? '未読' : isDraft ? '一時保存中' : '';
+      const isExpanded = rpExpandedSet.has(r.id);
       return `<div class="rp-row ${isUnread ? 'unread' : ''}" onclick="rpClickReport('${r.id}')">
         <span class="rp-row-date">${formatDate(r.createdAt)}</span>
         <span class="rp-row-author">${author?.name || '-'}</span>
         <span class="rp-row-title">${r.hasAttachment ? '<span class="attach-icon">📎</span>' : ''}${r.title}</span>
         ${badgeText ? `<span class="rp-row-badge ${badgeClass}">${badgeText}</span>` : '<span></span>'}
-      </div>`;
+      </div>${isExpanded ? `<div class="rp-row-detail" style="padding:8px 16px 12px;font-size:13px;color:var(--gray-500);background:var(--gray-50);border-bottom:1px solid var(--gray-200);"><strong>タイトル：</strong>${r.title}<br><strong>種別：</strong>${r.category || r.type || '-'}　<strong>ランク：</strong>${r.rank || '-'}　<strong>顧客：</strong>${r.clientName || '-'}</div>` : ''}`;
     }).join('');
   }
 
@@ -1602,12 +1679,25 @@ function rpMarkAllRead() {
 function rpClickReport(id) {
   const r = MOCK_DATA.reports.find(x => x.id === id);
   if (r && r.readStatus === '未読') r.readStatus = '既読';
+  if (rpExpandedSet.has(id)) {
+    rpExpandedSet.delete(id);
+  } else {
+    rpExpandedSet.add(id);
+  }
   rpRenderList();
-  // 将来的に詳細画面に遷移可能
 }
 
-function rpExpandAll() { /* placeholder for accordion */ }
-function rpCollapseAll() { /* placeholder for accordion */ }
+function rpExpandAll() {
+  const all = rpGetFiltered();
+  const start = (rpPage - 1) * rpPerPage;
+  const page = all.slice(start, start + rpPerPage);
+  page.forEach(r => rpExpandedSet.add(r.id));
+  rpRenderList();
+}
+function rpCollapseAll() {
+  rpExpandedSet.clear();
+  rpRenderList();
+}
 
 function rpSetPeriod(btn) {
   rpSearchState.period = btn.dataset.p;
@@ -1911,6 +2001,67 @@ function renderIntegrations(el) {
 // ===========================
 // マイ設定
 // ===========================
+let settingsActiveTab = 0;
+
+function settingsFlash(containerId, msg) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-info" style="padding:8px 12px;background:#d1ecf1;border:1px solid #bee5eb;border-radius:6px;color:#0c5460;font-size:13px;margin-bottom:12px;">${msg}</div>`;
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 2000);
+}
+
+function settingsRerender() {
+  const content = document.getElementById('page-content');
+  if (content) renderSettings(content);
+}
+
+function saveOfficeInfo() {
+  MOCK_DATA.office.aoName = document.getElementById('set-ao-name').value;
+  MOCK_DATA.office.address = document.getElementById('set-ao-address').value;
+  MOCK_DATA.office.tel = document.getElementById('set-ao-tel').value;
+  MOCK_DATA.office.email = document.getElementById('set-ao-email').value;
+  settingsRerender();
+  setTimeout(() => settingsFlash('office-flash', '保存しました'), 50);
+}
+
+function saveSecuritySettings() {
+  MOCK_DATA.securitySettings.allowedIpList = document.getElementById('set-sec-ip').value;
+  MOCK_DATA.securitySettings.maxLoginAttempts = parseInt(document.getElementById('set-sec-attempts').value) || 5;
+  MOCK_DATA.securitySettings.lockoutDuration = parseInt(document.getElementById('set-sec-lockout').value) || 30;
+  MOCK_DATA.securitySettings.sessionTimeout = parseInt(document.getElementById('set-sec-session').value) || 30;
+  MOCK_DATA.securitySettings.passwordMinLength = parseInt(document.getElementById('set-sec-pwlen').value) || 8;
+  MOCK_DATA.securitySettings.passwordRequireNumber = document.getElementById('set-sec-pwnum').checked ? 1 : 0;
+  MOCK_DATA.securitySettings.passwordRequireSymbol = document.getElementById('set-sec-pwsym').checked ? 1 : 0;
+  settingsRerender();
+  setTimeout(() => settingsFlash('security-flash', '保存しました'), 50);
+}
+
+function addDepartment() {
+  const name = prompt('部署名を入力してください');
+  if (!name) return;
+  const code = prompt('部署コードを入力してください');
+  if (!code) return;
+  const maxId = MOCK_DATA.departments.reduce((m, d) => Math.max(m, d.deptId), 0);
+  const maxSort = MOCK_DATA.departments.reduce((m, d) => Math.max(m, d.sortOrder), 0);
+  MOCK_DATA.departments.push({ deptId: maxId + 1, deptName: name, deptCode: code, parentDeptId: null, sortOrder: maxSort + 1, status: 1 });
+  settingsRerender();
+}
+
+function editDepartment(deptId) {
+  const d = MOCK_DATA.departments.find(x => x.deptId === deptId);
+  if (!d) return;
+  const name = prompt('新しい部署名を入力してください', d.deptName);
+  if (!name) return;
+  d.deptName = name;
+  settingsRerender();
+}
+
+function deleteDepartment(deptId) {
+  if (!confirm('この部署を削除しますか？')) return;
+  MOCK_DATA.departments = MOCK_DATA.departments.filter(x => x.deptId !== deptId);
+  settingsRerender();
+}
+
 function renderSettings(el) {
   const u = MOCK_DATA.currentUser;
   const fullUser = getUserById(u.id);
@@ -1930,6 +2081,8 @@ function renderSettings(el) {
   const logoutOpts = [5,10,15,30,60,120].map(m =>
     `<option value="${m}" ${office.logoutTime === m ? 'selected' : ''}>${m}分</option>`
   ).join('');
+
+  const inputStyle = 'width:200px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;';
 
   const panels = {
     personal: `
@@ -1953,10 +2106,11 @@ function renderSettings(el) {
         <div class="card">
           <div class="card-header"><h3>パスワード変更</h3></div>
           <div class="card-body">
+            <div id="pw-flash"></div>
             <div class="form-group"><label>現在のパスワード</label><input type="password" placeholder="現在のパスワード"></div>
             <div class="form-group"><label>新しいパスワード</label><input type="password" placeholder="新しいパスワード"></div>
             <div class="form-group"><label>新しいパスワード（確認）</label><input type="password" placeholder="もう一度入力"></div>
-            <button class="btn btn-primary" onclick="alert('パスワードを変更しました（モック）')">変更する</button>
+            <button class="btn btn-primary" onclick="settingsFlash('pw-flash','パスワードを変更しました')">変更する</button>
           </div>
         </div>
       </div>`,
@@ -1976,7 +2130,8 @@ function renderSettings(el) {
             </div>
             <div class="settings-row">
               <div><div class="settings-label">ログアウト時間設定</div><div class="settings-desc">無操作時の自動ログアウトまでの時間</div></div>
-              <select class="filter-select" style="width:120px;" onchange="MOCK_DATA.office.logoutTime=parseInt(this.value);alert('保存しました（モック）')">${logoutOpts}</select>
+              <select class="filter-select" style="width:120px;" onchange="MOCK_DATA.office.logoutTime=parseInt(this.value);settingsFlash('logout-flash','保存しました')">${logoutOpts}</select>
+              <span id="logout-flash" style="margin-left:8px;"></span>
             </div>
           </div>
         </div>
@@ -1986,22 +2141,31 @@ function renderSettings(el) {
       <div class="card" style="margin-bottom:24px;">
         <div class="card-header"><h3>オフィス情報</h3></div>
         <div class="card-body">
-          <div class="detail-row"><div class="detail-label">事務所名</div><div class="detail-value">${office.aoName}</div></div>
-          <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${office.address}</div></div>
-          <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${office.tel}</div></div>
-          <div class="detail-row"><div class="detail-label">メール</div><div class="detail-value">${office.email}</div></div>
+          <div id="office-flash"></div>
+          <div class="form-group"><label>事務所名</label><input type="text" id="set-ao-name" value="${office.aoName}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>住所</label><input type="text" id="set-ao-address" value="${office.address}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>電話番号</label><input type="text" id="set-ao-tel" value="${office.tel}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>メール</label><input type="email" id="set-ao-email" value="${office.email}" style="${inputStyle}width:100%;"></div>
+          <button class="btn btn-primary" onclick="saveOfficeInfo()">保存</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><h3>部署一覧</h3></div>
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>部署一覧</h3>
+          <button class="btn btn-primary btn-sm" onclick="addDepartment()">追加</button>
+        </div>
         <div class="card-body">
           <div class="table-wrapper">
             <table>
-              <thead><tr><th>部署コード</th><th>部署名</th><th>表示順</th><th>状態</th></tr></thead>
+              <thead><tr><th>部署コード</th><th>部署名</th><th>表示順</th><th>状態</th><th>操作</th></tr></thead>
               <tbody>
                 ${depts.map(d => `<tr>
                   <td>${d.deptCode}</td><td>${d.deptName}</td><td>${d.sortOrder}</td>
                   <td><span class="status-badge ${d.status === 1 ? 'status-done' : 'status-todo'}">${d.status === 1 ? '有効' : '無効'}</span></td>
+                  <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editDepartment(${d.deptId})">編集</button>
+                    <button class="btn btn-secondary btn-sm" style="color:var(--danger);" onclick="deleteDepartment(${d.deptId})">削除</button>
+                  </td>
                 </tr>`).join('')}
               </tbody>
             </table>
@@ -2013,20 +2177,36 @@ function renderSettings(el) {
       <div class="card" style="margin-bottom:24px;">
         <div class="card-header"><h3>セキュリティ管理</h3></div>
         <div class="card-body">
-          <div class="settings-list">
-            <div class="settings-row">
-              <div><div class="settings-label">IPアドレス制限</div><div class="settings-desc">許可するIPアドレスを設定（空欄＝制限なし）</div></div>
-              <input type="text" value="${sec.allowedIpList}" placeholder="未設定（制限なし）" style="width:200px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;">
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">ログイン試行上限</div><div class="settings-desc">上限超過で${sec.lockoutDuration}分間ロック</div></div>
-              <span style="font-weight:600;">${sec.maxLoginAttempts}回</span>
-            </div>
-            <div class="settings-row">
-              <div><div class="settings-label">パスワードポリシー</div><div class="settings-desc">最低文字数・必須条件</div></div>
-              <span style="font-size:13px;">${sec.passwordMinLength}文字以上${sec.passwordRequireNumber ? ' / 数字必須' : ''}${sec.passwordRequireSymbol ? ' / 記号必須' : ''}</span>
-            </div>
+          <div id="security-flash"></div>
+          <div class="form-group">
+            <label>IPアドレス制限</label>
+            <textarea id="set-sec-ip" rows="3" placeholder="許可するIPアドレス（改行区切り、空欄＝制限なし）" style="${inputStyle}width:100%;height:auto;">${sec.allowedIpList}</textarea>
           </div>
+          <div class="form-group">
+            <label>ログイン試行上限（回）</label>
+            <input type="number" id="set-sec-attempts" value="${sec.maxLoginAttempts}" min="1" style="${inputStyle}">
+          </div>
+          <div class="form-group">
+            <label>ロックアウト時間（分）</label>
+            <input type="number" id="set-sec-lockout" value="${sec.lockoutDuration}" min="1" style="${inputStyle}">
+          </div>
+          <div class="form-group">
+            <label>セッションタイムアウト（分）</label>
+            <input type="number" id="set-sec-session" value="${sec.sessionTimeout}" min="1" style="${inputStyle}">
+          </div>
+          <div class="form-group">
+            <label>パスワード最低文字数</label>
+            <input type="number" id="set-sec-pwlen" value="${sec.passwordMinLength}" min="1" style="${inputStyle}">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="set-sec-pwnum" ${sec.passwordRequireNumber ? 'checked' : ''}>
+            <label for="set-sec-pwnum" style="margin:0;">数字必須</label>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="set-sec-pwsym" ${sec.passwordRequireSymbol ? 'checked' : ''}>
+            <label for="set-sec-pwsym" style="margin:0;">記号必須</label>
+          </div>
+          <button class="btn btn-primary" onclick="saveSecuritySettings()">保存</button>
         </div>
       </div>`,
 
@@ -2075,15 +2255,18 @@ function renderSettings(el) {
       </div>`,
   };
 
+  const activeKey = tabs[settingsActiveTab]?.key || 'personal';
+
   el.innerHTML = `
     <div class="tab-bar" id="settings-tabs">
-      ${tabs.map((t, i) => `<button class="tab-btn ${i === 0 ? 'active' : ''}" data-tab="${t.key}">${t.label}</button>`).join('')}
+      ${tabs.map((t, i) => `<button class="tab-btn ${i === settingsActiveTab ? 'active' : ''}" data-tab="${t.key}" data-idx="${i}">${t.label}</button>`).join('')}
     </div>
-    <div id="settings-panel" style="margin-top:24px;">${panels.personal}</div>
+    <div id="settings-panel" style="margin-top:24px;">${panels[activeKey]}</div>
   `;
 
   document.querySelectorAll('#settings-tabs .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      settingsActiveTab = parseInt(btn.dataset.idx);
       document.querySelectorAll('#settings-tabs .tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('settings-panel').innerHTML = panels[btn.dataset.tab] || '';
