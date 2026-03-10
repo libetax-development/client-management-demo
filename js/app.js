@@ -30,6 +30,7 @@ function navigateTo(pageName, params = {}) {
     progress: '進捗管理表',
     'progress-detail': '進捗管理表 詳細',
     staff: '職員一覧',
+    'staff-detail': '職員詳細',
     timesheet: '工数管理',
     reports: '報告書',
     calendar: 'カレンダー',
@@ -380,7 +381,10 @@ function submitNewClient() {
 }
 
 // ── 職員追加モーダル ──
-function openStaffModal() {
+let editingStaffId = null;
+
+function openStaffModal(staffId) {
+  editingStaffId = staffId || null;
   const modal = document.getElementById('staff-create-modal');
   const deptSelect = document.getElementById('new-staff-deptId');
 
@@ -388,19 +392,43 @@ function openStaffModal() {
     MOCK_DATA.departments.filter(d => d.status === 1)
       .map(d => `<option value="${d.deptId}">${d.deptName}</option>`).join('');
 
-  document.getElementById('new-staff-lastName').value = '';
-  document.getElementById('new-staff-firstName').value = '';
-  document.getElementById('new-staff-lastNameKana').value = '';
-  document.getElementById('new-staff-firstNameKana').value = '';
-  document.getElementById('new-staff-email').value = '';
-  document.getElementById('new-staff-tel').value = '';
-  document.getElementById('new-staff-mobile').value = '';
-  document.getElementById('new-staff-position').value = '';
-  document.getElementById('new-staff-employmentType').value = '正社員';
-  document.getElementById('new-staff-joinDate').value = '';
-  document.getElementById('new-staff-role').value = 'member';
-  document.getElementById('new-staff-staffFlag').value = '税務';
-  document.getElementById('new-staff-memo').value = '';
+  // モーダルタイトル更新
+  const modalTitle = modal.querySelector('.modal-header h3');
+  if (modalTitle) modalTitle.textContent = editingStaffId ? '職員情報編集' : '新規職員登録';
+
+  if (editingStaffId) {
+    const u = getUserById(editingStaffId);
+    if (u) {
+      document.getElementById('new-staff-lastName').value = u.lastName || '';
+      document.getElementById('new-staff-firstName').value = u.firstName || '';
+      document.getElementById('new-staff-lastNameKana').value = u.lastNameKana || '';
+      document.getElementById('new-staff-firstNameKana').value = u.firstNameKana || '';
+      document.getElementById('new-staff-email').value = u.email || '';
+      document.getElementById('new-staff-tel').value = u.tel || '';
+      document.getElementById('new-staff-mobile').value = u.mobile || '';
+      document.getElementById('new-staff-position').value = u.position || '';
+      document.getElementById('new-staff-employmentType').value = u.employmentType || '正社員';
+      document.getElementById('new-staff-joinDate').value = u.joinDate || '';
+      document.getElementById('new-staff-role').value = u.role || 'member';
+      document.getElementById('new-staff-staffFlag').value = u.staffFlag || '税務';
+      document.getElementById('new-staff-memo').value = u.memo || '';
+      document.getElementById('new-staff-deptId').value = u.deptId || '';
+    }
+  } else {
+    document.getElementById('new-staff-lastName').value = '';
+    document.getElementById('new-staff-firstName').value = '';
+    document.getElementById('new-staff-lastNameKana').value = '';
+    document.getElementById('new-staff-firstNameKana').value = '';
+    document.getElementById('new-staff-email').value = '';
+    document.getElementById('new-staff-tel').value = '';
+    document.getElementById('new-staff-mobile').value = '';
+    document.getElementById('new-staff-position').value = '';
+    document.getElementById('new-staff-employmentType').value = '正社員';
+    document.getElementById('new-staff-joinDate').value = '';
+    document.getElementById('new-staff-role').value = 'member';
+    document.getElementById('new-staff-staffFlag').value = '税務';
+    document.getElementById('new-staff-memo').value = '';
+  }
 
   modal.classList.add('show');
 }
@@ -430,38 +458,37 @@ function submitNewStaff() {
   if (!email) { alert('メールアドレスを入力してください'); return; }
 
   const name = firstName ? lastName + ' ' + firstName : lastName;
-  const nextCode = 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
-  const newId = 'u-' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
-  const loginId = email.split('@')[0];
 
-  MOCK_DATA.users.push({
-    id: newId,
-    staffCode: nextCode,
-    lastName,
-    firstName,
-    lastNameKana,
-    firstNameKana,
-    name,
-    email,
-    tel,
-    mobile,
-    role,
-    deptId,
-    team: null,
-    position,
-    employmentType,
-    joinDate,
-    memo,
-    loginId,
-    isActive: true,
-    baseRatio: null,
-    staffFlag,
-  });
+  if (editingStaffId) {
+    const u = getUserById(editingStaffId);
+    if (u) {
+      u.lastName = lastName; u.firstName = firstName;
+      u.lastNameKana = lastNameKana; u.firstNameKana = firstNameKana;
+      u.name = name; u.email = email; u.tel = tel; u.mobile = mobile;
+      u.deptId = deptId; u.position = position; u.employmentType = employmentType;
+      u.joinDate = joinDate; u.role = role; u.staffFlag = staffFlag; u.memo = memo;
+      u.loginId = email.split('@')[0];
+    }
+    closeStaffModal();
+    navigateTo('staff-detail', { id: editingStaffId });
+    editingStaffId = null;
+  } else {
+    const nextCode = 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+    const newId = 'u-' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+    const loginId = email.split('@')[0];
 
-  closeStaffModal();
+    MOCK_DATA.users.push({
+      id: newId, staffCode: nextCode, lastName, firstName,
+      lastNameKana, firstNameKana, name, email, tel, mobile,
+      role, deptId, team: null, position, employmentType,
+      joinDate, memo, loginId, isActive: true, baseRatio: null, staffFlag,
+    });
 
-  if (currentPage === 'staff') navigateTo('staff');
-  else alert(`職員「${name}」を登録しました`);
+    closeStaffModal();
+
+    if (currentPage === 'staff') navigateTo('staff');
+    else alert(`職員「${name}」を登録しました`);
+  }
 }
 
 // ── タスク編集モーダル ──
@@ -673,6 +700,7 @@ function registerAllPages() {
   registerPage('progress', renderProgress);
   registerPage('progress-detail', renderProgressDetail);
   registerPage('staff', renderStaff);
+  registerPage('staff-detail', renderStaffDetail);
   registerPage('timesheet', renderTimesheet);
   registerPage('reports', renderReports);
   registerPage('calendar', renderCalendar);
@@ -862,7 +890,7 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${main?.name || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${sub?.name || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${mgr?.name || '-'}</div></div>
-          <div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();alert('Dropbox等の外部リンク（モック）')">Dropboxフォルダを開く</a></div></div>
+          <div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>
         </div>
       </div>
     </div>
@@ -886,6 +914,9 @@ function renderClientDetail(el, params) {
           </table>
         </div>
       </div>
+    </div>
+    <div style="margin-top:24px;text-align:right;">
+      <button class="btn btn-danger" onclick="deleteClient('${c.id}')" style="background:var(--danger);color:#fff;border:none;">顧客を削除</button>
     </div>
   `;
 }
@@ -1173,8 +1204,8 @@ function renderProgressDetail(el, params) {
         <input type="checkbox" id="pd-incomplete-only"> 未完了のみ
       </label>
       <div class="spacer"></div>
-      <button class="btn btn-secondary btn-sm" onclick="alert('エクスポート機能（モック）')">エクスポート</button>
-      <button class="btn btn-secondary btn-sm" onclick="alert('一括操作（モック）')">一括操作</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportProgressCSV('${sheet.id}')">エクスポート</button>
+      <button class="btn btn-secondary btn-sm" onclick="bulkStatusUpdate('${sheet.id}')">一括操作</button>
     </div>
 
     <div class="stats-grid" id="pd-summary"></div>
@@ -1286,6 +1317,42 @@ function cycleProgressStatus(sheetId, clientId, colName) {
   navigateTo('progress-detail', { id: sheetId });
 }
 
+function exportProgressCSV(sheetId) {
+  const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
+  if (!sheet) return;
+  const header = ['顧客コード', '顧客名', ...sheet.columns];
+  const rows = sheet.targets.map(t => {
+    const client = getClientById(t.clientId);
+    return [client?.clientCode || '', client?.name || '', ...sheet.columns.map(c => t.steps[c] || '未着手')];
+  });
+  const csvContent = [header, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = sheet.name + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function bulkStatusUpdate(sheetId) {
+  const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
+  if (!sheet) return;
+  const status = prompt('一括変更先のステータスを選択してください:\n1: 未着手\n2: 進行中\n3: 完了\n\n番号を入力');
+  const map = { '1': '未着手', '2': '進行中', '3': '完了' };
+  const target = map[status];
+  if (!target) return;
+  sheet.targets.forEach(t => {
+    sheet.columns.forEach(c => {
+      if (t.steps[c] !== '完了') t.steps[c] = target;
+    });
+  });
+  navigateTo('progress-detail', { id: sheetId });
+}
+
 // ===========================
 // 職員一覧
 // ===========================
@@ -1361,7 +1428,7 @@ function renderStaffTable() {
     const displayName = (u.lastName || '') + (u.firstName ? ' ' + u.firstName : '');
     const displayKana = (u.lastNameKana || '') + (u.firstNameKana ? ' ' + u.firstNameKana : '');
     return `
-    <tr>
+    <tr class="clickable" onclick="navigateTo('staff-detail',{id:'${u.id}'})">
       <td>${u.staffCode || '-'}</td>
       <td><strong>${displayName || u.name}</strong></td>
       <td>${displayKana || '-'}</td>
@@ -1385,6 +1452,73 @@ function toggleStaffActive(userId) {
   if (!confirm(`${u.name} を${action}にしますか？`)) return;
   u.isActive = !u.isActive;
   renderStaffTable();
+}
+
+// ===========================
+// 職員詳細
+// ===========================
+function renderStaffDetail(el, params) {
+  const u = getUserById(params.id);
+  if (!u) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>職員が見つかりません</p></div>'; return; }
+  document.getElementById('header-title').textContent = `職員詳細 - ${u.name}`;
+  const displayKana = (u.lastNameKana || '') + (u.firstNameKana ? ' ' + u.firstNameKana : '');
+  const clients = MOCK_DATA.clients.filter(c => c.mainUserId === u.id || c.subUserId === u.id);
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('staff')">&larr; 職員一覧に戻る</a></div>
+    <div class="detail-grid">
+      <div class="card">
+        <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openStaffModal('${u.id}')">編集</button></div>
+        <div class="card-body">
+          <div class="detail-row"><div class="detail-label">職員コード</div><div class="detail-value">${u.staffCode || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">氏名</div><div class="detail-value">${u.name}</div></div>
+          <div class="detail-row"><div class="detail-label">フリガナ</div><div class="detail-value">${displayKana || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">メール</div><div class="detail-value">${u.email || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${u.tel || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">携帯番号</div><div class="detail-value">${u.mobile || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">部署</div><div class="detail-value">${getDeptName(u.deptId)}</div></div>
+          <div class="detail-row"><div class="detail-label">役職</div><div class="detail-value">${u.position || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">雇用形態</div><div class="detail-value">${u.employmentType || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">入社日</div><div class="detail-value">${formatDate(u.joinDate)}</div></div>
+          ${u.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${u.memo}</div></div>` : ''}
+          <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${u.isActive ? '有効' : '無効'}</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>アカウント情報</h3></div>
+        <div class="card-body">
+          <div class="detail-row"><div class="detail-label">ログインID</div><div class="detail-value">${u.loginId || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">ロール</div><div class="detail-value"><span class="type-badge type-corp">${getRoleBadge(u.role)}</span></div></div>
+          <div class="detail-row"><div class="detail-label">チーム</div><div class="detail-value">${u.team || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">分類</div><div class="detail-value">${u.staffFlag || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">基本比率</div><div class="detail-value">${u.baseRatio != null ? u.baseRatio + '%' : '-'}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:24px">
+      <div class="card-header"><h3>担当顧客一覧</h3></div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>コード</th><th>顧客名</th><th>種別</th><th>決算月</th><th>担当区分</th><th>月額報酬</th></tr></thead>
+            <tbody>
+              ${clients.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400)">担当顧客なし</td></tr>' : clients.map(c => {
+                const role = c.mainUserId === u.id ? '主担当' : '副担当';
+                return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">
+                  <td>${c.clientCode}</td>
+                  <td><strong>${c.name}</strong></td>
+                  <td><span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span></td>
+                  <td>${c.fiscalMonth}月</td>
+                  <td>${role}</td>
+                  <td>${c.monthlySales.toLocaleString()}円</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ===========================
@@ -1938,19 +2072,56 @@ function renderRewardData(month, viewType) {
 // ===========================
 // 外部連携
 // ===========================
-function renderIntegrations(el) {
-  const integrations = [
-    { id: 'int-dropbox', name: 'Dropbox', icon: '📁', description: '顧客資料フォルダとの自動連携', status: 'connected', connectedAt: '2026-01-15', account: 'libetax-office@dropbox.com' },
-    { id: 'int-freee', name: 'freee会計', icon: '📊', description: '仕訳データ・試算表の自動取込', status: 'connected', connectedAt: '2026-02-01', account: 'libetax' },
-    { id: 'int-chatwork', name: 'Chatwork', icon: '💬', description: '顧客・チーム間メッセージ連携', status: 'connected', connectedAt: '2025-12-10', account: 'libetax-team' },
-    { id: 'int-slack', name: 'Slack', icon: '📢', description: 'チーム内通知・アラート配信', status: 'disconnected', connectedAt: null, account: null },
-    { id: 'int-google', name: 'Google Workspace', icon: '📧', description: 'Gmail・カレンダー・Drive連携', status: 'connected', connectedAt: '2026-01-20', account: 'admin@libetax.jp' },
-    { id: 'int-zoom', name: 'Zoom', icon: '🎥', description: 'ミーティング予約・録画管理', status: 'disconnected', connectedAt: null, account: null },
-    { id: 'int-eltax', name: 'eLTAX', icon: '🏛️', description: '地方税電子申告連携', status: 'connected', connectedAt: '2026-03-01', account: '利用者ID: LT-XXXXX' },
-    { id: 'int-etax', name: 'e-Tax', icon: '🏛️', description: '国税電子申告連携', status: 'connected', connectedAt: '2025-11-01', account: '利用者識別番号: XXXX-XXXX' },
-  ];
+// ── 外部連携ステート ──
+let integrationStates = {
+  dropbox: { connected: true, account: 'libetax@dropbox.com', date: '2025-08-15' },
+  freee: { connected: true, account: 'リベ大税理士法人', date: '2025-06-01' },
+  chatwork: { connected: true, account: 'リベ大税理士法人', date: '2025-05-20' },
+  slack: { connected: false },
+  google: { connected: true, account: 'libetax.jp', date: '2025-04-01' },
+  zoom: { connected: false },
+  eltax: { connected: true, account: '利用者識別番号: 1234567890', date: '2025-09-01' },
+  etax: { connected: true, account: '利用者識別番号: 0987654321', date: '2025-09-01' },
+};
 
-  const connected = integrations.filter(i => i.status === 'connected').length;
+const integrationDefs = [
+  { key: 'dropbox', name: 'Dropbox', icon: '📁', description: '顧客資料フォルダとの自動連携' },
+  { key: 'freee', name: 'freee会計', icon: '📊', description: '仕訳データ・試算表の自動取込' },
+  { key: 'chatwork', name: 'Chatwork', icon: '💬', description: '顧客・チーム間メッセージ連携' },
+  { key: 'slack', name: 'Slack', icon: '📢', description: 'チーム内通知・アラート配信' },
+  { key: 'google', name: 'Google Workspace', icon: '📧', description: 'Gmail・カレンダー・Drive連携' },
+  { key: 'zoom', name: 'Zoom', icon: '🎥', description: 'ミーティング予約・録画管理' },
+  { key: 'eltax', name: 'eLTAX', icon: '🏛️', description: '地方税電子申告連携' },
+  { key: 'etax', name: 'e-Tax', icon: '🏛️', description: '国税電子申告連携' },
+];
+
+function toggleIntegration(key) {
+  const st = integrationStates[key];
+  if (!st) return;
+  if (st.connected) {
+    if (!confirm(`${key} の接続を切断しますか？`)) return;
+    st.connected = false;
+    delete st.account;
+    delete st.date;
+  } else {
+    const today = new Date().toISOString().slice(0, 10);
+    st.connected = true;
+    st.account = key + '@example.com';
+    st.date = today;
+  }
+  const content = document.getElementById('page-content');
+  if (content) renderIntegrations(content);
+}
+
+function testIntegration(key) {
+  const el = document.getElementById('int-flash-' + key);
+  if (!el) return;
+  el.innerHTML = '<div style="background:#d1ecf1;border:1px solid #bee5eb;border-radius:6px;color:#0c5460;font-size:12px;padding:6px 10px;margin-top:8px;">接続テスト成功</div>';
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 2000);
+}
+
+function renderIntegrations(el) {
+  const connected = integrationDefs.filter(d => integrationStates[d.key]?.connected).length;
 
   el.innerHTML = `
     <div class="stats-grid">
@@ -1961,39 +2132,42 @@ function renderIntegrations(el) {
       </div>
       <div class="stat-card accent-yellow">
         <div class="stat-label">未接続</div>
-        <div class="stat-value">${integrations.length - connected}</div>
+        <div class="stat-value">${integrationDefs.length - connected}</div>
         <div class="stat-sub">サービス</div>
       </div>
     </div>
 
     <div class="int-grid">
-      ${integrations.map(i => `
+      ${integrationDefs.map(d => {
+        const st = integrationStates[d.key] || { connected: false };
+        return `
         <div class="card int-card">
           <div class="card-body">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-              <div style="font-size:28px;">${i.icon}</div>
+              <div style="font-size:28px;">${d.icon}</div>
               <div style="flex:1;">
-                <div style="font-weight:600;font-size:15px;">${i.name}</div>
-                <div style="font-size:12px;color:var(--gray-500);">${i.description}</div>
+                <div style="font-weight:600;font-size:15px;">${d.name}</div>
+                <div style="font-size:12px;color:var(--gray-500);">${d.description}</div>
               </div>
-              <span class="status-badge ${i.status === 'connected' ? 'status-done' : 'status-todo'}">${i.status === 'connected' ? '接続済み' : '未接続'}</span>
+              <span class="status-badge ${st.connected ? 'status-done' : 'status-todo'}">${st.connected ? '接続済み' : '未接続'}</span>
             </div>
-            ${i.status === 'connected' ? `
+            ${st.connected ? `
               <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
-                <div>アカウント: ${i.account}</div>
-                <div>接続日: ${formatDate(i.connectedAt)}</div>
+                <div>アカウント: ${st.account}</div>
+                <div>接続日: ${formatDate(st.date)}</div>
               </div>
               <div style="display:flex;gap:8px;">
-                <button class="btn btn-secondary btn-sm" onclick="alert('同期設定画面（モック）')">設定</button>
-                <button class="btn btn-secondary btn-sm" onclick="alert('テスト接続（モック）')">テスト</button>
-                <button class="btn btn-danger btn-sm" onclick="alert('切断確認（モック）')">切断</button>
+                <button class="btn btn-secondary btn-sm" onclick="alert('同期設定画面（${d.name}）')">設定</button>
+                <button class="btn btn-secondary btn-sm" onclick="testIntegration('${d.key}')">テスト</button>
+                <button class="btn btn-danger btn-sm" onclick="toggleIntegration('${d.key}')">切断</button>
               </div>
+              <div id="int-flash-${d.key}"></div>
             ` : `
-              <button class="btn btn-primary btn-sm" onclick="alert('OAuth認証画面（モック）')">接続する</button>
+              <button class="btn btn-primary btn-sm" onclick="toggleIntegration('${d.key}')">接続する</button>
             `}
           </div>
-        </div>
-      `).join('')}
+        </div>`;
+      }).join('')}
     </div>
   `;
 }
@@ -2062,6 +2236,43 @@ function deleteDepartment(deptId) {
   settingsRerender();
 }
 
+function savePersonalSettings() {
+  const name = document.getElementById('set-personal-name').value.trim();
+  const email = document.getElementById('set-personal-email').value.trim();
+  if (!name) { alert('表示名を入力してください'); return; }
+  if (!email) { alert('メールアドレスを入力してください'); return; }
+  MOCK_DATA.currentUser.name = name;
+  MOCK_DATA.currentUser.email = email;
+  const fullUser = getUserById(MOCK_DATA.currentUser.id);
+  if (fullUser) { fullUser.name = name; fullUser.email = email; }
+  // サイドバーも更新
+  const sidebarName = document.querySelector('.sidebar-user .name');
+  const sidebarAvatar = document.querySelector('.sidebar-user .avatar');
+  if (sidebarName) sidebarName.textContent = name;
+  if (sidebarAvatar) sidebarAvatar.textContent = name[0];
+  settingsRerender();
+  setTimeout(() => settingsFlash('personal-flash', '保存しました'), 50);
+}
+
+function issueUserId() {
+  const input = prompt('職員名またはスタッフコードを入力してください');
+  if (!input) return;
+  const user = MOCK_DATA.users.find(u => u.name === input || u.staffCode === input);
+  if (!user) { alert('該当する職員が見つかりません'); return; }
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let tmpPassword = '';
+  for (let i = 0; i < 12; i++) tmpPassword += chars[Math.floor(Math.random() * chars.length)];
+  alert(`ユーザーID発行完了\n\nログインID: ${user.loginId}\n仮パスワード: ${tmpPassword}\n\n※ 初回ログイン時にパスワード変更が必要です`);
+}
+
+function deleteClient(clientId) {
+  const c = getClientById(clientId);
+  if (!c) return;
+  if (!confirm(`顧客「${c.name}」を削除しますか？\nこの操作は取り消せません。`)) return;
+  MOCK_DATA.clients = MOCK_DATA.clients.filter(x => x.id !== clientId);
+  navigateTo('clients');
+}
+
 function renderSettings(el) {
   const u = MOCK_DATA.currentUser;
   const fullUser = getUserById(u.id);
@@ -2097,10 +2308,11 @@ function renderSettings(el) {
                 <div style="font-size:13px;color:var(--gray-500);">${u.email} / ${getRoleBadge(u.role)}</div>
               </div>
             </div>
-            <div class="form-group"><label>表示名</label><input type="text" value="${u.name}"></div>
-            <div class="form-group"><label>メールアドレス</label><input type="email" value="${u.email}"></div>
+            <div id="personal-flash"></div>
+            <div class="form-group"><label>表示名</label><input type="text" id="set-personal-name" value="${u.name}"></div>
+            <div class="form-group"><label>メールアドレス</label><input type="email" id="set-personal-email" value="${u.email}"></div>
             <div class="form-group"><label>所属チーム</label><input type="text" value="${fullUser?.team || '（なし）'}" disabled style="background:var(--gray-50);"></div>
-            <button class="btn btn-primary" onclick="alert('保存しました（モック）')">保存</button>
+            <button class="btn btn-primary" onclick="savePersonalSettings()">保存</button>
           </div>
         </div>
         <div class="card">
@@ -2126,7 +2338,7 @@ function renderSettings(el) {
             </div>
             <div class="settings-row">
               <div><div class="settings-label">ユーザーID発行</div><div class="settings-desc">新しいユーザーIDを発行します</div></div>
-              <button class="btn btn-primary btn-sm" onclick="alert('ユーザーID発行（モック）')">発行</button>
+              <button class="btn btn-primary btn-sm" onclick="issueUserId()">発行</button>
             </div>
             <div class="settings-row">
               <div><div class="settings-label">ログアウト時間設定</div><div class="settings-desc">無操作時の自動ログアウトまでの時間</div></div>
