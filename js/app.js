@@ -36,6 +36,7 @@ function navigateTo(pageName, params = {}) {
     calendar: 'カレンダー',
     rewards: '報酬管理',
     chatrooms: 'チャットマスタ',
+    templates: 'テンプレート管理',
     integrations: '外部連携',
     settings: 'マイ設定',
   };
@@ -766,6 +767,7 @@ function registerAllPages() {
   registerPage('calendar', renderCalendar);
   registerPage('rewards', renderRewards);
   registerPage('chatrooms', renderChatRooms);
+  registerPage('templates', renderTemplates);
   registerPage('integrations', renderIntegrations);
   registerPage('settings', renderSettings);
 }
@@ -1123,7 +1125,7 @@ function renderClientDetail(el, params) {
 
     ${!isNew ? `
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>関連タスク</h3><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div>
+      <div class="card-header"><h3>関連タスク</h3><div style="display:flex;gap:8px;"><button class="btn btn-secondary btn-sm" onclick="openTemplateApplyModal('','${c.id}')">テンプレ適用</button><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div></div>
       <div class="card-body">
         <div class="table-wrapper">
           <table>
@@ -3500,4 +3502,289 @@ function deleteCustomField(cfId) {
     if (c.customFieldValues) delete c.customFieldValues[cfId];
   });
   renderCustomFieldList();
+}
+
+// ===========================
+// テンプレート管理
+// ===========================
+
+function getCategoryBadgeClass(category) {
+  const map = {
+    '法人決算': 'type-corp',
+    '確定申告': 'status-progress',
+    '年末調整': 'status-returned',
+    '中間申告': 'status-todo',
+    '月次': 'status-done',
+  };
+  return map[category] || 'status-todo';
+}
+
+function getAssigneeRoleLabel(role) {
+  const map = { main: '主担当', sub: '副担当', mgr: '管理者' };
+  return map[role] || role;
+}
+
+function renderTemplates(el) {
+  const templates = MOCK_DATA.taskTemplates || [];
+
+  el.innerHTML = `
+    <div class="toolbar">
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="openTemplateEditModal()">+ テンプレート作成</button>
+    </div>
+    <div class="pg-grid">
+      ${templates.length === 0 ? '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>テンプレートがありません</p></div>' :
+        templates.map(tmpl => `
+          <div class="card tmpl-card">
+            <div class="card-header">
+              <h3 style="font-size:14px;">${tmpl.name}</h3>
+              <span class="status-badge ${getCategoryBadgeClass(tmpl.category)}">${tmpl.category}</span>
+            </div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${tmpl.tasks.length} タスク</div>
+              <div class="tmpl-task-preview">
+                ${tmpl.tasks.map((t, i) => `
+                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;${i > 0 ? 'border-top:1px solid var(--gray-100);' : ''}">
+                    <span style="color:var(--gray-400);width:18px;text-align:right;">${i + 1}.</span>
+                    <span style="flex:1;color:var(--gray-700);">${t.title}</span>
+                    <span style="color:var(--gray-400);font-size:11px;">${t.daysBeforeDue}日前</span>
+                    <span class="status-badge status-todo" style="font-size:10px;padding:1px 6px;">${getAssigneeRoleLabel(t.assigneeRole)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="openTemplateEditModal('${tmpl.id}')">編集</button>
+                <button class="btn btn-primary btn-sm" onclick="openTemplateApplyModal('${tmpl.id}')">適用</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+    </div>
+  `;
+}
+
+// ── テンプレート編集モーダル ──
+
+function openTemplateEditModal(tmplId) {
+  const modal = document.getElementById('template-edit-modal');
+  const titleEl = document.getElementById('template-modal-title');
+  const idEl = document.getElementById('edit-template-id');
+  const nameEl = document.getElementById('edit-template-name');
+  const catEl = document.getElementById('edit-template-category');
+  const listEl = document.getElementById('template-task-list');
+
+  if (tmplId) {
+    const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
+    if (!tmpl) return;
+    titleEl.textContent = 'テンプレート編集';
+    idEl.value = tmplId;
+    nameEl.value = tmpl.name;
+    catEl.value = tmpl.category;
+    listEl.innerHTML = '';
+    tmpl.tasks.forEach(t => addTemplateTaskRow(t.title, t.daysBeforeDue, t.assigneeRole));
+  } else {
+    titleEl.textContent = 'テンプレート作成';
+    idEl.value = '';
+    nameEl.value = '';
+    catEl.value = '法人決算';
+    listEl.innerHTML = '';
+    addTemplateTaskRow();
+  }
+  modal.classList.add('show');
+}
+
+function closeTemplateEditModal() {
+  document.getElementById('template-edit-modal').classList.remove('show');
+}
+
+function addTemplateTaskRow(title, days, role) {
+  const listEl = document.getElementById('template-task-list');
+  const row = document.createElement('div');
+  row.className = 'tmpl-task-row';
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+  row.innerHTML = `
+    <input type="text" class="tmpl-row-title" placeholder="タスク名" value="${title || ''}" style="flex:1;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
+    <input type="number" class="tmpl-row-days" placeholder="日前" value="${days || ''}" min="1" style="width:70px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
+    <select class="tmpl-row-role" style="width:90px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
+      <option value="main" ${role === 'main' ? 'selected' : ''}>主担当</option>
+      <option value="sub" ${role === 'sub' ? 'selected' : ''}>副担当</option>
+      <option value="mgr" ${role === 'mgr' ? 'selected' : ''}>管理者</option>
+    </select>
+    <button class="btn-icon" onclick="this.parentElement.remove()" style="color:var(--danger);font-size:16px;">&times;</button>
+  `;
+  listEl.appendChild(row);
+}
+
+function submitTemplateEdit() {
+  const idEl = document.getElementById('edit-template-id');
+  const name = document.getElementById('edit-template-name').value.trim();
+  const category = document.getElementById('edit-template-category').value;
+  const rows = document.querySelectorAll('#template-task-list .tmpl-task-row');
+
+  if (!name) { alert('テンプレート名を入力してください'); return; }
+
+  const tasks = [];
+  rows.forEach(row => {
+    const title = row.querySelector('.tmpl-row-title').value.trim();
+    const days = parseInt(row.querySelector('.tmpl-row-days').value) || 0;
+    const role = row.querySelector('.tmpl-row-role').value;
+    if (title && days > 0) {
+      tasks.push({ title, daysBeforeDue: days, assigneeRole: role });
+    }
+  });
+
+  if (tasks.length === 0) { alert('タスクを1つ以上追加してください'); return; }
+
+  if (idEl.value) {
+    // 編集
+    const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === idEl.value);
+    if (tmpl) {
+      tmpl.name = name;
+      tmpl.category = category;
+      tmpl.tasks = tasks;
+    }
+  } else {
+    // 新規作成
+    const newId = 'tmpl-' + String(MOCK_DATA.taskTemplates.length + 1).padStart(3, '0');
+    MOCK_DATA.taskTemplates.push({ id: newId, name, category, tasks });
+  }
+
+  closeTemplateEditModal();
+  navigateTo('templates');
+}
+
+// ── テンプレート適用モーダル ──
+
+function openTemplateApplyModal(tmplId, clientId) {
+  const modal = document.getElementById('template-apply-modal');
+  const tmplSelect = document.getElementById('apply-template-select');
+  const clientSelect = document.getElementById('apply-template-client');
+  const dueInput = document.getElementById('apply-template-due');
+  const previewArea = document.getElementById('apply-preview-area');
+
+  // テンプレート選択肢
+  tmplSelect.innerHTML = MOCK_DATA.taskTemplates.map(t =>
+    `<option value="${t.id}" ${t.id === tmplId ? 'selected' : ''}>${t.name}</option>`
+  ).join('');
+
+  // 顧客選択肢
+  clientSelect.innerHTML = '<option value="">-- 選択 --</option>' +
+    MOCK_DATA.clients.filter(c => c.isActive).map(c =>
+      `<option value="${c.id}" ${c.id === clientId ? 'selected' : ''}>${c.name}</option>`
+    ).join('');
+
+  // デフォルト期限（1ヶ月後）
+  const defaultDue = new Date();
+  defaultDue.setMonth(defaultDue.getMonth() + 1);
+  dueInput.value = defaultDue.toISOString().split('T')[0];
+
+  previewArea.innerHTML = '';
+  modal.classList.add('show');
+  updateApplyPreview();
+}
+
+function closeTemplateApplyModal() {
+  document.getElementById('template-apply-modal').classList.remove('show');
+}
+
+function updateApplyPreview() {
+  const tmplId = document.getElementById('apply-template-select').value;
+  const clientId = document.getElementById('apply-template-client').value;
+  const dueDateStr = document.getElementById('apply-template-due').value;
+  const previewArea = document.getElementById('apply-preview-area');
+
+  if (!tmplId || !clientId || !dueDateStr) {
+    previewArea.innerHTML = '<div style="color:var(--gray-400);font-size:13px;padding:12px 0;">テンプレート・顧客・期限日を選択してください</div>';
+    return;
+  }
+
+  const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
+  const client = getClientById(clientId);
+  if (!tmpl || !client) return;
+
+  const dueDate = new Date(dueDateStr);
+
+  const roleToUserId = (role) => {
+    if (role === 'main') return client.mainUserId;
+    if (role === 'sub') return client.subUserId || client.mainUserId;
+    if (role === 'mgr') return client.mgrUserId || client.mainUserId;
+    return client.mainUserId;
+  };
+
+  const rows = tmpl.tasks.map(t => {
+    const taskDate = new Date(dueDate);
+    taskDate.setDate(taskDate.getDate() - t.daysBeforeDue);
+    const assigneeId = roleToUserId(t.assigneeRole);
+    const assignee = getUserById(assigneeId);
+    return `
+      <tr>
+        <td>${t.title}</td>
+        <td>${assignee?.name || '-'}</td>
+        <td>${getAssigneeRoleLabel(t.assigneeRole)}</td>
+        <td>${formatDate(taskDate.toISOString().split('T')[0])}</td>
+      </tr>
+    `;
+  });
+
+  previewArea.innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">プレビュー: ${tmpl.name} → ${client.name}</div>
+    <div class="table-wrapper" style="border:1px solid var(--gray-200);border-radius:6px;">
+      <table>
+        <thead><tr><th>タスク名</th><th>担当者</th><th>役割</th><th>期限</th></tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--gray-500);margin-top:8px;">${tmpl.tasks.length} 件のタスクが作成されます</div>
+  `;
+}
+
+function submitTemplateApply() {
+  const tmplId = document.getElementById('apply-template-select').value;
+  const clientId = document.getElementById('apply-template-client').value;
+  const dueDateStr = document.getElementById('apply-template-due').value;
+
+  if (!tmplId || !clientId || !dueDateStr) {
+    alert('テンプレート・顧客・期限日を全て選択してください');
+    return;
+  }
+
+  const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
+  const client = getClientById(clientId);
+  if (!tmpl || !client) return;
+
+  const dueDate = new Date(dueDateStr);
+  const now = new Date().toISOString().split('T')[0];
+
+  const roleToUserId = (role) => {
+    if (role === 'main') return client.mainUserId;
+    if (role === 'sub') return client.subUserId || client.mainUserId;
+    if (role === 'mgr') return client.mgrUserId || client.mainUserId;
+    return client.mainUserId;
+  };
+
+  let count = 0;
+  tmpl.tasks.forEach(t => {
+    const taskDate = new Date(dueDate);
+    taskDate.setDate(taskDate.getDate() - t.daysBeforeDue);
+    const newId = 'tk-' + String(MOCK_DATA.tasks.length + count + 1).padStart(3, '0');
+    MOCK_DATA.tasks.push({
+      id: newId,
+      clientId: client.id,
+      assigneeUserId: roleToUserId(t.assigneeRole),
+      title: t.title,
+      status: '未着手',
+      dueDate: taskDate.toISOString().split('T')[0],
+      createdAt: now,
+    });
+    count++;
+  });
+
+  closeTemplateApplyModal();
+  alert(`${client.name} に ${count} 件のタスクを作成しました`);
+
+  // 現在のページを再描画
+  if (currentPage === 'client-detail') navigateTo('client-detail', { id: clientId });
+  else if (currentPage === 'tasks') navigateTo('tasks');
+  else if (currentPage === 'templates') navigateTo('templates');
+  else if (currentPage === 'dashboard') navigateTo('dashboard');
 }

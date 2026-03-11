@@ -197,6 +197,51 @@ const MOCK_DATA = {
     { id: 'cf-003', name: 'メモ（社内用）', type: 'textarea', order: 3 },
   ],
 
+  // タスクテンプレート
+  taskTemplates: [
+    {
+      id: 'tmpl-001', name: '法人決算テンプレート', category: '法人決算',
+      tasks: [
+        { title: '資料回収依頼', daysBeforeDue: 90, assigneeRole: 'main' },
+        { title: '記帳確認', daysBeforeDue: 60, assigneeRole: 'main' },
+        { title: '決算整理仕訳', daysBeforeDue: 45, assigneeRole: 'main' },
+        { title: '法人税申告書作成', daysBeforeDue: 30, assigneeRole: 'main' },
+        { title: '消費税申告書作成', daysBeforeDue: 30, assigneeRole: 'sub' },
+        { title: 'レビュー', daysBeforeDue: 14, assigneeRole: 'mgr' },
+        { title: '電子申告', daysBeforeDue: 7, assigneeRole: 'main' },
+        { title: '納品・報告', daysBeforeDue: 3, assigneeRole: 'main' },
+      ]
+    },
+    {
+      id: 'tmpl-002', name: '確定申告テンプレート', category: '確定申告',
+      tasks: [
+        { title: '資料回収', daysBeforeDue: 60, assigneeRole: 'main' },
+        { title: '記帳確認・修正', daysBeforeDue: 40, assigneeRole: 'main' },
+        { title: '申告書作成', daysBeforeDue: 20, assigneeRole: 'main' },
+        { title: 'レビュー', daysBeforeDue: 10, assigneeRole: 'mgr' },
+        { title: '電子申告', daysBeforeDue: 5, assigneeRole: 'main' },
+        { title: '納品', daysBeforeDue: 2, assigneeRole: 'main' },
+      ]
+    },
+    {
+      id: 'tmpl-003', name: '年末調整テンプレート', category: '年末調整',
+      tasks: [
+        { title: '年末調整資料配布', daysBeforeDue: 45, assigneeRole: 'main' },
+        { title: '年末調整計算', daysBeforeDue: 20, assigneeRole: 'main' },
+        { title: '源泉所得税納付書作成', daysBeforeDue: 10, assigneeRole: 'main' },
+        { title: '総括表・法定調書作成', daysBeforeDue: 10, assigneeRole: 'sub' },
+        { title: '償却資産申告', daysBeforeDue: 10, assigneeRole: 'sub' },
+      ]
+    },
+    {
+      id: 'tmpl-004', name: '月次顧問テンプレート', category: '月次',
+      tasks: [
+        { title: '月次記帳チェック', daysBeforeDue: 15, assigneeRole: 'main' },
+        { title: '月次報告書作成', daysBeforeDue: 10, assigneeRole: 'main' },
+      ]
+    },
+  ],
+
   notifications: [
     { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
     { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },
