@@ -927,12 +927,24 @@ function renderClientDetail(el, params) {
   const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
   const cfValues = c.customFieldValues || {};
 
+  // 関連ルーム取得
+  const rooms = getChatRoomsByClient(c.id);
+  const allRooms = MOCK_DATA.chatRooms || [];
+  const unlinkedRooms = allRooms.filter(r => !r.clientIds.includes(c.id));
+
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('clients')">&larr; 顧客一覧に戻る</a></div>
 
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openClientEditModal('${c.id}')">編集</button></div>
+      <div class="card-header">
+        <h3>顧客情報</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openCustomFieldModal()">項目設定</button>
+          <button class="btn btn-primary btn-sm" onclick="openClientEditModal('${c.id}')">編集</button>
+        </div>
+      </div>
       <div class="card-body">
+        <div class="detail-section-title">基本情報</div>
         <div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>
         <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${c.name}</div></div>
         <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value"><span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span></div></div>
@@ -946,48 +958,46 @@ function renderClientDetail(el, params) {
         <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${c.taxOffice || '-'}</div></div>
         ${c.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
         <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${c.isActive ? '有効' : '無効'}</div></div>
-      </div>
-    </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>Chatwork連携</h3></div>
-      <div class="card-body">
-        <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${c.cwAccountId ? c.cwAccountId : '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
-        <div class="detail-row"><div class="detail-label">CW表示名</div><div class="detail-value">${c.cwAccountName || '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
-        <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + (c.cwAccountName || c.name) + 'さん</code>' : '<span style="color:var(--gray-400)">-</span>'}</div></div>
-        ${(() => {
-          const rooms = getChatRoomsByClient(c.id);
-          if (rooms.length === 0) return '<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><span style="color:var(--gray-400)">なし</span></div></div>';
-          return rooms.map(r => `<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><a href="${r.roomUrl}" target="_blank">${r.roomName}</a></div></div>`).join('');
-        })()}
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>担当者</h3></div>
-      <div class="card-body">
+        <div class="detail-section-title">担当者</div>
         <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${main?.name || '-'}</div></div>
         <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${sub?.name || '-'}</div></div>
         <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${mgr?.name || '-'}</div></div>
         <div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>
-      </div>
-    </div>
 
-    ${customFields.length > 0 ? `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>カスタム項目</h3><button class="btn btn-secondary btn-sm" onclick="openCustomFieldModal()">項目設定</button></div>
-      <div class="card-body">
-        ${customFields.map(cf => `
-          <div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${cfValues[cf.id] || '<span style="color:var(--gray-400)">-</span>'}</div></div>
-        `).join('')}
+        <div class="detail-section-title">Chatwork連携</div>
+        <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${c.cwAccountId ? c.cwAccountId : '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
+        <div class="detail-row"><div class="detail-label">CW表示名</div><div class="detail-value">${c.cwAccountName || '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
+        <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + (c.cwAccountName || c.name) + 'さん</code>' : '<span style="color:var(--gray-400)">-</span>'}</div></div>
+        <div class="detail-row">
+          <div class="detail-label">関連ルーム</div>
+          <div class="detail-value">
+            ${rooms.length === 0 ? '<span style="color:var(--gray-400)">なし</span>' : rooms.map(r =>
+              `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <a href="${r.roomUrl}" target="_blank">${r.roomName}</a>
+                <button class="btn-icon" style="font-size:11px;color:var(--danger);" onclick="unlinkRoomFromClient('${r.id}','${c.id}')" title="紐づけ解除">&times;</button>
+              </div>`
+            ).join('')}
+            ${unlinkedRooms.length > 0 ? `
+              <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+                <select id="link-room-select" style="padding:4px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
+                  <option value="">ルームを選択...</option>
+                  ${unlinkedRooms.map(r => `<option value="${r.id}">${r.roomName}</option>`).join('')}
+                </select>
+                <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="linkRoomToClient('${c.id}')">紐づけ</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        ${customFields.length > 0 ? `
+          <div class="detail-section-title">カスタム項目</div>
+          ${customFields.map(cf => `
+            <div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${cfValues[cf.id] || '<span style="color:var(--gray-400)">-</span>'}</div></div>
+          `).join('')}
+        ` : ''}
       </div>
     </div>
-    ` : `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>カスタム項目</h3><button class="btn btn-secondary btn-sm" onclick="openCustomFieldModal()">項目設定</button></div>
-      <div class="card-body"><div style="color:var(--gray-400);font-size:13px;">カスタム項目がありません。「項目設定」から追加してください。</div></div>
-    </div>
-    `}
 
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>関連タスク</h3><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div>
@@ -2778,6 +2788,27 @@ function deleteChatRoom() {
   if (idx >= 0) MOCK_DATA.chatRooms.splice(idx, 1);
   closeChatRoomModal();
   navigateTo('chatrooms');
+}
+
+// ===========================
+// 顧客詳細からのルーム紐づけ/解除
+// ===========================
+function linkRoomToClient(clientId) {
+  const select = document.getElementById('link-room-select');
+  if (!select || !select.value) { alert('ルームを選択してください'); return; }
+  const room = getChatRoomById(select.value);
+  if (!room) return;
+  if (!room.clientIds.includes(clientId)) {
+    room.clientIds.push(clientId);
+  }
+  navigateTo('client-detail', { id: clientId });
+}
+
+function unlinkRoomFromClient(roomId, clientId) {
+  const room = getChatRoomById(roomId);
+  if (!room) return;
+  room.clientIds = room.clientIds.filter(id => id !== clientId);
+  navigateTo('client-detail', { id: clientId });
 }
 
 // ===========================

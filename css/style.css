@@ -335,6 +335,10 @@ tbody tr.clickable { cursor: pointer; }
 .cf-row .cf-type { font-size: 11px; color: var(--gray-500); background: var(--gray-100); padding: 2px 8px; border-radius: 4px; }
 .cf-row .cf-actions { display: flex; gap: 4px; }
 
+/* ── セクション見出し（カード内） ── */
+.detail-section-title { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .03em; padding: 16px 0 8px; margin-top: 8px; border-top: 1px solid var(--gray-100); }
+.detail-section-title:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
 /* ── CSV ボタン ── */
 .btn-csv { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300); padding: 6px 12px; font-size: 12px; }
 .btn-csv:hover { background: var(--gray-200); }
