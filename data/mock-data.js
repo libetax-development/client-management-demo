@@ -197,49 +197,26 @@ const MOCK_DATA = {
     { id: 'cf-003', name: 'メモ（社内用）', type: 'textarea', order: 3 },
   ],
 
-  // タスクテンプレート
-  taskTemplates: [
-    {
-      id: 'tmpl-001', name: '法人決算テンプレート', category: '法人決算',
-      tasks: [
-        { title: '資料回収依頼', daysBeforeDue: 90, assigneeRole: 'main' },
-        { title: '記帳確認', daysBeforeDue: 60, assigneeRole: 'main' },
-        { title: '決算整理仕訳', daysBeforeDue: 45, assigneeRole: 'main' },
-        { title: '法人税申告書作成', daysBeforeDue: 30, assigneeRole: 'main' },
-        { title: '消費税申告書作成', daysBeforeDue: 30, assigneeRole: 'sub' },
-        { title: 'レビュー', daysBeforeDue: 14, assigneeRole: 'mgr' },
-        { title: '電子申告', daysBeforeDue: 7, assigneeRole: 'main' },
-        { title: '納品・報告', daysBeforeDue: 3, assigneeRole: 'main' },
-      ]
-    },
-    {
-      id: 'tmpl-002', name: '確定申告テンプレート', category: '確定申告',
-      tasks: [
-        { title: '資料回収', daysBeforeDue: 60, assigneeRole: 'main' },
-        { title: '記帳確認・修正', daysBeforeDue: 40, assigneeRole: 'main' },
-        { title: '申告書作成', daysBeforeDue: 20, assigneeRole: 'main' },
-        { title: 'レビュー', daysBeforeDue: 10, assigneeRole: 'mgr' },
-        { title: '電子申告', daysBeforeDue: 5, assigneeRole: 'main' },
-        { title: '納品', daysBeforeDue: 2, assigneeRole: 'main' },
-      ]
-    },
-    {
-      id: 'tmpl-003', name: '年末調整テンプレート', category: '年末調整',
-      tasks: [
-        { title: '年末調整資料配布', daysBeforeDue: 45, assigneeRole: 'main' },
-        { title: '年末調整計算', daysBeforeDue: 20, assigneeRole: 'main' },
-        { title: '源泉所得税納付書作成', daysBeforeDue: 10, assigneeRole: 'main' },
-        { title: '総括表・法定調書作成', daysBeforeDue: 10, assigneeRole: 'sub' },
-        { title: '償却資産申告', daysBeforeDue: 10, assigneeRole: 'sub' },
-      ]
-    },
-    {
-      id: 'tmpl-004', name: '月次顧問テンプレート', category: '月次',
-      tasks: [
-        { title: '月次記帳チェック', daysBeforeDue: 15, assigneeRole: 'main' },
-        { title: '月次報告書作成', daysBeforeDue: 10, assigneeRole: 'main' },
-      ]
-    },
+  automationRules: [
+    { id: 'ar-001', name: '期限7日前リマインド', type: 'reminder', enabled: true, trigger: 'タスク期限の7日前', action: 'Chatworkに通知', target: '担当者', lastRun: '2026-03-10T09:00:00' },
+    { id: 'ar-002', name: '期限当日アラート', type: 'reminder', enabled: true, trigger: 'タスク期限当日', action: 'Chatworkに通知 + ダッシュボード警告', target: '担当者 + チームリーダー', lastRun: '2026-03-11T09:00:00' },
+    { id: 'ar-003', name: '月次タスク自動生成', type: 'auto_create', enabled: true, trigger: '毎月1日', action: '月次顧問テンプレートからタスク自動生成', target: '全アクティブ顧客', lastRun: '2026-03-01T00:00:00' },
+    { id: 'ar-004', name: '完了タスクアーカイブ', type: 'cleanup', enabled: false, trigger: '完了から30日経過', action: 'タスクを非表示化', target: '全タスク', lastRun: null },
+    { id: 'ar-005', name: '差戻しエスカレーション', type: 'escalation', enabled: true, trigger: '差戻し後3日未対応', action: 'チームリーダーに通知', target: '差戻しタスクの担当者', lastRun: '2026-03-09T09:00:00' },
+    { id: 'ar-006', name: '決算期限自動算出', type: 'auto_create', enabled: true, trigger: '決算月の2ヶ月前', action: '法人決算テンプレートからタスク自動生成', target: '該当決算月の法人顧客', lastRun: '2026-02-01T00:00:00' },
+  ],
+
+  automationLog: [
+    { id: 'al-001', timestamp: '2026-03-11T09:00:00', ruleId: 'ar-002', ruleName: '期限当日アラート', result: '成功', targetCount: 3 },
+    { id: 'al-002', timestamp: '2026-03-10T09:00:00', ruleId: 'ar-001', ruleName: '期限7日前リマインド', result: '成功', targetCount: 5 },
+    { id: 'al-003', timestamp: '2026-03-10T09:00:00', ruleId: 'ar-002', ruleName: '期限当日アラート', result: '成功', targetCount: 2 },
+    { id: 'al-004', timestamp: '2026-03-09T09:00:00', ruleId: 'ar-005', ruleName: '差戻しエスカレーション', result: '成功', targetCount: 1 },
+    { id: 'al-005', timestamp: '2026-03-09T09:00:00', ruleId: 'ar-001', ruleName: '期限7日前リマインド', result: '成功', targetCount: 4 },
+    { id: 'al-006', timestamp: '2026-03-08T09:00:00', ruleId: 'ar-001', ruleName: '期限7日前リマインド', result: '成功', targetCount: 6 },
+    { id: 'al-007', timestamp: '2026-03-08T09:00:00', ruleId: 'ar-002', ruleName: '期限当日アラート', result: '成功', targetCount: 1 },
+    { id: 'al-008', timestamp: '2026-03-07T09:00:00', ruleId: 'ar-001', ruleName: '期限7日前リマインド', result: '成功', targetCount: 3 },
+    { id: 'al-009', timestamp: '2026-03-01T00:00:00', ruleId: 'ar-003', ruleName: '月次タスク自動生成', result: '成功', targetCount: 9 },
+    { id: 'al-010', timestamp: '2026-02-01T00:00:00', ruleId: 'ar-006', ruleName: '決算期限自動算出', result: '成功', targetCount: 2 },
   ],
 
   notifications: [

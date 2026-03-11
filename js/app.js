@@ -36,8 +36,8 @@ function navigateTo(pageName, params = {}) {
     calendar: 'カレンダー',
     rewards: '報酬管理',
     chatrooms: 'チャットマスタ',
-    templates: 'テンプレート管理',
     integrations: '外部連携',
+    automation: '自動化設定',
     settings: 'マイ設定',
   };
   header.textContent = titles[pageName] || pageName;
@@ -767,8 +767,8 @@ function registerAllPages() {
   registerPage('calendar', renderCalendar);
   registerPage('rewards', renderRewards);
   registerPage('chatrooms', renderChatRooms);
-  registerPage('templates', renderTemplates);
   registerPage('integrations', renderIntegrations);
+  registerPage('automation', renderAutomation);
   registerPage('settings', renderSettings);
 }
 
@@ -1125,7 +1125,7 @@ function renderClientDetail(el, params) {
 
     ${!isNew ? `
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>関連タスク</h3><div style="display:flex;gap:8px;"><button class="btn btn-secondary btn-sm" onclick="openTemplateApplyModal('','${c.id}')">テンプレ適用</button><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div></div>
+      <div class="card-header"><h3>関連タスク</h3><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div>
       <div class="card-body">
         <div class="table-wrapper">
           <table>
@@ -2433,50 +2433,125 @@ function renderRewardData(month, viewType) {
 // ===========================
 // ── 外部連携ステート ──
 let integrationStates = {
-  dropbox: { connected: true, account: 'libetax@dropbox.com', date: '2025-08-15' },
-  freee: { connected: true, account: 'リベ大税理士法人', date: '2025-06-01' },
-  chatwork: { connected: true, account: 'リベ大税理士法人', date: '2025-05-20' },
+  chatwork: { connected: true, account: 'リベ大税理士法人', date: '2025-05-20', webhookUrl: 'https://api.chatwork.com/v2/webhook/xxxxx', roomId: '300000001', lastSync: '2026-03-11T08:30:00' },
+  google: { connected: true, account: 'hiro@libetax.jp', date: '2025-04-01', calendars: [{ name: '業務カレンダー', checked: true }, { name: '面談カレンダー', checked: true }, { name: '期限カレンダー', checked: false }], syncDirection: 'bidirectional', lastSync: '2026-03-11T07:00:00' },
+  dropbox: { connected: true, account: 'libetax@dropbox.com', date: '2025-08-15', rootPath: '/リベ大税理士法人/顧客資料', usedStorage: '45.2 GB', totalStorage: '2 TB', autoCreateFolder: true, namingRule: '{顧客コード}_{顧客名}', lastSync: '2026-03-11T06:00:00' },
+  zoom: { connected: false, account: '', date: '', lastSync: null },
+  freee: { connected: true, account: 'リベ大税理士法人', date: '2025-06-01', lastSync: '2026-03-10T22:00:00' },
   slack: { connected: false },
-  google: { connected: true, account: 'libetax.jp', date: '2025-04-01' },
-  zoom: { connected: false },
-  eltax: { connected: true, account: '利用者識別番号: 1234567890', date: '2025-09-01' },
-  etax: { connected: true, account: '利用者識別番号: 0987654321', date: '2025-09-01' },
+  eltax: { connected: true, account: '利用者識別番号: 1234567890', date: '2025-09-01', lastSync: '2026-03-10T18:00:00' },
+  etax: { connected: true, account: '利用者識別番号: 0987654321', date: '2025-09-01', lastSync: '2026-03-10T18:00:00' },
 };
 
 const integrationDefs = [
-  { key: 'dropbox', name: 'Dropbox', icon: '📁', description: '顧客資料フォルダとの自動連携' },
-  { key: 'freee', name: 'freee会計', icon: '📊', description: '仕訳データ・試算表の自動取込' },
   { key: 'chatwork', name: 'Chatwork', icon: '💬', description: '顧客・チーム間メッセージ連携' },
-  { key: 'slack', name: 'Slack', icon: '📢', description: 'チーム内通知・アラート配信' },
-  { key: 'google', name: 'Google Workspace', icon: '📧', description: 'Gmail・カレンダー・Drive連携' },
+  { key: 'google', name: 'Googleカレンダー', icon: '📅', description: 'スケジュール・面談予約連携' },
+  { key: 'dropbox', name: 'Dropbox', icon: '📁', description: '顧客資料フォルダとの自動連携' },
   { key: 'zoom', name: 'Zoom', icon: '🎥', description: 'ミーティング予約・録画管理' },
+  { key: 'freee', name: 'freee会計', icon: '📊', description: '仕訳データ・試算表の自動取込' },
+  { key: 'slack', name: 'Slack', icon: '📢', description: 'チーム内通知・アラート配信' },
   { key: 'eltax', name: 'eLTAX', icon: '🏛️', description: '地方税電子申告連携' },
   { key: 'etax', name: 'e-Tax', icon: '🏛️', description: '国税電子申告連携' },
 ];
+
+// ── 外部連携: mock upcoming events for Google Calendar ──
+const mockUpcomingEvents = [
+  { date: '2026-03-12', time: '10:00', title: '株式会社サンプル商事 月次面談' },
+  { date: '2026-03-14', time: '14:00', title: '株式会社リベ不動産 決算打ち合わせ' },
+  { date: '2026-03-15', time: '09:00', title: '確定申告期限（個人）' },
+];
+
+const mockZoomMeetings = [
+  { date: '2026-03-10', title: '株式会社CRAT zoom面談', duration: '45分', recordingUrl: '#' },
+  { date: '2026-03-07', title: '田中一郎 確定申告相談', duration: '30分', recordingUrl: '#' },
+  { date: '2026-03-05', title: 'チーム定例ミーティング', duration: '60分', recordingUrl: '#' },
+];
+
+let intExpandedCards = {};
 
 function toggleIntegration(key) {
   const st = integrationStates[key];
   if (!st) return;
   if (st.connected) {
-    if (!confirm(`${key} の接続を切断しますか？`)) return;
+    if (!confirm(`${integrationDefs.find(d => d.key === key)?.name || key} の接続を切断しますか？`)) return;
     st.connected = false;
     delete st.account;
     delete st.date;
+    st.lastSync = null;
   } else {
     const today = new Date().toISOString().slice(0, 10);
     st.connected = true;
-    st.account = key + '@example.com';
+    st.lastSync = new Date().toISOString();
+    if (key === 'chatwork') { st.account = 'リベ大税理士法人'; st.webhookUrl = ''; st.roomId = ''; }
+    else if (key === 'google') { st.account = 'hiro@libetax.jp'; st.calendars = [{ name: '業務カレンダー', checked: true }, { name: '面談カレンダー', checked: false }, { name: '期限カレンダー', checked: false }]; st.syncDirection = 'bidirectional'; }
+    else if (key === 'dropbox') { st.account = 'libetax@dropbox.com'; st.rootPath = ''; st.usedStorage = '45.2 GB'; st.totalStorage = '2 TB'; st.autoCreateFolder = false; st.namingRule = '{顧客コード}_{顧客名}'; }
+    else if (key === 'zoom') { st.account = 'hiro@libetax.jp'; }
+    else { st.account = key + '@example.com'; }
     st.date = today;
   }
   const content = document.getElementById('page-content');
   if (content) renderIntegrations(content);
 }
 
-function testIntegration(key) {
-  const el = document.getElementById('int-flash-' + key);
+function toggleIntCard(key) {
+  intExpandedCards[key] = !intExpandedCards[key];
+  const content = document.getElementById('page-content');
+  if (content) renderIntegrations(content);
+}
+
+function intFlash(elementId, msg, type) {
+  const el = document.getElementById(elementId);
   if (!el) return;
-  el.innerHTML = '<div style="background:#d1ecf1;border:1px solid #bee5eb;border-radius:6px;color:#0c5460;font-size:12px;padding:6px 10px;margin-top:8px;">接続テスト成功</div>';
-  setTimeout(() => { if (el) el.innerHTML = ''; }, 2000);
+  const bg = type === 'success' ? '#d1ecf1' : type === 'warning' ? '#fff3cd' : '#d1ecf1';
+  const border = type === 'success' ? '#bee5eb' : type === 'warning' ? '#ffeeba' : '#bee5eb';
+  const color = type === 'success' ? '#0c5460' : type === 'warning' ? '#856404' : '#0c5460';
+  el.innerHTML = `<div style="background:${bg};border:1px solid ${border};border-radius:6px;color:${color};font-size:12px;padding:6px 10px;margin-top:8px;">${msg}</div>`;
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 3000);
+}
+
+function chatworkTestSend() {
+  intFlash('int-flash-chatwork', 'テストメッセージを送信しました', 'success');
+}
+
+function saveChatworkSettings() {
+  const st = integrationStates.chatwork;
+  st.webhookUrl = document.getElementById('int-cw-webhook')?.value || '';
+  st.roomId = document.getElementById('int-cw-roomid')?.value || '';
+  intFlash('int-flash-chatwork', '設定を保存しました', 'success');
+}
+
+function toggleGoogleCalendar(idx) {
+  const st = integrationStates.google;
+  if (st.calendars && st.calendars[idx]) {
+    st.calendars[idx].checked = !st.calendars[idx].checked;
+  }
+}
+
+function setGoogleSyncDirection(val) {
+  integrationStates.google.syncDirection = val;
+}
+
+function saveDropboxSettings() {
+  const st = integrationStates.dropbox;
+  st.rootPath = document.getElementById('int-dbx-root')?.value || '';
+  st.namingRule = document.getElementById('int-dbx-naming')?.value || '';
+  intFlash('int-flash-dropbox', '設定を保存しました', 'success');
+}
+
+function toggleDropboxAutoCreate() {
+  integrationStates.dropbox.autoCreateFolder = !integrationStates.dropbox.autoCreateFolder;
+  const content = document.getElementById('page-content');
+  if (content) renderIntegrations(content);
+}
+
+function zoomCreateMeeting() {
+  intFlash('int-flash-zoom', '会議を作成しました: https://zoom.us/j/1234567890 (コピー済み)', 'success');
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
 function renderIntegrations(el) {
@@ -2499,34 +2574,394 @@ function renderIntegrations(el) {
     <div class="int-grid">
       ${integrationDefs.map(d => {
         const st = integrationStates[d.key] || { connected: false };
+        const expanded = intExpandedCards[d.key];
         return `
         <div class="card int-card">
           <div class="card-body">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;" onclick="toggleIntCard('${d.key}')">
               <div style="font-size:28px;">${d.icon}</div>
               <div style="flex:1;">
                 <div style="font-weight:600;font-size:15px;">${d.name}</div>
                 <div style="font-size:12px;color:var(--gray-500);">${d.description}</div>
               </div>
               <span class="status-badge ${st.connected ? 'status-done' : 'status-todo'}">${st.connected ? '接続済み' : '未接続'}</span>
+              <span style="font-size:12px;color:var(--gray-400);transition:transform .2s;display:inline-block;${expanded ? 'transform:rotate(180deg)' : ''}">▼</span>
             </div>
-            ${st.connected ? `
-              <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
-                <div>アカウント: ${st.account}</div>
-                <div>接続日: ${formatDate(st.date)}</div>
-              </div>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-secondary btn-sm" onclick="alert('同期設定画面（${d.name}）')">設定</button>
-                <button class="btn btn-secondary btn-sm" onclick="testIntegration('${d.key}')">テスト</button>
-                <button class="btn btn-danger btn-sm" onclick="toggleIntegration('${d.key}')">切断</button>
-              </div>
-              <div id="int-flash-${d.key}"></div>
-            ` : `
-              <button class="btn btn-primary btn-sm" onclick="toggleIntegration('${d.key}')">接続する</button>
-            `}
+            ${st.connected && st.lastSync ? `<div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">最終同期: ${formatDateTime(st.lastSync)}</div>` : ''}
+            ${expanded ? renderIntegrationDetails(d.key, st) : renderIntegrationSummary(d.key, st)}
           </div>
         </div>`;
       }).join('')}
+    </div>
+  `;
+}
+
+function renderIntegrationSummary(key, st) {
+  if (!st.connected) {
+    return `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('${key}')">接続する</button>`;
+  }
+  return `
+    <div style="background:var(--gray-50);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--gray-600);margin-bottom:8px;">
+      アカウント: ${st.account}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();toggleIntCard('${key}')">詳細設定</button>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('${key}')">切断</button>
+    </div>`;
+}
+
+function renderIntegrationDetails(key, st) {
+  if (key === 'chatwork') return renderChatworkDetails(st);
+  if (key === 'google') return renderGoogleDetails(st);
+  if (key === 'dropbox') return renderDropboxDetails(st);
+  if (key === 'zoom') return renderZoomDetails(st);
+  // fallback for other integrations
+  if (!st.connected) {
+    return `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('${key}')">接続する</button>`;
+  }
+  return `
+    <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+      <div>アカウント: ${st.account}</div>
+      <div>接続日: ${formatDate(st.date)}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();alert('同期設定画面')">設定</button>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('${key}')">切断</button>
+    </div>
+    <div id="int-flash-${key}"></div>`;
+}
+
+function renderChatworkDetails(st) {
+  if (!st.connected) {
+    return `
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('chatwork')">接続する</button>`;
+  }
+  return `
+    <div class="int-detail-section">
+      <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">接続アカウント</div>
+        <div>${st.account}</div>
+        <div style="margin-top:4px;">接続日: ${formatDate(st.date)}</div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;">Webhook URL</label>
+        <input type="text" id="int-cw-webhook" value="${st.webhookUrl || ''}" placeholder="https://api.chatwork.com/v2/webhook/..." style="font-size:12px;padding:6px 8px;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;">通知先ルームID</label>
+        <input type="text" id="int-cw-roomid" value="${st.roomId || ''}" placeholder="300000001" style="font-size:12px;padding:6px 8px;">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveChatworkSettings()">設定保存</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();chatworkTestSend()">テスト送信</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('chatwork')">切断</button>
+      </div>
+      <div id="int-flash-chatwork"></div>
+    </div>`;
+}
+
+function renderGoogleDetails(st) {
+  if (!st.connected) {
+    return `
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('google')">Googleアカウント連携</button>`;
+  }
+  const cals = st.calendars || [];
+  const dir = st.syncDirection || 'bidirectional';
+  return `
+    <div class="int-detail-section">
+      <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">接続アカウント</div>
+        <div>${st.account}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">カレンダー選択</div>
+        ${cals.map((c, i) => `
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+            <input type="checkbox" ${c.checked ? 'checked' : ''} onchange="event.stopPropagation();toggleGoogleCalendar(${i})"> ${c.name}
+          </label>
+        `).join('')}
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">同期方向</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+          <input type="radio" name="gcal-sync" value="bidirectional" ${dir === 'bidirectional' ? 'checked' : ''} onchange="event.stopPropagation();setGoogleSyncDirection('bidirectional')"> 双方向
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+          <input type="radio" name="gcal-sync" value="readonly" ${dir === 'readonly' ? 'checked' : ''} onchange="event.stopPropagation();setGoogleSyncDirection('readonly')"> 読み取りのみ
+        </label>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">直近の予定</div>
+        <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;">
+          ${mockUpcomingEvents.map(e => `
+            <div style="padding:8px 12px;border-bottom:1px solid var(--gray-100);font-size:12px;display:flex;gap:8px;">
+              <span style="color:var(--primary);font-weight:600;white-space:nowrap;">${e.date.slice(5)} ${e.time}</span>
+              <span style="color:var(--gray-700);">${e.title}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('google')">切断</button>
+      </div>
+    </div>`;
+}
+
+function renderDropboxDetails(st) {
+  if (!st.connected) {
+    return `
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('dropbox')">Dropbox連携</button>`;
+  }
+  return `
+    <div class="int-detail-section">
+      <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">接続アカウント</div>
+        <div>${st.account}</div>
+        <div style="margin-top:4px;">使用容量: <span style="font-weight:600;">${st.usedStorage || '0 GB'}</span> / ${st.totalStorage || '2 TB'}</div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;">ルートフォルダパス</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="int-dbx-root" value="${st.rootPath || ''}" placeholder="/リベ大税理士法人/顧客資料" style="font-size:12px;padding:6px 8px;flex:1;">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();alert('フォルダ選択画面（モック）')">参照</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--gray-800);">顧客フォルダ自動作成</div>
+          <div style="font-size:11px;color:var(--gray-400);">新規顧客追加時に自動でフォルダを作成</div>
+        </div>
+        <label class="toggle" onclick="event.stopPropagation();">
+          <input type="checkbox" ${st.autoCreateFolder ? 'checked' : ''} onchange="toggleDropboxAutoCreate()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;">命名規則</label>
+        <input type="text" id="int-dbx-naming" value="${st.namingRule || ''}" placeholder="{顧客コード}_{顧客名}" style="font-size:12px;padding:6px 8px;">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveDropboxSettings()">設定保存</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('dropbox')">切断</button>
+      </div>
+      <div id="int-flash-dropbox"></div>
+    </div>`;
+}
+
+function renderZoomDetails(st) {
+  if (!st.connected) {
+    return `
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();toggleIntegration('zoom')">Zoom連携</button>`;
+  }
+  return `
+    <div class="int-detail-section">
+      <div style="background:var(--gray-50);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--gray-600);margin-bottom:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">接続アカウント</div>
+        <div>${st.account}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();zoomCreateMeeting()">会議作成</button>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">最近の会議</div>
+        <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;">
+          ${mockZoomMeetings.map(m => `
+            <div style="padding:8px 12px;border-bottom:1px solid var(--gray-100);font-size:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:500;color:var(--gray-800);">${m.title}</span>
+                <span style="color:var(--gray-400);font-size:11px;">${m.duration}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
+                <span style="color:var(--gray-500);">${m.date}</span>
+                <a href="${m.recordingUrl}" style="font-size:11px;" onclick="event.stopPropagation();event.preventDefault();alert('録画ファイルを開きます（モック）')">録画を見る</a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleIntegration('zoom')">切断</button>
+      </div>
+      <div id="int-flash-zoom"></div>
+    </div>`;
+}
+
+// ===========================
+// 自動化設定
+// ===========================
+
+function getAutoTypeBadge(type) {
+  const map = {
+    reminder: { label: 'リマインド', cls: 'auto-type-reminder' },
+    auto_create: { label: '自動生成', cls: 'auto-type-create' },
+    cleanup: { label: 'クリーンアップ', cls: 'auto-type-cleanup' },
+    escalation: { label: 'エスカレーション', cls: 'auto-type-escalation' },
+  };
+  const m = map[type] || { label: type, cls: '' };
+  return `<span class="auto-type-badge ${m.cls}">${m.label}</span>`;
+}
+
+function toggleAutomationRule(ruleId) {
+  const rule = MOCK_DATA.automationRules.find(r => r.id === ruleId);
+  if (rule) {
+    rule.enabled = !rule.enabled;
+    const content = document.getElementById('page-content');
+    if (content) renderAutomation(content);
+  }
+}
+
+function runAutomationRule(ruleId) {
+  const rule = MOCK_DATA.automationRules.find(r => r.id === ruleId);
+  if (!rule) return;
+  const targetCount = Math.floor(Math.random() * 8) + 1;
+  rule.lastRun = new Date().toISOString();
+  // Add to log
+  const newLog = {
+    id: 'al-' + String(MOCK_DATA.automationLog.length + 1).padStart(3, '0'),
+    timestamp: rule.lastRun,
+    ruleId: rule.id,
+    ruleName: rule.name,
+    result: '成功',
+    targetCount: targetCount,
+  };
+  MOCK_DATA.automationLog.unshift(newLog);
+  const content = document.getElementById('page-content');
+  if (content) renderAutomation(content);
+  setTimeout(() => {
+    intFlash('auto-flash-' + ruleId, `ルール「${rule.name}」を実行しました。対象: ${targetCount}件`, 'success');
+  }, 50);
+}
+
+function openAutomationModal() {
+  document.getElementById('new-auto-name').value = '';
+  document.getElementById('new-auto-type').value = 'reminder';
+  document.getElementById('new-auto-trigger').value = '';
+  document.getElementById('new-auto-action').value = '';
+  document.getElementById('new-auto-target').value = '';
+  document.getElementById('automation-create-modal').classList.add('show');
+}
+
+function closeAutomationModal() {
+  document.getElementById('automation-create-modal').classList.remove('show');
+}
+
+function submitNewAutomationRule() {
+  const name = document.getElementById('new-auto-name').value.trim();
+  const type = document.getElementById('new-auto-type').value;
+  const trigger = document.getElementById('new-auto-trigger').value.trim();
+  const action = document.getElementById('new-auto-action').value.trim();
+  const target = document.getElementById('new-auto-target').value.trim();
+  if (!name) { alert('ルール名を入力してください'); return; }
+  if (!trigger) { alert('トリガーを入力してください'); return; }
+  if (!action) { alert('アクションを入力してください'); return; }
+  const newRule = {
+    id: 'ar-' + String(MOCK_DATA.automationRules.length + 1).padStart(3, '0'),
+    name, type, enabled: true, trigger, action, target, lastRun: null,
+  };
+  MOCK_DATA.automationRules.push(newRule);
+  closeAutomationModal();
+  const content = document.getElementById('page-content');
+  if (content) renderAutomation(content);
+}
+
+function renderAutomation(el) {
+  const rules = MOCK_DATA.automationRules;
+  const logs = MOCK_DATA.automationLog;
+  const enabledCount = rules.filter(r => r.enabled).length;
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthlyRuns = logs.filter(l => l.timestamp && l.timestamp.slice(0, 7) === thisMonth).length;
+  const lastRun = logs.length > 0 ? formatDateTime(logs[0].timestamp) : '-';
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card accent-blue">
+        <div class="stat-label">有効なルール</div>
+        <div class="stat-value">${enabledCount}</div>
+        <div class="stat-sub">${rules.length}件中</div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-label">今月の実行回数</div>
+        <div class="stat-value">${monthlyRuns}</div>
+        <div class="stat-sub">回</div>
+      </div>
+      <div class="stat-card accent-yellow">
+        <div class="stat-label">最終実行</div>
+        <div class="stat-value" style="font-size:16px;">${lastRun}</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:16px;font-weight:600;">ルール一覧</h3>
+      <button class="btn btn-primary btn-sm" onclick="openAutomationModal()">+ ルール追加</button>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>有効</th>
+              <th>ルール名</th>
+              <th>種別</th>
+              <th>トリガー</th>
+              <th>アクション</th>
+              <th>対象</th>
+              <th>最終実行</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rules.map(r => `
+              <tr>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleAutomationRule('${r.id}')">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </td>
+                <td style="font-weight:500;">${r.name}</td>
+                <td>${getAutoTypeBadge(r.type)}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${r.trigger}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${r.action}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${r.target}</td>
+                <td style="font-size:12px;color:var(--gray-400);">${r.lastRun ? formatDateTime(r.lastRun) : '-'}</td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" onclick="runAutomationRule('${r.id}')" ${!r.enabled ? 'disabled style="opacity:0.5"' : ''}>今すぐ実行</button>
+                  <div id="auto-flash-${r.id}"></div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">実行ログ（直近10件）</h3>
+    </div>
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>実行日時</th>
+              <th>ルール名</th>
+              <th>結果</th>
+              <th>対象件数</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${logs.slice(0, 10).map(l => `
+              <tr>
+                <td style="font-size:12px;">${formatDateTime(l.timestamp)}</td>
+                <td style="font-weight:500;">${l.ruleName}</td>
+                <td><span class="status-badge status-done">${l.result}</span></td>
+                <td style="font-size:13px;">${l.targetCount}件</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 }
@@ -3502,289 +3937,4 @@ function deleteCustomField(cfId) {
     if (c.customFieldValues) delete c.customFieldValues[cfId];
   });
   renderCustomFieldList();
-}
-
-// ===========================
-// テンプレート管理
-// ===========================
-
-function getCategoryBadgeClass(category) {
-  const map = {
-    '法人決算': 'type-corp',
-    '確定申告': 'status-progress',
-    '年末調整': 'status-returned',
-    '中間申告': 'status-todo',
-    '月次': 'status-done',
-  };
-  return map[category] || 'status-todo';
-}
-
-function getAssigneeRoleLabel(role) {
-  const map = { main: '主担当', sub: '副担当', mgr: '管理者' };
-  return map[role] || role;
-}
-
-function renderTemplates(el) {
-  const templates = MOCK_DATA.taskTemplates || [];
-
-  el.innerHTML = `
-    <div class="toolbar">
-      <div class="spacer"></div>
-      <button class="btn btn-primary" onclick="openTemplateEditModal()">+ テンプレート作成</button>
-    </div>
-    <div class="pg-grid">
-      ${templates.length === 0 ? '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>テンプレートがありません</p></div>' :
-        templates.map(tmpl => `
-          <div class="card tmpl-card">
-            <div class="card-header">
-              <h3 style="font-size:14px;">${tmpl.name}</h3>
-              <span class="status-badge ${getCategoryBadgeClass(tmpl.category)}">${tmpl.category}</span>
-            </div>
-            <div class="card-body" style="padding:16px 20px;">
-              <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${tmpl.tasks.length} タスク</div>
-              <div class="tmpl-task-preview">
-                ${tmpl.tasks.map((t, i) => `
-                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;${i > 0 ? 'border-top:1px solid var(--gray-100);' : ''}">
-                    <span style="color:var(--gray-400);width:18px;text-align:right;">${i + 1}.</span>
-                    <span style="flex:1;color:var(--gray-700);">${t.title}</span>
-                    <span style="color:var(--gray-400);font-size:11px;">${t.daysBeforeDue}日前</span>
-                    <span class="status-badge status-todo" style="font-size:10px;padding:1px 6px;">${getAssigneeRoleLabel(t.assigneeRole)}</span>
-                  </div>
-                `).join('')}
-              </div>
-              <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-                <button class="btn btn-secondary btn-sm" onclick="openTemplateEditModal('${tmpl.id}')">編集</button>
-                <button class="btn btn-primary btn-sm" onclick="openTemplateApplyModal('${tmpl.id}')">適用</button>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-    </div>
-  `;
-}
-
-// ── テンプレート編集モーダル ──
-
-function openTemplateEditModal(tmplId) {
-  const modal = document.getElementById('template-edit-modal');
-  const titleEl = document.getElementById('template-modal-title');
-  const idEl = document.getElementById('edit-template-id');
-  const nameEl = document.getElementById('edit-template-name');
-  const catEl = document.getElementById('edit-template-category');
-  const listEl = document.getElementById('template-task-list');
-
-  if (tmplId) {
-    const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
-    if (!tmpl) return;
-    titleEl.textContent = 'テンプレート編集';
-    idEl.value = tmplId;
-    nameEl.value = tmpl.name;
-    catEl.value = tmpl.category;
-    listEl.innerHTML = '';
-    tmpl.tasks.forEach(t => addTemplateTaskRow(t.title, t.daysBeforeDue, t.assigneeRole));
-  } else {
-    titleEl.textContent = 'テンプレート作成';
-    idEl.value = '';
-    nameEl.value = '';
-    catEl.value = '法人決算';
-    listEl.innerHTML = '';
-    addTemplateTaskRow();
-  }
-  modal.classList.add('show');
-}
-
-function closeTemplateEditModal() {
-  document.getElementById('template-edit-modal').classList.remove('show');
-}
-
-function addTemplateTaskRow(title, days, role) {
-  const listEl = document.getElementById('template-task-list');
-  const row = document.createElement('div');
-  row.className = 'tmpl-task-row';
-  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
-  row.innerHTML = `
-    <input type="text" class="tmpl-row-title" placeholder="タスク名" value="${title || ''}" style="flex:1;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
-    <input type="number" class="tmpl-row-days" placeholder="日前" value="${days || ''}" min="1" style="width:70px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
-    <select class="tmpl-row-role" style="width:90px;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
-      <option value="main" ${role === 'main' ? 'selected' : ''}>主担当</option>
-      <option value="sub" ${role === 'sub' ? 'selected' : ''}>副担当</option>
-      <option value="mgr" ${role === 'mgr' ? 'selected' : ''}>管理者</option>
-    </select>
-    <button class="btn-icon" onclick="this.parentElement.remove()" style="color:var(--danger);font-size:16px;">&times;</button>
-  `;
-  listEl.appendChild(row);
-}
-
-function submitTemplateEdit() {
-  const idEl = document.getElementById('edit-template-id');
-  const name = document.getElementById('edit-template-name').value.trim();
-  const category = document.getElementById('edit-template-category').value;
-  const rows = document.querySelectorAll('#template-task-list .tmpl-task-row');
-
-  if (!name) { alert('テンプレート名を入力してください'); return; }
-
-  const tasks = [];
-  rows.forEach(row => {
-    const title = row.querySelector('.tmpl-row-title').value.trim();
-    const days = parseInt(row.querySelector('.tmpl-row-days').value) || 0;
-    const role = row.querySelector('.tmpl-row-role').value;
-    if (title && days > 0) {
-      tasks.push({ title, daysBeforeDue: days, assigneeRole: role });
-    }
-  });
-
-  if (tasks.length === 0) { alert('タスクを1つ以上追加してください'); return; }
-
-  if (idEl.value) {
-    // 編集
-    const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === idEl.value);
-    if (tmpl) {
-      tmpl.name = name;
-      tmpl.category = category;
-      tmpl.tasks = tasks;
-    }
-  } else {
-    // 新規作成
-    const newId = 'tmpl-' + String(MOCK_DATA.taskTemplates.length + 1).padStart(3, '0');
-    MOCK_DATA.taskTemplates.push({ id: newId, name, category, tasks });
-  }
-
-  closeTemplateEditModal();
-  navigateTo('templates');
-}
-
-// ── テンプレート適用モーダル ──
-
-function openTemplateApplyModal(tmplId, clientId) {
-  const modal = document.getElementById('template-apply-modal');
-  const tmplSelect = document.getElementById('apply-template-select');
-  const clientSelect = document.getElementById('apply-template-client');
-  const dueInput = document.getElementById('apply-template-due');
-  const previewArea = document.getElementById('apply-preview-area');
-
-  // テンプレート選択肢
-  tmplSelect.innerHTML = MOCK_DATA.taskTemplates.map(t =>
-    `<option value="${t.id}" ${t.id === tmplId ? 'selected' : ''}>${t.name}</option>`
-  ).join('');
-
-  // 顧客選択肢
-  clientSelect.innerHTML = '<option value="">-- 選択 --</option>' +
-    MOCK_DATA.clients.filter(c => c.isActive).map(c =>
-      `<option value="${c.id}" ${c.id === clientId ? 'selected' : ''}>${c.name}</option>`
-    ).join('');
-
-  // デフォルト期限（1ヶ月後）
-  const defaultDue = new Date();
-  defaultDue.setMonth(defaultDue.getMonth() + 1);
-  dueInput.value = defaultDue.toISOString().split('T')[0];
-
-  previewArea.innerHTML = '';
-  modal.classList.add('show');
-  updateApplyPreview();
-}
-
-function closeTemplateApplyModal() {
-  document.getElementById('template-apply-modal').classList.remove('show');
-}
-
-function updateApplyPreview() {
-  const tmplId = document.getElementById('apply-template-select').value;
-  const clientId = document.getElementById('apply-template-client').value;
-  const dueDateStr = document.getElementById('apply-template-due').value;
-  const previewArea = document.getElementById('apply-preview-area');
-
-  if (!tmplId || !clientId || !dueDateStr) {
-    previewArea.innerHTML = '<div style="color:var(--gray-400);font-size:13px;padding:12px 0;">テンプレート・顧客・期限日を選択してください</div>';
-    return;
-  }
-
-  const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
-  const client = getClientById(clientId);
-  if (!tmpl || !client) return;
-
-  const dueDate = new Date(dueDateStr);
-
-  const roleToUserId = (role) => {
-    if (role === 'main') return client.mainUserId;
-    if (role === 'sub') return client.subUserId || client.mainUserId;
-    if (role === 'mgr') return client.mgrUserId || client.mainUserId;
-    return client.mainUserId;
-  };
-
-  const rows = tmpl.tasks.map(t => {
-    const taskDate = new Date(dueDate);
-    taskDate.setDate(taskDate.getDate() - t.daysBeforeDue);
-    const assigneeId = roleToUserId(t.assigneeRole);
-    const assignee = getUserById(assigneeId);
-    return `
-      <tr>
-        <td>${t.title}</td>
-        <td>${assignee?.name || '-'}</td>
-        <td>${getAssigneeRoleLabel(t.assigneeRole)}</td>
-        <td>${formatDate(taskDate.toISOString().split('T')[0])}</td>
-      </tr>
-    `;
-  });
-
-  previewArea.innerHTML = `
-    <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">プレビュー: ${tmpl.name} → ${client.name}</div>
-    <div class="table-wrapper" style="border:1px solid var(--gray-200);border-radius:6px;">
-      <table>
-        <thead><tr><th>タスク名</th><th>担当者</th><th>役割</th><th>期限</th></tr></thead>
-        <tbody>${rows.join('')}</tbody>
-      </table>
-    </div>
-    <div style="font-size:12px;color:var(--gray-500);margin-top:8px;">${tmpl.tasks.length} 件のタスクが作成されます</div>
-  `;
-}
-
-function submitTemplateApply() {
-  const tmplId = document.getElementById('apply-template-select').value;
-  const clientId = document.getElementById('apply-template-client').value;
-  const dueDateStr = document.getElementById('apply-template-due').value;
-
-  if (!tmplId || !clientId || !dueDateStr) {
-    alert('テンプレート・顧客・期限日を全て選択してください');
-    return;
-  }
-
-  const tmpl = MOCK_DATA.taskTemplates.find(t => t.id === tmplId);
-  const client = getClientById(clientId);
-  if (!tmpl || !client) return;
-
-  const dueDate = new Date(dueDateStr);
-  const now = new Date().toISOString().split('T')[0];
-
-  const roleToUserId = (role) => {
-    if (role === 'main') return client.mainUserId;
-    if (role === 'sub') return client.subUserId || client.mainUserId;
-    if (role === 'mgr') return client.mgrUserId || client.mainUserId;
-    return client.mainUserId;
-  };
-
-  let count = 0;
-  tmpl.tasks.forEach(t => {
-    const taskDate = new Date(dueDate);
-    taskDate.setDate(taskDate.getDate() - t.daysBeforeDue);
-    const newId = 'tk-' + String(MOCK_DATA.tasks.length + count + 1).padStart(3, '0');
-    MOCK_DATA.tasks.push({
-      id: newId,
-      clientId: client.id,
-      assigneeUserId: roleToUserId(t.assigneeRole),
-      title: t.title,
-      status: '未着手',
-      dueDate: taskDate.toISOString().split('T')[0],
-      createdAt: now,
-    });
-    count++;
-  });
-
-  closeTemplateApplyModal();
-  alert(`${client.name} に ${count} 件のタスクを作成しました`);
-
-  // 現在のページを再描画
-  if (currentPage === 'client-detail') navigateTo('client-detail', { id: clientId });
-  else if (currentPage === 'tasks') navigateTo('tasks');
-  else if (currentPage === 'templates') navigateTo('templates');
-  else if (currentPage === 'dashboard') navigateTo('dashboard');
 }

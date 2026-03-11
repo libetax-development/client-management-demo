@@ -50,7 +50,6 @@
       <div class="nav-section">管理</div>
       <a href="#" data-page="clients">&#x1f465; 顧客一覧</a>
       <a href="#" data-page="staff">&#x1f464; 職員一覧</a>
-      <a href="#" data-page="templates">&#x1f4cb; テンプレート</a>
       <a href="#" data-page="timesheet">&#x23f1; 工数管理</a>
       <a href="#" data-page="reports">&#x1f4dd; 報告書</a>
       <a href="#" data-page="calendar">&#x1f4c5; カレンダー</a>
@@ -63,6 +62,7 @@
 
       <div class="nav-section">設定</div>
       <a href="#" data-page="integrations">&#x1f517; 外部連携</a>
+      <a href="#" data-page="automation">&#x26a1; 自動化設定</a>
       <a href="#" data-page="settings">&#x2699; マイ設定</a>
     </nav>
     <div class="sidebar-user">
@@ -606,72 +606,43 @@
   </div>
 </div>
 
-<!-- テンプレート作成/編集モーダル -->
-<div class="modal-overlay" id="template-edit-modal">
-  <div class="modal modal-wide" style="width:640px;">
+<!-- 自動化ルール追加モーダル -->
+<div class="modal-overlay" id="automation-create-modal">
+  <div class="modal modal-wide">
     <div class="modal-header">
-      <h3 id="template-modal-title">テンプレート作成</h3>
-      <button class="btn-icon" onclick="closeTemplateEditModal()">&times;</button>
+      <h3>自動化ルール追加</h3>
+      <button class="btn-icon" onclick="closeAutomationModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="edit-template-id">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div class="form-group">
-          <label>テンプレート名</label>
-          <input type="text" id="edit-template-name" placeholder="例: 法人決算テンプレート">
-        </div>
-        <div class="form-group">
-          <label>カテゴリ</label>
-          <select id="edit-template-category">
-            <option value="法人決算">法人決算</option>
-            <option value="確定申告">確定申告</option>
-            <option value="年末調整">年末調整</option>
-            <option value="中間申告">中間申告</option>
-            <option value="月次">月次</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>ルール名</label>
+        <input type="text" id="new-auto-name" placeholder="例: 期限3日前リマインド">
       </div>
       <div class="form-group">
-        <label>タスク一覧</label>
-        <div id="template-task-list"></div>
-        <button class="btn btn-secondary btn-sm" onclick="addTemplateTaskRow()" style="margin-top:8px;">+ タスク行を追加</button>
+        <label>種別</label>
+        <select id="new-auto-type">
+          <option value="reminder">リマインド</option>
+          <option value="auto_create">自動生成</option>
+          <option value="cleanup">クリーンアップ</option>
+          <option value="escalation">エスカレーション</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>トリガー</label>
+        <input type="text" id="new-auto-trigger" placeholder="例: タスク期限の3日前 / 毎月1日 / 完了から14日経過">
+      </div>
+      <div class="form-group">
+        <label>アクション</label>
+        <input type="text" id="new-auto-action" placeholder="例: Chatworkに通知 / テンプレートからタスク自動生成">
+      </div>
+      <div class="form-group">
+        <label>対象</label>
+        <input type="text" id="new-auto-target" placeholder="例: 担当者 / 全アクティブ顧客">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeTemplateEditModal()">キャンセル</button>
-      <button class="btn btn-primary" onclick="submitTemplateEdit()">保存</button>
-    </div>
-  </div>
-</div>
-
-<!-- テンプレート適用モーダル -->
-<div class="modal-overlay" id="template-apply-modal">
-  <div class="modal modal-wide" style="width:700px;">
-    <div class="modal-header">
-      <h3>テンプレート適用</h3>
-      <button class="btn-icon" onclick="closeTemplateApplyModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="apply-template-id">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-        <div class="form-group">
-          <label>テンプレート</label>
-          <select id="apply-template-select" onchange="updateApplyPreview()"></select>
-        </div>
-        <div class="form-group">
-          <label>顧客</label>
-          <select id="apply-template-client" onchange="updateApplyPreview()"></select>
-        </div>
-        <div class="form-group">
-          <label>最終期限日</label>
-          <input type="date" id="apply-template-due" onchange="updateApplyPreview()">
-        </div>
-      </div>
-      <div id="apply-preview-area"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeTemplateApplyModal()">キャンセル</button>
-      <button class="btn btn-primary" onclick="submitTemplateApply()">適用する</button>
+      <button class="btn btn-secondary" onclick="closeAutomationModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitNewAutomationRule()">作成</button>
     </div>
   </div>
 </div>
