@@ -45,16 +45,16 @@ const MOCK_DATA = {
   ],
 
   clients: [
-    { id: 'c-001', clientCode: '030450', name: '株式会社サンプル商事', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-003', subUserId: 'u-007', mgrUserId: 'u-003', monthlySales: 50000, address: '東京都千代田区大手町1-1-1', tel: '03-1234-5001', representative: '山本 太郎', establishDate: '2010-05-20', industry: '卸売業', taxOffice: '千代田税務署', memo: '' },
-    { id: 'c-002', clientCode: '030451', name: '合同会社テスト工業', clientType: '法人', fiscalMonth: 9, isActive: true, mainUserId: 'u-004', subUserId: null, mgrUserId: 'u-004', monthlySales: 30000, address: '大阪府大阪市中央区本町2-2-2', tel: '06-1234-5002', representative: '鈴木 一郎', establishDate: '2015-03-10', industry: '製造業', taxOffice: '東税務署', memo: '' },
-    { id: 'c-003', clientCode: '030452', name: '田中 一郎', clientType: '個人', fiscalMonth: 12, isActive: true, mainUserId: 'u-005', subUserId: 'u-006', mgrUserId: 'u-005', monthlySales: 20000, address: '愛知県名古屋市中区栄3-3-3', tel: '052-1234-5003', representative: '', establishDate: '', industry: '不動産賃貸', taxOffice: '名古屋中税務署', memo: '不動産所得あり' },
-    { id: 'c-004', clientCode: '030453', name: '株式会社リベ不動産', clientType: '法人', fiscalMonth: 6, isActive: true, mainUserId: 'u-003', subUserId: null, mgrUserId: 'u-003', monthlySales: 80000, address: '大阪府大阪市北区梅田1-4-4', tel: '06-1234-5004', representative: '高橋 花子', establishDate: '2018-01-15', industry: '不動産業', taxOffice: '北税務署', memo: '' },
-    { id: 'c-005', clientCode: '030454', name: '佐藤 二郎', clientType: '個人', fiscalMonth: 12, isActive: true, mainUserId: 'u-006', subUserId: null, mgrUserId: 'u-005', monthlySales: 15000, address: '福岡県福岡市博多区博多駅前5-5-5', tel: '092-1234-5005', representative: '', establishDate: '', industry: 'フリーランス（IT）', taxOffice: '博多税務署', memo: '' },
-    { id: 'c-006', clientCode: '030455', name: '有限会社グリーンファーム', clientType: '法人', fiscalMonth: 8, isActive: true, mainUserId: 'u-007', subUserId: null, mgrUserId: 'u-003', monthlySales: 25000, address: '北海道札幌市中央区北1条6-6-6', tel: '011-1234-5006', representative: '田村 健太', establishDate: '2005-09-01', industry: '農業', taxOffice: '札幌中税務署', memo: '' },
-    { id: 'c-007', clientCode: '030456', name: '株式会社デジタルソリューション', clientType: '法人', fiscalMonth: 12, isActive: true, mainUserId: 'u-004', subUserId: 'u-006', mgrUserId: 'u-004', monthlySales: 100000, address: '東京都渋谷区渋谷2-7-7', tel: '03-1234-5007', representative: '中村 誠', establishDate: '2020-02-14', industry: 'IT・ソフトウェア', taxOffice: '渋谷税務署', memo: '顧問契約プレミアムプラン' },
-    { id: 'c-008', clientCode: '030457', name: '山田 花子', clientType: '個人', fiscalMonth: 12, isActive: false, mainUserId: 'u-005', subUserId: null, mgrUserId: 'u-005', monthlySales: 10000, address: '京都府京都市左京区8-8-8', tel: '075-1234-5008', representative: '', establishDate: '', industry: '小売業', taxOffice: '左京税務署', memo: '2025年解約済み' },
-    { id: 'c-009', clientCode: '030458', name: '株式会社スカイブルー', clientType: '法人', fiscalMonth: 1, isActive: true, mainUserId: 'u-003', subUserId: 'u-005', mgrUserId: 'u-003', monthlySales: 45000, address: '神奈川県横浜市西区みなとみらい9-9-9', tel: '045-1234-5009', representative: '木村 翔', establishDate: '2019-11-01', industry: 'サービス業', taxOffice: '横浜中税務署', memo: '' },
-    { id: 'c-010', clientCode: '030459', name: 'NPO法人サポートネット', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-006', subUserId: null, mgrUserId: 'u-009', monthlySales: 18000, address: '兵庫県神戸市中央区三宮10-10-10', tel: '078-1234-5010', representative: '佐々木 みどり', establishDate: '2012-06-30', industry: 'NPO・福祉', taxOffice: '神戸税務署', memo: '' },
+    { id: 'c-001', clientCode: '030450', name: '株式会社サンプル商事', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-003', subUserId: 'u-007', mgrUserId: 'u-003', monthlySales: 50000, address: '東京都千代田区大手町1-1-1', tel: '03-1234-5001', representative: '山本 太郎', establishDate: '2010-05-20', industry: '卸売業', taxOffice: '千代田税務署', memo: '', cwAccountId: '1234001', cwAccountName: '山本太郎（サンプル商事）' },
+    { id: 'c-002', clientCode: '030451', name: '合同会社テスト工業', clientType: '法人', fiscalMonth: 9, isActive: true, mainUserId: 'u-004', subUserId: null, mgrUserId: 'u-004', monthlySales: 30000, address: '大阪府大阪市中央区本町2-2-2', tel: '06-1234-5002', representative: '鈴木 一郎', establishDate: '2015-03-10', industry: '製造業', taxOffice: '東税務署', memo: '', cwAccountId: '1234002', cwAccountName: '鈴木一郎（テスト工業）' },
+    { id: 'c-003', clientCode: '030452', name: '田中 一郎', clientType: '個人', fiscalMonth: 12, isActive: true, mainUserId: 'u-005', subUserId: 'u-006', mgrUserId: 'u-005', monthlySales: 20000, address: '愛知県名古屋市中区栄3-3-3', tel: '052-1234-5003', representative: '', establishDate: '', industry: '不動産賃貸', taxOffice: '名古屋中税務署', memo: '不動産所得あり', cwAccountId: '1234003', cwAccountName: '田中一郎' },
+    { id: 'c-004', clientCode: '030453', name: '株式会社リベ不動産', clientType: '法人', fiscalMonth: 6, isActive: true, mainUserId: 'u-003', subUserId: null, mgrUserId: 'u-003', monthlySales: 80000, address: '大阪府大阪市北区梅田1-4-4', tel: '06-1234-5004', representative: '高橋 花子', establishDate: '2018-01-15', industry: '不動産業', taxOffice: '北税務署', memo: '', cwAccountId: '1234004', cwAccountName: '高橋花子（リベ不動産）' },
+    { id: 'c-005', clientCode: '030454', name: '佐藤 二郎', clientType: '個人', fiscalMonth: 12, isActive: true, mainUserId: 'u-006', subUserId: null, mgrUserId: 'u-005', monthlySales: 15000, address: '福岡県福岡市博多区博多駅前5-5-5', tel: '092-1234-5005', representative: '', establishDate: '', industry: 'フリーランス（IT）', taxOffice: '博多税務署', memo: '', cwAccountId: '', cwAccountName: '' },
+    { id: 'c-006', clientCode: '030455', name: '有限会社グリーンファーム', clientType: '法人', fiscalMonth: 8, isActive: true, mainUserId: 'u-007', subUserId: null, mgrUserId: 'u-003', monthlySales: 25000, address: '北海道札幌市中央区北1条6-6-6', tel: '011-1234-5006', representative: '田村 健太', establishDate: '2005-09-01', industry: '農業', taxOffice: '札幌中税務署', memo: '', cwAccountId: '1234006', cwAccountName: '田村健太（グリーンファーム）' },
+    { id: 'c-007', clientCode: '030456', name: '株式会社デジタルソリューション', clientType: '法人', fiscalMonth: 12, isActive: true, mainUserId: 'u-004', subUserId: 'u-006', mgrUserId: 'u-004', monthlySales: 100000, address: '東京都渋谷区渋谷2-7-7', tel: '03-1234-5007', representative: '中村 誠', establishDate: '2020-02-14', industry: 'IT・ソフトウェア', taxOffice: '渋谷税務署', memo: '顧問契約プレミアムプラン', cwAccountId: '1234007', cwAccountName: '中村誠（デジタルソリューション）' },
+    { id: 'c-008', clientCode: '030457', name: '山田 花子', clientType: '個人', fiscalMonth: 12, isActive: false, mainUserId: 'u-005', subUserId: null, mgrUserId: 'u-005', monthlySales: 10000, address: '京都府京都市左京区8-8-8', tel: '075-1234-5008', representative: '', establishDate: '', industry: '小売業', taxOffice: '左京税務署', memo: '2025年解約済み', cwAccountId: '', cwAccountName: '' },
+    { id: 'c-009', clientCode: '030458', name: '株式会社スカイブルー', clientType: '法人', fiscalMonth: 1, isActive: true, mainUserId: 'u-003', subUserId: 'u-005', mgrUserId: 'u-003', monthlySales: 45000, address: '神奈川県横浜市西区みなとみらい9-9-9', tel: '045-1234-5009', representative: '木村 翔', establishDate: '2019-11-01', industry: 'サービス業', taxOffice: '横浜中税務署', memo: '', cwAccountId: '1234009', cwAccountName: '木村翔（スカイブルー）' },
+    { id: 'c-010', clientCode: '030459', name: 'NPO法人サポートネット', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-006', subUserId: null, mgrUserId: 'u-009', monthlySales: 18000, address: '兵庫県神戸市中央区三宮10-10-10', tel: '078-1234-5010', representative: '佐々木 みどり', establishDate: '2012-06-30', industry: 'NPO・福祉', taxOffice: '神戸税務署', memo: '', cwAccountId: '1234010', cwAccountName: '佐々木みどり（サポートネット）' },
   ],
 
   tasks: [
@@ -177,6 +177,19 @@ const MOCK_DATA = {
     { id: 'rw-010', userId: 'u-007', month: '2026-03', clientId: 'c-006', amount: 3750, type: '税務顧問' },
   ],
 
+  // チャットマスタ（Chatworkルーム）
+  chatRooms: [
+    { id: 'cr-001', roomId: '300000001', roomName: '【リベ税】株式会社サンプル商事', roomUrl: 'https://www.chatwork.com/#!rid300000001', clientIds: ['c-001'], memo: '' },
+    { id: 'cr-002', roomId: '300000002', roomName: '【リベ税】合同会社テスト工業', roomUrl: 'https://www.chatwork.com/#!rid300000002', clientIds: ['c-002'], memo: '' },
+    { id: 'cr-003', roomId: '300000003', roomName: '【リベ税】田中一郎', roomUrl: 'https://www.chatwork.com/#!rid300000003', clientIds: ['c-003'], memo: '' },
+    { id: 'cr-004', roomId: '300000004', roomName: '【リベ税】株式会社リベ不動産', roomUrl: 'https://www.chatwork.com/#!rid300000004', clientIds: ['c-004'], memo: '' },
+    { id: 'cr-005', roomId: '300000005', roomName: '【リベ税】有限会社グリーンファーム', roomUrl: 'https://www.chatwork.com/#!rid300000005', clientIds: ['c-006'], memo: '' },
+    { id: 'cr-006', roomId: '300000006', roomName: '【リベ税】デジタルソリューション', roomUrl: 'https://www.chatwork.com/#!rid300000006', clientIds: ['c-007'], memo: '' },
+    { id: 'cr-007', roomId: '300000007', roomName: '【リベ税】スカイブルー', roomUrl: 'https://www.chatwork.com/#!rid300000007', clientIds: ['c-009'], memo: '' },
+    { id: 'cr-008', roomId: '300000008', roomName: '【リベ税】NPOサポートネット', roomUrl: 'https://www.chatwork.com/#!rid300000008', clientIds: ['c-010'], memo: '' },
+    { id: 'cr-009', roomId: '300000009', roomName: '【リベ税】セキュリティ連絡', roomUrl: 'https://www.chatwork.com/#!rid300000009', clientIds: ['c-001', 'c-002', 'c-004', 'c-006', 'c-007', 'c-009', 'c-010'], memo: 'セキュリティ関連の一斉連絡用' },
+  ],
+
   notifications: [
     { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
     { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },
@@ -190,6 +203,9 @@ function getUserById(id) { return MOCK_DATA.users.find(u => u.id === id); }
 function getClientById(id) { return MOCK_DATA.clients.find(c => c.id === id); }
 function getTasksByClient(clientId) { return MOCK_DATA.tasks.filter(t => t.clientId === clientId); }
 function getTasksByAssignee(userId) { return MOCK_DATA.tasks.filter(t => t.assigneeUserId === userId); }
+
+function getChatRoomsByClient(clientId) { return MOCK_DATA.chatRooms.filter(r => r.clientIds.includes(clientId)); }
+function getChatRoomById(id) { return MOCK_DATA.chatRooms.find(r => r.id === id); }
 
 function getRoleBadge(role) {
   const map = { superadmin: 'SA', admin: '管理者', team_leader: 'TL', member: 'メンバー' };

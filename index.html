@@ -54,6 +54,9 @@
       <a href="#" data-page="reports">&#x1f4dd; 報告書</a>
       <a href="#" data-page="calendar">&#x1f4c5; カレンダー</a>
 
+      <div class="nav-section">チャット</div>
+      <a href="#" data-page="chatrooms">&#x1f4ac; チャットマスタ</a>
+
       <div class="nav-section">報酬</div>
       <a href="#" data-page="rewards">&#x1f4b0; 報酬管理</a>
 
@@ -194,6 +197,19 @@
       <div class="form-group">
         <label>月額報酬（税抜・円）</label>
         <input type="number" id="new-client-sales" placeholder="50000" min="0" step="1000">
+      </div>
+      <div style="border-top:1px solid var(--gray-200);padding-top:16px;margin-top:8px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">Chatwork連携</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label>CWアカウントID</label>
+            <input type="text" id="new-client-cw-id" placeholder="例: 1234567">
+          </div>
+          <div class="form-group">
+            <label>CW表示名</label>
+            <input type="text" id="new-client-cw-name" placeholder="例: 山本太郎">
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -507,6 +523,46 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeProgressSettingsModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="submitEditProgress()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- チャットルーム追加/編集モーダル -->
+<div class="modal-overlay" id="chatroom-create-modal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3 id="chatroom-modal-title">チャットルーム登録</h3>
+      <button class="btn-icon" onclick="closeChatRoomModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-chatroom-id">
+      <div class="form-group">
+        <label>ルーム名</label>
+        <input type="text" id="new-cr-name" placeholder="例: 【リベ税】株式会社サンプル商事">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>ルームID</label>
+          <input type="text" id="new-cr-roomid" placeholder="例: 300000001">
+        </div>
+        <div class="form-group">
+          <label>ルームURL</label>
+          <input type="text" id="new-cr-url" placeholder="https://www.chatwork.com/#!rid...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>紐づけ顧客（複数選択可）</label>
+        <div id="cr-client-checkboxes" style="max-height:180px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;"></div>
+      </div>
+      <div class="form-group">
+        <label>備考</label>
+        <input type="text" id="new-cr-memo" placeholder="例: セキュリティ関連の一斉連絡用">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="cr-delete-btn" onclick="deleteChatRoom()" style="margin-right:auto;display:none">削除</button>
+      <button class="btn btn-secondary" onclick="closeChatRoomModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitChatRoom()">登録</button>
     </div>
   </div>
 </div>
