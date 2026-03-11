@@ -348,6 +348,33 @@ textarea.inline-edit-input { resize: vertical; font-family: inherit; }
 .btn-csv { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300); padding: 6px 12px; font-size: 12px; }
 .btn-csv:hover { background: var(--gray-200); }
 
+/* ── SPOT報酬テーブル ── */
+.spot-fee-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+.spot-fee-table th { background: var(--gray-50); padding: 5px 8px; text-align: left; font-weight: 600; color: var(--gray-500); border-bottom: 1px solid var(--gray-200); font-size: 11px; }
+.spot-fee-table td { padding: 5px 8px; border-bottom: 1px solid var(--gray-100); font-size: 12px; }
+.spot-fee-table .spot-fee-del { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.spot-fee-add-row { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.spot-fee-add-row input { padding: 5px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px; }
+.spot-fee-add-row input[type="text"] { width: 100px; }
+.spot-fee-add-row input[type="number"] { width: 90px; }
+.spot-fee-add-row .spot-fee-desc-input { width: 140px; }
+
+/* ── CWルームURLリスト ── */
+.cw-room-list { margin-top: 4px; }
+.cw-room-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.cw-room-item a { font-size: 13px; }
+.cw-room-del { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.cw-room-add-row { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.cw-room-add-row input { padding: 5px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px; }
+.cw-room-add-row input.cw-room-url-input { width: 220px; }
+.cw-room-add-row input.cw-room-name-input { width: 160px; }
+
+/* ── 関連顧客 ── */
+.related-client-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.related-client-del { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; padding: 0 4px; }
+.related-client-add-row { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+.related-client-add-row select { padding: 5px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px; min-width: 200px; }
+
 @media (max-width: 768px) {
   .hamburger { display: block; }
   .sidebar { transform: translateX(-100%); transition: transform .25s; }

@@ -321,7 +321,7 @@ function openClientModal(clientId) {
       document.getElementById('new-client-sub').value = c.subUserId || '';
       document.getElementById('new-client-fiscal').value = c.fiscalMonth || 3;
       document.getElementById('new-client-cw-id').value = c.cwAccountId || '';
-      document.getElementById('new-client-cw-name').value = c.cwAccountName || '';
+      if (document.getElementById('new-client-annual-fee')) document.getElementById('new-client-annual-fee').value = c.annualFee || '';
       // カスタムフィールド値セット
       const cfv = c.customFieldValues || {};
       customFields.forEach(cf => {
@@ -339,7 +339,7 @@ function openClientModal(clientId) {
     document.getElementById('new-client-representative').value = '';
     document.getElementById('new-client-taxoffice').value = '';
     document.getElementById('new-client-cw-id').value = '';
-    document.getElementById('new-client-cw-name').value = '';
+    if (document.getElementById('new-client-annual-fee')) document.getElementById('new-client-annual-fee').value = '';
     // カスタムフィールド初期化
     customFields.forEach(cf => {
       const el = document.getElementById('cf-val-' + cf.id);
@@ -366,8 +366,8 @@ function submitNewClient() {
   const industry = document.getElementById('new-client-industry').value.trim();
   const representative = document.getElementById('new-client-representative').value.trim();
   const taxOffice = document.getElementById('new-client-taxoffice').value.trim();
+  const annualFee = parseInt(document.getElementById('new-client-annual-fee')?.value) || 0;
   const cwAccountId = document.getElementById('new-client-cw-id').value.trim();
-  const cwAccountName = document.getElementById('new-client-cw-name').value.trim();
 
   if (!name) { alert('顧客名を入力してください'); return; }
   if (!monthlySales) { alert('月額報酬を入力してください'); return; }
@@ -390,13 +390,13 @@ function submitNewClient() {
       c.subUserId = subUserId;
       c.mgrUserId = mainUserId;
       c.monthlySales = monthlySales;
+      c.annualFee = annualFee;
       c.address = address;
       c.tel = tel;
       c.industry = industry;
       c.representative = representative;
       c.taxOffice = taxOffice;
       c.cwAccountId = cwAccountId;
-      c.cwAccountName = cwAccountName;
       c.customFieldValues = customFieldValues;
     }
     closeClientModal();
@@ -418,6 +418,8 @@ function submitNewClient() {
       subUserId,
       mgrUserId: mainUserId,
       monthlySales,
+      annualFee,
+      spotFees: [],
       address,
       tel,
       industry,
@@ -426,7 +428,8 @@ function submitNewClient() {
       memo: '',
       establishDate: '',
       cwAccountId,
-      cwAccountName,
+      cwRoomUrls: [],
+      relatedClientIds: [],
       customFieldValues,
     });
 
@@ -951,15 +954,100 @@ function renderClientDetail(el, params) {
     return `<input type="text" id="${id}" class="inline-edit-input" value="${v || ''}" placeholder="${placeholder || ''}">`;
   };
 
-  // 関連ルーム（閲覧モード時のみ表示、編集モードでは非表示）
-  const rooms = c ? getChatRoomsByClient(c.id) : [];
-  const allRooms = MOCK_DATA.chatRooms || [];
-  const unlinkedRooms = c ? allRooms.filter(r => !r.clientIds.includes(c.id)) : [];
   const tasks = c ? getTasksByClient(c.id) : [];
 
   // 担当者情報（閲覧モード用）
   const main = c ? getUserById(c.mainUserId) : null;
   const sub = c ? getUserById(c.subUserId) : null;
+  const mgr = c ? getUserById(c.mgrUserId) : null;
+
+  // SPOT報酬
+  const spotFees = c ? (c.spotFees || []) : [];
+
+  // CWルームURL
+  const cwRoomUrls = c ? (c.cwRoomUrls || []) : [];
+
+  // 関連顧客
+  const relatedClientIds = c ? (c.relatedClientIds || []) : [];
+  const otherClients = c ? MOCK_DATA.clients.filter(oc => oc.id !== c.id && !relatedClientIds.includes(oc.id)) : MOCK_DATA.clients;
+
+  // SPOT報酬ビューHTML
+  const spotFeesViewHtml = spotFees.length === 0
+    ? '<span style="color:var(--gray-400)">なし</span>'
+    : `<table class="spot-fee-table"><thead><tr><th>タイミング</th><th>金額</th><th>内容</th></tr></thead><tbody>${spotFees.map(sf =>
+        `<tr><td>${sf.timing}</td><td>${(sf.amount || 0).toLocaleString()}円</td><td>${sf.description || ''}</td></tr>`
+      ).join('')}</tbody></table>`;
+
+  // SPOT報酬編集HTML
+  const spotFeesEditHtml = `
+    <div id="spot-fees-edit-area">
+      ${spotFees.map((sf, i) =>
+        `<div class="spot-fee-edit-item" data-index="${i}" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;">
+          <span>${sf.timing}</span> <span>${(sf.amount || 0).toLocaleString()}円</span> <span>${sf.description || ''}</span>
+          <button class="spot-fee-del" onclick="removeSpotFee(${i},'${c?.id || ''}')">&times;</button>
+        </div>`
+      ).join('')}
+      <div class="spot-fee-add-row">
+        <input type="text" id="add-sf-timing" placeholder="2026-05" style="width:90px;">
+        <input type="number" id="add-sf-amount" placeholder="金額" min="0" step="1000">
+        <input type="text" id="add-sf-desc" class="spot-fee-desc-input" placeholder="内容">
+        <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="addSpotFee('${c?.id || ''}')">追加</button>
+      </div>
+    </div>`;
+
+  // CWルームURL ビューHTML
+  const cwRoomUrlsViewHtml = cwRoomUrls.length === 0
+    ? '<span style="color:var(--gray-400)">なし</span>'
+    : `<div class="cw-room-list">${cwRoomUrls.map(r =>
+        `<div class="cw-room-item"><a href="${r.url}" target="_blank">${r.name || r.url}</a></div>`
+      ).join('')}</div>`;
+
+  // CWルームURL 編集HTML
+  const cwRoomUrlsEditHtml = `
+    <div id="cw-room-urls-edit-area">
+      ${cwRoomUrls.map((r, i) =>
+        `<div class="cw-room-item" data-index="${i}">
+          <span style="font-size:12px;">${r.name || r.url}</span>
+          <button class="cw-room-del" onclick="removeCwRoomUrl(${i},'${c?.id || ''}')">&times;</button>
+        </div>`
+      ).join('')}
+      <div class="cw-room-add-row">
+        <input type="text" id="add-cwroom-url" class="cw-room-url-input" placeholder="https://www.chatwork.com/#!rid...">
+        <input type="text" id="add-cwroom-name" class="cw-room-name-input" placeholder="表示名">
+        <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="addCwRoomUrl('${c?.id || ''}')">追加</button>
+      </div>
+    </div>`;
+
+  // 関連顧客ビューHTML
+  const relatedClientsViewHtml = relatedClientIds.length === 0
+    ? '<span style="color:var(--gray-400)">なし</span>'
+    : relatedClientIds.map(rid => {
+        const rc = getClientById(rid);
+        if (!rc) return '';
+        return `<div class="related-client-item"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${rc.id}'})">${rc.name}</a> <span class="type-badge ${rc.clientType === '法人' ? 'type-corp' : 'type-individual'}" style="font-size:10px;">${rc.clientType}</span></div>`;
+      }).join('');
+
+  // 関連顧客編集HTML
+  const relatedClientsEditHtml = `
+    <div id="related-clients-edit-area">
+      ${relatedClientIds.map((rid, i) => {
+        const rc = getClientById(rid);
+        if (!rc) return '';
+        return `<div class="related-client-item">
+          <span style="font-size:12px;">${rc.name} (${rc.clientType})</span>
+          <button class="related-client-del" onclick="removeRelatedClient('${c?.id || ''}','${rid}')">&times;</button>
+        </div>`;
+      }).join('')}
+      ${otherClients.length > 0 ? `
+        <div class="related-client-add-row">
+          <select id="add-related-client-select">
+            <option value="">顧客を選択...</option>
+            ${otherClients.map(oc => `<option value="${oc.id}">${oc.name} (${oc.clientType})</option>`).join('')}
+          </select>
+          <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="addRelatedClient('${c?.id || ''}')">追加</button>
+        </div>
+      ` : ''}
+    </div>`;
 
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('clients')">&larr; 顧客一覧に戻る</a></div>
@@ -983,6 +1071,8 @@ function renderClientDetail(el, params) {
         <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${editing ? inp('ed-type', '', 'select-type') : `<span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span>`}</div></div>
         <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${editing ? inp('ed-fiscal', '', 'select-fiscal') : c.fiscalMonth + '月'}</div></div>
         <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-sales', c?.monthlySales, 'number', '50000') : (c.monthlySales || 0).toLocaleString() + '円'}</div></div>
+        <div class="detail-row"><div class="detail-label">年1申告報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-annualfee', c?.annualFee, 'number', '150000') : (c?.annualFee || 0).toLocaleString() + '円'}</div></div>
+        <div class="detail-row"><div class="detail-label">SPOT報酬</div><div class="detail-value">${editing ? spotFeesEditHtml : spotFeesViewHtml}</div></div>
         <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${editing ? inp('ed-address', c?.address, 'text', '例: 東京都千代田区大手町1-1-1') : val(c.address)}</div></div>
         <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${editing ? inp('ed-tel', c?.tel, 'text', '例: 03-1234-5678') : val(c.tel)}</div></div>
         <div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${editing ? inp('ed-representative', c?.representative, 'text', '例: 山本 太郎') : val(c?.representative)}</div></div>
@@ -991,37 +1081,23 @@ function renderClientDetail(el, params) {
         ${!editing && c.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
         ${!isNew ? `<div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${c.isActive ? '有効' : '無効'}</div></div>` : ''}
 
+        ${!isNew ? `
+        <div class="detail-section-title">関連顧客</div>
+        <div class="detail-row"><div class="detail-label">関連顧客</div><div class="detail-value">${editing ? relatedClientsEditHtml : relatedClientsViewHtml}</div></div>
+        ` : ''}
+
         <div class="detail-section-title">担当者</div>
+        <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${editing ? inp('ed-mgr', '', 'select-staff') : val(mgr?.name)}</div></div>
         <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${editing ? inp('ed-main', '', 'select-staff') : val(main?.name)}</div></div>
         <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${editing ? inp('ed-sub', '', 'select-staff') : val(sub?.name)}</div></div>
         ${!editing ? `<div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>` : ''}
 
         <div class="detail-section-title">Chatwork連携</div>
         <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${editing ? inp('ed-cwid', c?.cwAccountId, 'text', '例: 1234567') : val(c?.cwAccountId, '未設定')}</div></div>
-        <div class="detail-row"><div class="detail-label">CW表示名</div><div class="detail-value">${editing ? inp('ed-cwname', c?.cwAccountName, 'text', '例: 山本太郎') : val(c?.cwAccountName, '未設定')}</div></div>
         ${!editing ? `
-          <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + (c.cwAccountName || c.name) + 'さん</code>' : val('', '-')}</div></div>
-          <div class="detail-row">
-            <div class="detail-label">関連ルーム</div>
-            <div class="detail-value">
-              ${rooms.length === 0 ? '<span style="color:var(--gray-400)">なし</span>' : rooms.map(r =>
-                `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                  <a href="${r.roomUrl}" target="_blank">${r.roomName}</a>
-                  <button class="btn-icon" style="font-size:11px;color:var(--danger);" onclick="unlinkRoomFromClient('${r.id}','${c.id}')" title="紐づけ解除">&times;</button>
-                </div>`
-              ).join('')}
-              ${unlinkedRooms.length > 0 ? `
-                <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
-                  <select id="link-room-select" style="padding:4px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;">
-                    <option value="">ルームを選択...</option>
-                    ${unlinkedRooms.map(r => `<option value="${r.id}">${r.roomName}</option>`).join('')}
-                  </select>
-                  <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="linkRoomToClient('${c.id}')">紐づけ</button>
-                </div>
-              ` : ''}
-            </div>
-          </div>
+          <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + c.name + 'さん</code>' : val('', '-')}</div></div>
         ` : ''}
+        <div class="detail-row"><div class="detail-label">CWルームURL</div><div class="detail-value">${editing ? cwRoomUrlsEditHtml : cwRoomUrlsViewHtml}</div></div>
 
         ${customFields.length > 0 || editing ? `
           <div class="detail-section-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -1078,6 +1154,7 @@ function renderClientDetail(el, params) {
     const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
     setVal('ed-type', c?.clientType || '法人');
     setVal('ed-fiscal', c?.fiscalMonth || 3);
+    setVal('ed-mgr', c?.mgrUserId || '');
     setVal('ed-main', c?.mainUserId || '');
     setVal('ed-sub', c?.subUserId || '');
   }
@@ -1089,15 +1166,16 @@ function saveClientInline(id) {
   const clientType = document.getElementById('ed-type')?.value || '法人';
   const fiscalMonth = parseInt(document.getElementById('ed-fiscal')?.value) || 3;
   const monthlySales = parseInt(document.getElementById('ed-sales')?.value) || 0;
+  const annualFee = parseInt(document.getElementById('ed-annualfee')?.value) || 0;
   const address = (document.getElementById('ed-address')?.value || '').trim();
   const tel = (document.getElementById('ed-tel')?.value || '').trim();
   const representative = (document.getElementById('ed-representative')?.value || '').trim();
   const industry = (document.getElementById('ed-industry')?.value || '').trim();
   const taxOffice = (document.getElementById('ed-taxoffice')?.value || '').trim();
+  const mgrUserId = document.getElementById('ed-mgr')?.value || '';
   const mainUserId = document.getElementById('ed-main')?.value || '';
   const subUserId = document.getElementById('ed-sub')?.value || null;
   const cwAccountId = (document.getElementById('ed-cwid')?.value || '').trim();
-  const cwAccountName = (document.getElementById('ed-cwname')?.value || '').trim();
 
   // カスタムフィールド値
   const customFieldValues = {};
@@ -1114,9 +1192,9 @@ function saveClientInline(id) {
     const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
     MOCK_DATA.clients.push({
       id: newId, clientCode: nextCode, name, clientType, fiscalMonth,
-      isActive: true, mainUserId, subUserId, mgrUserId: mainUserId,
-      monthlySales, address, tel, industry, representative, taxOffice,
-      memo: '', establishDate: '', cwAccountId, cwAccountName, customFieldValues,
+      isActive: true, mainUserId, subUserId, mgrUserId: mgrUserId || mainUserId,
+      monthlySales, annualFee, spotFees: [], address, tel, industry, representative, taxOffice,
+      memo: '', establishDate: '', cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
     });
     clientEditMode = false;
     navigateTo('client-detail', { id: newId });
@@ -1124,15 +1202,78 @@ function saveClientInline(id) {
     const c = getClientById(id);
     if (c) {
       c.name = name; c.clientType = clientType; c.fiscalMonth = fiscalMonth;
-      c.mainUserId = mainUserId; c.subUserId = subUserId; c.mgrUserId = mainUserId;
-      c.monthlySales = monthlySales; c.address = address; c.tel = tel;
+      c.mgrUserId = mgrUserId || mainUserId; c.mainUserId = mainUserId; c.subUserId = subUserId;
+      c.monthlySales = monthlySales; c.annualFee = annualFee;
+      c.address = address; c.tel = tel;
       c.industry = industry; c.representative = representative; c.taxOffice = taxOffice;
-      c.cwAccountId = cwAccountId; c.cwAccountName = cwAccountName;
+      c.cwAccountId = cwAccountId;
       c.customFieldValues = customFieldValues;
     }
     clientEditMode = false;
     navigateTo('client-detail', { id });
   }
+}
+
+// SPOT報酬の追加・削除
+function addSpotFee(clientId) {
+  const timing = (document.getElementById('add-sf-timing')?.value || '').trim();
+  const amount = parseInt(document.getElementById('add-sf-amount')?.value) || 0;
+  const description = (document.getElementById('add-sf-desc')?.value || '').trim();
+  if (!timing || !amount) { alert('タイミングと金額を入力してください'); return; }
+  const c = getClientById(clientId);
+  if (!c) return;
+  if (!c.spotFees) c.spotFees = [];
+  c.spotFees.push({ id: 'sf-' + Date.now(), timing, amount, description });
+  navigateTo('client-detail', { id: clientId });
+}
+
+function removeSpotFee(index, clientId) {
+  const c = getClientById(clientId);
+  if (!c || !c.spotFees) return;
+  c.spotFees.splice(index, 1);
+  navigateTo('client-detail', { id: clientId });
+}
+
+// CWルームURLの追加・削除
+function addCwRoomUrl(clientId) {
+  const url = (document.getElementById('add-cwroom-url')?.value || '').trim();
+  const name = (document.getElementById('add-cwroom-name')?.value || '').trim();
+  if (!url) { alert('URLを入力してください'); return; }
+  const c = getClientById(clientId);
+  if (!c) return;
+  if (!c.cwRoomUrls) c.cwRoomUrls = [];
+  c.cwRoomUrls.push({ url, name: name || url });
+  navigateTo('client-detail', { id: clientId });
+}
+
+function removeCwRoomUrl(index, clientId) {
+  const c = getClientById(clientId);
+  if (!c || !c.cwRoomUrls) return;
+  c.cwRoomUrls.splice(index, 1);
+  navigateTo('client-detail', { id: clientId });
+}
+
+// 関連顧客の追加・削除
+function addRelatedClient(clientId) {
+  const select = document.getElementById('add-related-client-select');
+  if (!select || !select.value) { alert('顧客を選択してください'); return; }
+  const targetId = select.value;
+  const c = getClientById(clientId);
+  const target = getClientById(targetId);
+  if (!c || !target) return;
+  if (!c.relatedClientIds) c.relatedClientIds = [];
+  if (!target.relatedClientIds) target.relatedClientIds = [];
+  if (!c.relatedClientIds.includes(targetId)) c.relatedClientIds.push(targetId);
+  if (!target.relatedClientIds.includes(clientId)) target.relatedClientIds.push(clientId);
+  navigateTo('client-detail', { id: clientId });
+}
+
+function removeRelatedClient(clientId, targetId) {
+  const c = getClientById(clientId);
+  const target = getClientById(targetId);
+  if (c && c.relatedClientIds) c.relatedClientIds = c.relatedClientIds.filter(id => id !== targetId);
+  if (target && target.relatedClientIds) target.relatedClientIds = target.relatedClientIds.filter(id => id !== clientId);
+  navigateTo('client-detail', { id: clientId });
 }
 
 // ===========================
@@ -2783,7 +2924,7 @@ function previewMentions() {
   const mentions = room.clientIds.map(cid => {
     const c = getClientById(cid);
     if (!c || !c.cwAccountId) return null;
-    return `[To:${c.cwAccountId}]${c.cwAccountName || c.name}さん`;
+    return `[To:${c.cwAccountId}]${c.name}さん`;
   }).filter(Boolean);
 
   if (mentions.length === 0) {
@@ -3017,10 +3158,11 @@ function exportClientCSV() {
   const cfHeaders = customFields.map(cf => cf.name);
   const cfIds = customFields.map(cf => cf.id);
 
-  const header = ['clientCode', 'name', 'clientType', 'fiscalMonth', 'address', 'tel', 'representative', 'industry', 'taxOffice', 'monthlySales', 'cwAccountId', 'cwAccountName', ...cfHeaders];
+  const header = ['clientCode', 'name', 'clientType', 'fiscalMonth', 'address', 'tel', 'representative', 'industry', 'taxOffice', 'monthlySales', 'annualFee', 'spotFees', 'cwAccountId', ...cfHeaders];
   const rows = clients.map(c => {
     const cfv = c.customFieldValues || {};
-    return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.address || '', c.tel || '', c.representative || '', c.industry || '', c.taxOffice || '', c.monthlySales || 0, c.cwAccountId || '', c.cwAccountName || '', ...cfIds.map(id => cfv[id] || '')];
+    const spotFeesJson = (c.spotFees && c.spotFees.length > 0) ? JSON.stringify(c.spotFees) : '';
+    return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.address || '', c.tel || '', c.representative || '', c.industry || '', c.taxOffice || '', c.monthlySales || 0, c.annualFee || 0, spotFeesJson, c.cwAccountId || '', ...cfIds.map(id => cfv[id] || '')];
   });
 
   downloadCSV('顧客一覧.csv', header, rows);
@@ -3059,8 +3201,9 @@ function importClientCSV() {
           if (obj.industry !== undefined) existing.industry = obj.industry;
           if (obj.taxOffice !== undefined) existing.taxOffice = obj.taxOffice;
           if (obj.monthlySales) existing.monthlySales = parseInt(obj.monthlySales) || existing.monthlySales;
+          if (obj.annualFee) existing.annualFee = parseInt(obj.annualFee) || existing.annualFee;
+          if (obj.spotFees) { try { existing.spotFees = JSON.parse(obj.spotFees); } catch(e) {} }
           if (obj.cwAccountId !== undefined) existing.cwAccountId = obj.cwAccountId;
-          if (obj.cwAccountName !== undefined) existing.cwAccountName = obj.cwAccountName;
           // カスタムフィールド
           if (!existing.customFieldValues) existing.customFieldValues = {};
           customFields.forEach(cf => {
@@ -3088,6 +3231,8 @@ function importClientCSV() {
             subUserId: null,
             mgrUserId: MOCK_DATA.users[1]?.id || 'u-002',
             monthlySales: parseInt(obj.monthlySales) || 0,
+            annualFee: parseInt(obj.annualFee) || 0,
+            spotFees: obj.spotFees ? (function(){ try { return JSON.parse(obj.spotFees); } catch(e) { return []; } })() : [],
             address: obj.address || '',
             tel: obj.tel || '',
             representative: obj.representative || '',
@@ -3096,7 +3241,8 @@ function importClientCSV() {
             memo: '',
             establishDate: '',
             cwAccountId: obj.cwAccountId || '',
-            cwAccountName: obj.cwAccountName || '',
+            cwRoomUrls: [],
+            relatedClientIds: [],
             customFieldValues: cfv,
           });
           imported++;
