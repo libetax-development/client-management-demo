@@ -280,6 +280,32 @@ function openClientModal(clientId) {
   const modalTitle = modal.querySelector('.modal-header h3') || modal.querySelector('.modal-header h2');
   if (modalTitle) modalTitle.textContent = editingClientId ? '顧客情報編集' : '新規顧客登録';
 
+  // カスタムフィールド入力エリアを生成
+  const cfArea = document.getElementById('client-custom-fields-area');
+  const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
+  if (customFields.length > 0) {
+    cfArea.innerHTML = `
+      <div style="border-top:1px solid var(--gray-200);padding-top:16px;margin-top:8px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">カスタム項目</div>
+        ${customFields.map(cf => {
+          let input = '';
+          const inputId = 'cf-val-' + cf.id;
+          if (cf.type === 'textarea') {
+            input = `<textarea id="${inputId}" rows="2" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;"></textarea>`;
+          } else if (cf.type === 'date') {
+            input = `<input type="date" id="${inputId}">`;
+          } else if (cf.type === 'number') {
+            input = `<input type="number" id="${inputId}">`;
+          } else {
+            input = `<input type="text" id="${inputId}">`;
+          }
+          return `<div class="form-group"><label>${cf.name}</label>${input}</div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    cfArea.innerHTML = '';
+  }
+
   if (editingClientId) {
     const c = getClientById(editingClientId);
     if (c) {
@@ -296,6 +322,12 @@ function openClientModal(clientId) {
       document.getElementById('new-client-fiscal').value = c.fiscalMonth || 3;
       document.getElementById('new-client-cw-id').value = c.cwAccountId || '';
       document.getElementById('new-client-cw-name').value = c.cwAccountName || '';
+      // カスタムフィールド値セット
+      const cfv = c.customFieldValues || {};
+      customFields.forEach(cf => {
+        const el = document.getElementById('cf-val-' + cf.id);
+        if (el) el.value = cfv[cf.id] || '';
+      });
     }
   } else {
     document.getElementById('new-client-name').value = '';
@@ -308,6 +340,11 @@ function openClientModal(clientId) {
     document.getElementById('new-client-taxoffice').value = '';
     document.getElementById('new-client-cw-id').value = '';
     document.getElementById('new-client-cw-name').value = '';
+    // カスタムフィールド初期化
+    customFields.forEach(cf => {
+      const el = document.getElementById('cf-val-' + cf.id);
+      if (el) el.value = '';
+    });
   }
 
   modal.classList.add('show');
@@ -335,6 +372,13 @@ function submitNewClient() {
   if (!name) { alert('顧客名を入力してください'); return; }
   if (!monthlySales) { alert('月額報酬を入力してください'); return; }
 
+  // カスタムフィールド値を収集
+  const customFieldValues = {};
+  (MOCK_DATA.customFields || []).forEach(cf => {
+    const el = document.getElementById('cf-val-' + cf.id);
+    if (el && el.value.trim()) customFieldValues[cf.id] = el.value.trim();
+  });
+
   if (editingClientId) {
     // 編集モード
     const c = getClientById(editingClientId);
@@ -353,6 +397,7 @@ function submitNewClient() {
       c.taxOffice = taxOffice;
       c.cwAccountId = cwAccountId;
       c.cwAccountName = cwAccountName;
+      c.customFieldValues = customFieldValues;
     }
     closeClientModal();
     navigateTo('client-detail', { id: editingClientId });
@@ -382,6 +427,7 @@ function submitNewClient() {
       establishDate: '',
       cwAccountId,
       cwAccountName,
+      customFieldValues,
     });
 
     closeClientModal();
@@ -817,6 +863,8 @@ function renderClients(el) {
         <option value="inactive">無効</option>
       </select>
       <div class="spacer"></div>
+      <button class="btn btn-csv btn-sm" onclick="exportClientCSV()">CSV出力</button>
+      <button class="btn btn-csv btn-sm" onclick="importClientCSV()">CSV取り込み</button>
       <button class="btn btn-primary" onclick="openClientModal()">+ 新規顧客</button>
     </div>
     <div class="card">
@@ -875,53 +923,73 @@ function renderClientDetail(el, params) {
   const tasks = getTasksByClient(c.id);
   document.getElementById('header-title').textContent = `顧客詳細 - ${c.name}`;
 
+  // カスタムフィールド表示
+  const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
+  const cfValues = c.customFieldValues || {};
+
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('clients')">&larr; 顧客一覧に戻る</a></div>
-    <div class="detail-grid">
-      <div class="card">
-        <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openClientEditModal('${c.id}')">編集</button></div>
-        <div class="card-body">
-          <div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>
-          <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${c.name}</div></div>
-          <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value"><span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span></div></div>
-          <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${c.fiscalMonth}月</div></div>
-          <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${c.monthlySales.toLocaleString()}円</div></div>
-          <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${c.address || '-'}</div></div>
-          <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${c.tel || '-'}</div></div>
-          ${c.clientType === '法人' ? `<div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${c.representative || '-'}</div></div>` : ''}
-          ${c.clientType === '法人' ? `<div class="detail-row"><div class="detail-label">設立日</div><div class="detail-value">${formatDate(c.establishDate)}</div></div>` : ''}
-          <div class="detail-row"><div class="detail-label">業種</div><div class="detail-value">${c.industry || '-'}</div></div>
-          <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${c.taxOffice || '-'}</div></div>
-          ${c.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
-          <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${c.isActive ? '有効' : '無効'}</div></div>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-header"><h3>担当者</h3></div>
-          <div class="card-body">
-            <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${main?.name || '-'}</div></div>
-            <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${sub?.name || '-'}</div></div>
-            <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${mgr?.name || '-'}</div></div>
-            <div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Chatwork連携</h3></div>
-          <div class="card-body">
-            <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${c.cwAccountId ? c.cwAccountId : '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
-            <div class="detail-row"><div class="detail-label">CW表示名</div><div class="detail-value">${c.cwAccountName || '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
-            <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + (c.cwAccountName || c.name) + 'さん</code>' : '<span style="color:var(--gray-400)">-</span>'}</div></div>
-            ${(() => {
-              const rooms = getChatRoomsByClient(c.id);
-              if (rooms.length === 0) return '<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><span style="color:var(--gray-400)">なし</span></div></div>';
-              return rooms.map(r => `<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><a href="${r.roomUrl}" target="_blank">${r.roomName}</a></div></div>`).join('');
-            })()}
-          </div>
-        </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openClientEditModal('${c.id}')">編集</button></div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>
+        <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${c.name}</div></div>
+        <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value"><span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span></div></div>
+        <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${c.fiscalMonth}月</div></div>
+        <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${c.monthlySales.toLocaleString()}円</div></div>
+        <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${c.address || '-'}</div></div>
+        <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${c.tel || '-'}</div></div>
+        ${c.clientType === '法人' ? `<div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${c.representative || '-'}</div></div>` : ''}
+        ${c.clientType === '法人' ? `<div class="detail-row"><div class="detail-label">設立日</div><div class="detail-value">${formatDate(c.establishDate)}</div></div>` : ''}
+        <div class="detail-row"><div class="detail-label">業種</div><div class="detail-value">${c.industry || '-'}</div></div>
+        <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${c.taxOffice || '-'}</div></div>
+        ${c.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
+        <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${c.isActive ? '有効' : '無効'}</div></div>
       </div>
     </div>
-    <div class="card" style="margin-top:24px">
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>Chatwork連携</h3></div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${c.cwAccountId ? c.cwAccountId : '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
+        <div class="detail-row"><div class="detail-label">CW表示名</div><div class="detail-value">${c.cwAccountName || '<span style="color:var(--gray-400)">未設定</span>'}</div></div>
+        <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + (c.cwAccountName || c.name) + 'さん</code>' : '<span style="color:var(--gray-400)">-</span>'}</div></div>
+        ${(() => {
+          const rooms = getChatRoomsByClient(c.id);
+          if (rooms.length === 0) return '<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><span style="color:var(--gray-400)">なし</span></div></div>';
+          return rooms.map(r => `<div class="detail-row"><div class="detail-label">関連ルーム</div><div class="detail-value"><a href="${r.roomUrl}" target="_blank">${r.roomName}</a></div></div>`).join('');
+        })()}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>担当者</h3></div>
+      <div class="card-body">
+        <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${main?.name || '-'}</div></div>
+        <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${sub?.name || '-'}</div></div>
+        <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${mgr?.name || '-'}</div></div>
+        <div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>
+      </div>
+    </div>
+
+    ${customFields.length > 0 ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>カスタム項目</h3><button class="btn btn-secondary btn-sm" onclick="openCustomFieldModal()">項目設定</button></div>
+      <div class="card-body">
+        ${customFields.map(cf => `
+          <div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${cfValues[cf.id] || '<span style="color:var(--gray-400)">-</span>'}</div></div>
+        `).join('')}
+      </div>
+    </div>
+    ` : `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>カスタム項目</h3><button class="btn btn-secondary btn-sm" onclick="openCustomFieldModal()">項目設定</button></div>
+      <div class="card-body"><div style="color:var(--gray-400);font-size:13px;">カスタム項目がありません。「項目設定」から追加してください。</div></div>
+    </div>
+    `}
+
+    <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>関連タスク</h3><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ タスク追加</button></div>
       <div class="card-body">
         <div class="table-wrapper">
@@ -942,7 +1010,7 @@ function renderClientDetail(el, params) {
         </div>
       </div>
     </div>
-    <div style="margin-top:24px;text-align:right;">
+    <div style="text-align:right;">
       <button class="btn btn-danger" onclick="deleteClient('${c.id}')" style="background:var(--danger);color:#fff;border:none;">顧客を削除</button>
     </div>
   `;
@@ -1413,6 +1481,8 @@ function renderStaff(el) {
         ${empTypeOptions}
       </select>
       <div class="spacer"></div>
+      <button class="btn btn-csv btn-sm" onclick="exportStaffCSV()">CSV出力</button>
+      <button class="btn btn-csv btn-sm" onclick="importStaffCSV()">CSV取り込み</button>
       <button class="btn btn-primary" onclick="openStaffModal()">+ 職員追加</button>
     </div>
     <div class="card">
@@ -2708,4 +2778,440 @@ function deleteChatRoom() {
   if (idx >= 0) MOCK_DATA.chatRooms.splice(idx, 1);
   closeChatRoomModal();
   navigateTo('chatrooms');
+}
+
+// ===========================
+// CSV ユーティリティ
+// ===========================
+function csvEscape(val) {
+  const s = String(val == null ? '' : val);
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadCSV(filename, header, rows) {
+  const csvContent = [header.map(csvEscape).join(','), ...rows.map(r => r.map(csvEscape).join(','))].join('\r\n');
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function parseCSV(text) {
+  const lines = [];
+  let current = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        current.push(field);
+        field = '';
+      } else if (ch === '\r') {
+        // skip
+      } else if (ch === '\n') {
+        current.push(field);
+        field = '';
+        lines.push(current);
+        current = [];
+      } else {
+        field += ch;
+      }
+    }
+  }
+  if (field || current.length > 0) {
+    current.push(field);
+    lines.push(current);
+  }
+  return lines;
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+// ===========================
+// 顧客CSV出力・取り込み
+// ===========================
+function exportClientCSV() {
+  const search = (document.getElementById('client-search')?.value || '').toLowerCase();
+  const typeFilter = document.getElementById('client-type-filter')?.value || '';
+  const statusFilter = document.getElementById('client-status-filter')?.value || '';
+
+  let clients = MOCK_DATA.clients.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
+    if (typeFilter && c.clientType !== typeFilter) return false;
+    if (statusFilter === 'active' && !c.isActive) return false;
+    if (statusFilter === 'inactive' && c.isActive) return false;
+    return true;
+  });
+
+  const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
+  const cfHeaders = customFields.map(cf => cf.name);
+  const cfIds = customFields.map(cf => cf.id);
+
+  const header = ['clientCode', 'name', 'clientType', 'fiscalMonth', 'address', 'tel', 'representative', 'industry', 'taxOffice', 'monthlySales', 'cwAccountId', 'cwAccountName', ...cfHeaders];
+  const rows = clients.map(c => {
+    const cfv = c.customFieldValues || {};
+    return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.address || '', c.tel || '', c.representative || '', c.industry || '', c.taxOffice || '', c.monthlySales || 0, c.cwAccountId || '', c.cwAccountName || '', ...cfIds.map(id => cfv[id] || '')];
+  });
+
+  downloadCSV('顧客一覧.csv', header, rows);
+}
+
+function importClientCSV() {
+  const input = document.getElementById('csv-import-input');
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    input.value = '';
+    try {
+      const text = await readFileAsText(file);
+      const lines = parseCSV(text);
+      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
+      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
+      const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
+      let imported = 0;
+      let updated = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        if (row.length < 2 || !row.some(v => v.trim())) continue;
+        const obj = {};
+        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+
+        const existing = MOCK_DATA.clients.find(c => c.clientCode === obj.clientCode);
+        if (existing) {
+          // 更新
+          if (obj.name) existing.name = obj.name;
+          if (obj.clientType) existing.clientType = obj.clientType;
+          if (obj.fiscalMonth) existing.fiscalMonth = parseInt(obj.fiscalMonth) || existing.fiscalMonth;
+          if (obj.address !== undefined) existing.address = obj.address;
+          if (obj.tel !== undefined) existing.tel = obj.tel;
+          if (obj.representative !== undefined) existing.representative = obj.representative;
+          if (obj.industry !== undefined) existing.industry = obj.industry;
+          if (obj.taxOffice !== undefined) existing.taxOffice = obj.taxOffice;
+          if (obj.monthlySales) existing.monthlySales = parseInt(obj.monthlySales) || existing.monthlySales;
+          if (obj.cwAccountId !== undefined) existing.cwAccountId = obj.cwAccountId;
+          if (obj.cwAccountName !== undefined) existing.cwAccountName = obj.cwAccountName;
+          // カスタムフィールド
+          if (!existing.customFieldValues) existing.customFieldValues = {};
+          customFields.forEach(cf => {
+            if (obj[cf.name] !== undefined && obj[cf.name] !== '') {
+              existing.customFieldValues[cf.id] = obj[cf.name];
+            }
+          });
+          updated++;
+        } else {
+          // 新規
+          const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
+          const code = obj.clientCode || String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
+          const cfv = {};
+          customFields.forEach(cf => {
+            if (obj[cf.name]) cfv[cf.id] = obj[cf.name];
+          });
+          MOCK_DATA.clients.push({
+            id: newId,
+            clientCode: code,
+            name: obj.name || '名称未設定',
+            clientType: obj.clientType || '法人',
+            fiscalMonth: parseInt(obj.fiscalMonth) || 3,
+            isActive: true,
+            mainUserId: MOCK_DATA.users[1]?.id || 'u-002',
+            subUserId: null,
+            mgrUserId: MOCK_DATA.users[1]?.id || 'u-002',
+            monthlySales: parseInt(obj.monthlySales) || 0,
+            address: obj.address || '',
+            tel: obj.tel || '',
+            representative: obj.representative || '',
+            industry: obj.industry || '',
+            taxOffice: obj.taxOffice || '',
+            memo: '',
+            establishDate: '',
+            cwAccountId: obj.cwAccountId || '',
+            cwAccountName: obj.cwAccountName || '',
+            customFieldValues: cfv,
+          });
+          imported++;
+        }
+      }
+      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
+      if (currentPage === 'clients') navigateTo('clients');
+    } catch (err) {
+      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+    }
+  };
+  input.click();
+}
+
+// ===========================
+// 職員CSV出力・取り込み
+// ===========================
+function exportStaffCSV() {
+  const search = (document.getElementById('staff-search')?.value || '').toLowerCase();
+  const roleFilter = document.getElementById('staff-role-filter')?.value || '';
+  const deptFilter = document.getElementById('staff-dept-filter')?.value || '';
+  const empTypeFilter = document.getElementById('staff-emptype-filter')?.value || '';
+
+  let users = MOCK_DATA.users.filter(u => {
+    if (search) {
+      const kana = ((u.lastNameKana || '') + ' ' + (u.firstNameKana || '')).toLowerCase();
+      const fullName = ((u.lastName || '') + ' ' + (u.firstName || '')).toLowerCase();
+      if (!u.name.toLowerCase().includes(search) && !u.staffCode.toLowerCase().includes(search) && !kana.includes(search) && !fullName.includes(search)) return false;
+    }
+    if (roleFilter && u.role !== roleFilter) return false;
+    if (deptFilter && String(u.deptId) !== deptFilter) return false;
+    if (empTypeFilter && u.employmentType !== empTypeFilter) return false;
+    return true;
+  });
+
+  const header = ['staffCode', 'lastName', 'firstName', 'lastNameKana', 'firstNameKana', 'email', 'tel', 'mobile', 'deptId', 'position', 'employmentType', 'joinDate', 'role', 'staffFlag', 'memo'];
+  const rows = users.map(u => [u.staffCode || '', u.lastName || '', u.firstName || '', u.lastNameKana || '', u.firstNameKana || '', u.email || '', u.tel || '', u.mobile || '', u.deptId || '', u.position || '', u.employmentType || '', u.joinDate || '', u.role || '', u.staffFlag || '', u.memo || '']);
+
+  downloadCSV('職員一覧.csv', header, rows);
+}
+
+function importStaffCSV() {
+  const input = document.getElementById('csv-import-input');
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    input.value = '';
+    try {
+      const text = await readFileAsText(file);
+      const lines = parseCSV(text);
+      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
+      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
+      let imported = 0;
+      let updated = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        if (row.length < 2 || !row.some(v => v.trim())) continue;
+        const obj = {};
+        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+
+        const existing = MOCK_DATA.users.find(u => u.staffCode === obj.staffCode);
+        if (existing) {
+          if (obj.lastName) existing.lastName = obj.lastName;
+          if (obj.firstName !== undefined) existing.firstName = obj.firstName;
+          if (obj.lastNameKana) existing.lastNameKana = obj.lastNameKana;
+          if (obj.firstNameKana !== undefined) existing.firstNameKana = obj.firstNameKana;
+          existing.name = (existing.lastName || '') + (existing.firstName ? ' ' + existing.firstName : '');
+          if (obj.email) existing.email = obj.email;
+          if (obj.tel !== undefined) existing.tel = obj.tel;
+          if (obj.mobile !== undefined) existing.mobile = obj.mobile;
+          if (obj.deptId) existing.deptId = parseInt(obj.deptId) || existing.deptId;
+          if (obj.position !== undefined) existing.position = obj.position;
+          if (obj.employmentType) existing.employmentType = obj.employmentType;
+          if (obj.joinDate) existing.joinDate = obj.joinDate;
+          if (obj.role) existing.role = obj.role;
+          if (obj.staffFlag) existing.staffFlag = obj.staffFlag;
+          if (obj.memo !== undefined) existing.memo = obj.memo;
+          updated++;
+        } else {
+          const newId = 'u-' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+          const code = obj.staffCode || 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+          const lastName = obj.lastName || '名称未設定';
+          const firstName = obj.firstName || '';
+          const name = firstName ? lastName + ' ' + firstName : lastName;
+          MOCK_DATA.users.push({
+            id: newId,
+            staffCode: code,
+            lastName,
+            firstName,
+            lastNameKana: obj.lastNameKana || '',
+            firstNameKana: obj.firstNameKana || '',
+            name,
+            email: obj.email || '',
+            tel: obj.tel || '',
+            mobile: obj.mobile || '',
+            role: obj.role || 'member',
+            deptId: obj.deptId ? parseInt(obj.deptId) : null,
+            team: null,
+            position: obj.position || '',
+            employmentType: obj.employmentType || '正社員',
+            joinDate: obj.joinDate || '',
+            memo: obj.memo || '',
+            loginId: (obj.email || '').split('@')[0] || '',
+            isActive: true,
+            baseRatio: null,
+            staffFlag: obj.staffFlag || '税務',
+          });
+          imported++;
+        }
+      }
+      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
+      if (currentPage === 'staff') navigateTo('staff');
+    } catch (err) {
+      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+    }
+  };
+  input.click();
+}
+
+// ===========================
+// カスタムフィールド設定
+// ===========================
+function openCustomFieldModal() {
+  document.getElementById('custom-field-modal').classList.add('show');
+  renderCustomFieldList();
+}
+
+function closeCustomFieldModal() {
+  document.getElementById('custom-field-modal').classList.remove('show');
+  // 詳細ページを再描画
+  if (currentPage === 'client-detail') {
+    const hash = location.hash.slice(1);
+    const [page, id] = hash.split('/');
+    if (id) navigateTo('client-detail', { id });
+  }
+}
+
+function renderCustomFieldList() {
+  if (!MOCK_DATA.customFields) MOCK_DATA.customFields = [];
+  const fields = MOCK_DATA.customFields.slice().sort((a, b) => a.order - b.order);
+  const container = document.getElementById('cf-field-list');
+  const typeLabels = { text: 'テキスト', number: '数値', date: '日付', select: '選択肢', textarea: 'テキストエリア' };
+
+  container.innerHTML = fields.length === 0
+    ? '<div style="padding:12px;color:var(--gray-400);font-size:13px;">カスタムフィールドがありません</div>'
+    : fields.map(cf => `
+      <div class="cf-row" draggable="true" data-cf-id="${cf.id}">
+        <span class="cf-handle">&#9776;</span>
+        <span class="cf-name" id="cf-name-display-${cf.id}">${cf.name}</span>
+        <span class="cf-type">${typeLabels[cf.type] || cf.type}</span>
+        <div class="cf-actions">
+          <button class="btn btn-secondary btn-sm" onclick="editCustomFieldName('${cf.id}')">編集</button>
+          <button class="btn btn-sm" style="color:var(--danger);background:none;border:none;cursor:pointer;" onclick="deleteCustomField('${cf.id}')">削除</button>
+        </div>
+      </div>
+    `).join('');
+
+  // ドラッグ&ドロップ設定
+  initCustomFieldDragDrop();
+}
+
+function initCustomFieldDragDrop() {
+  const container = document.getElementById('cf-field-list');
+  const rows = container.querySelectorAll('.cf-row');
+  let draggedEl = null;
+
+  rows.forEach(row => {
+    row.addEventListener('dragstart', (e) => {
+      draggedEl = row;
+      row.classList.add('cf-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', row.dataset.cfId);
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('cf-dragging');
+      rows.forEach(r => r.classList.remove('cf-drag-over'));
+      draggedEl = null;
+    });
+
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (draggedEl && draggedEl !== row) {
+        row.classList.add('cf-drag-over');
+      }
+    });
+
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('cf-drag-over');
+    });
+
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.classList.remove('cf-drag-over');
+      if (!draggedEl || draggedEl === row) return;
+
+      const draggedId = draggedEl.dataset.cfId;
+      const targetId = row.dataset.cfId;
+
+      // 並び替え
+      const fields = MOCK_DATA.customFields.slice().sort((a, b) => a.order - b.order);
+      const draggedIdx = fields.findIndex(f => f.id === draggedId);
+      const targetIdx = fields.findIndex(f => f.id === targetId);
+
+      if (draggedIdx < 0 || targetIdx < 0) return;
+
+      const [moved] = fields.splice(draggedIdx, 1);
+      fields.splice(targetIdx, 0, moved);
+
+      // order を再割り当て
+      fields.forEach((f, i) => { f.order = i + 1; });
+
+      renderCustomFieldList();
+    });
+  });
+}
+
+function addCustomField() {
+  const nameInput = document.getElementById('cf-new-name');
+  const typeSelect = document.getElementById('cf-new-type');
+  const name = nameInput.value.trim();
+  const type = typeSelect.value;
+  if (!name) { alert('フィールド名を入力してください'); return; }
+
+  if (!MOCK_DATA.customFields) MOCK_DATA.customFields = [];
+  const maxOrder = MOCK_DATA.customFields.reduce((m, f) => Math.max(m, f.order), 0);
+  const maxNum = MOCK_DATA.customFields.reduce((m, f) => {
+    const n = parseInt(f.id.replace('cf-', ''));
+    return Math.max(m, n);
+  }, 0);
+  const newId = 'cf-' + String(maxNum + 1).padStart(3, '0');
+
+  MOCK_DATA.customFields.push({ id: newId, name, type, order: maxOrder + 1 });
+  nameInput.value = '';
+  typeSelect.value = 'text';
+  renderCustomFieldList();
+}
+
+function editCustomFieldName(cfId) {
+  const cf = MOCK_DATA.customFields.find(f => f.id === cfId);
+  if (!cf) return;
+  const newName = prompt('新しいフィールド名を入力してください', cf.name);
+  if (!newName || !newName.trim()) return;
+  cf.name = newName.trim();
+  renderCustomFieldList();
+}
+
+function deleteCustomField(cfId) {
+  if (!confirm('このカスタムフィールドを削除しますか？\n全顧客のこの項目の値も削除されます。')) return;
+  MOCK_DATA.customFields = MOCK_DATA.customFields.filter(f => f.id !== cfId);
+  // 全顧客からこのフィールドの値を削除
+  MOCK_DATA.clients.forEach(c => {
+    if (c.customFieldValues) delete c.customFieldValues[cfId];
+  });
+  renderCustomFieldList();
 }

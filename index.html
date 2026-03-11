@@ -198,6 +198,7 @@
         <label>月額報酬（税抜・円）</label>
         <input type="number" id="new-client-sales" placeholder="50000" min="0" step="1000">
       </div>
+      <div id="client-custom-fields-area"></div>
       <div style="border-top:1px solid var(--gray-200);padding-top:16px;margin-top:8px;">
         <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">Chatwork連携</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
@@ -566,6 +567,46 @@
     </div>
   </div>
 </div>
+
+<!-- カスタムフィールド設定モーダル -->
+<div class="modal-overlay" id="custom-field-modal">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3>項目設定（カスタムフィールド）</h3>
+      <button class="btn-icon" onclick="closeCustomFieldModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">ドラッグ&ドロップで並び替えできます</div>
+        <div id="cf-field-list"></div>
+      </div>
+      <div style="border-top:1px solid var(--gray-200);padding-top:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">新規フィールド追加</div>
+        <div style="display:grid;grid-template-columns:1fr 120px;gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" id="cf-new-name" placeholder="フィールド名">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <select id="cf-new-type">
+              <option value="text">テキスト</option>
+              <option value="number">数値</option>
+              <option value="date">日付</option>
+              <option value="select">選択肢</option>
+              <option value="textarea">テキストエリア</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addCustomField()" style="margin-top:12px;">+ 追加</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCustomFieldModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV取り込み用の非表示input -->
+<input type="file" id="csv-import-input" accept=".csv" style="display:none">
 
 <script src="data/mock-data.js"></script>
 <script src="js/app.js"></script>
