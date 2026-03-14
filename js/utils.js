@@ -176,3 +176,35 @@ function bindFilters(ids, handler) {
     el.addEventListener(event, handler);
   });
 }
+
+// CSV取り込み共通フレームワーク
+function runCSVImport(processRow, onComplete) {
+  const input = document.getElementById('csv-import-input');
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    input.value = '';
+    try {
+      const text = await readFileAsText(file);
+      const lines = parseCSV(text);
+      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
+      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
+      let imported = 0;
+      let updated = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        if (row.length < 2 || !row.some(v => v.trim())) continue;
+        const obj = {};
+        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+        const result = processRow(obj);
+        if (result === 'imported') imported++;
+        else if (result === 'updated') updated++;
+      }
+      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
+      if (onComplete) onComplete();
+    } catch (err) {
+      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+    }
+  };
+  input.click();
+}

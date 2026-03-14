@@ -191,82 +191,44 @@ function exportStaffCSV() {
 }
 
 function importStaffCSV() {
-  const input = document.getElementById('csv-import-input');
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    input.value = '';
-    try {
-      const text = await readFileAsText(file);
-      const lines = parseCSV(text);
-      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
-      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
-      let imported = 0;
-      let updated = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i];
-        if (row.length < 2 || !row.some(v => v.trim())) continue;
-        const obj = {};
-        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
-
-        const existing = MOCK_DATA.users.find(u => u.staffCode === obj.staffCode);
-        if (existing) {
-          if (obj.lastName) existing.lastName = obj.lastName;
-          if (obj.firstName !== undefined) existing.firstName = obj.firstName;
-          if (obj.lastNameKana) existing.lastNameKana = obj.lastNameKana;
-          if (obj.firstNameKana !== undefined) existing.firstNameKana = obj.firstNameKana;
-          existing.name = (existing.lastName || '') + (existing.firstName ? ' ' + existing.firstName : '');
-          if (obj.email) existing.email = obj.email;
-          if (obj.tel !== undefined) existing.tel = obj.tel;
-          if (obj.mobile !== undefined) existing.mobile = obj.mobile;
-          if (obj.deptId) existing.deptId = parseInt(obj.deptId) || existing.deptId;
-          if (obj.position !== undefined) existing.position = obj.position;
-          if (obj.employmentType) existing.employmentType = obj.employmentType;
-          if (obj.joinDate) existing.joinDate = obj.joinDate;
-          if (obj.role) existing.role = obj.role;
-          if (obj.staffFlag) existing.staffFlag = obj.staffFlag;
-          if (obj.memo !== undefined) existing.memo = obj.memo;
-          updated++;
-        } else {
-          const newId = generateId('u-', MOCK_DATA.users);
-          const code = obj.staffCode || 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
-          const lastName = obj.lastName || '名称未設定';
-          const firstName = obj.firstName || '';
-          const name = firstName ? lastName + ' ' + firstName : lastName;
-          MOCK_DATA.users.push({
-            id: newId,
-            staffCode: code,
-            lastName,
-            firstName,
-            lastNameKana: obj.lastNameKana || '',
-            firstNameKana: obj.firstNameKana || '',
-            name,
-            email: obj.email || '',
-            tel: obj.tel || '',
-            mobile: obj.mobile || '',
-            role: obj.role || 'member',
-            deptId: obj.deptId ? parseInt(obj.deptId) : null,
-            team: null,
-            position: obj.position || '',
-            employmentType: obj.employmentType || '正社員',
-            joinDate: obj.joinDate || '',
-            memo: obj.memo || '',
-            loginId: (obj.email || '').split('@')[0] || '',
-            isActive: true,
-            baseRatio: null,
-            staffFlag: obj.staffFlag || '税務',
-          });
-          imported++;
-        }
-      }
-      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
-      if (currentPage === 'staff') navigateTo('staff');
-    } catch (err) {
-      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+  runCSVImport((obj) => {
+    const existing = MOCK_DATA.users.find(u => u.staffCode === obj.staffCode);
+    if (existing) {
+      if (obj.lastName) existing.lastName = obj.lastName;
+      if (obj.firstName !== undefined) existing.firstName = obj.firstName;
+      if (obj.lastNameKana) existing.lastNameKana = obj.lastNameKana;
+      if (obj.firstNameKana !== undefined) existing.firstNameKana = obj.firstNameKana;
+      existing.name = (existing.lastName || '') + (existing.firstName ? ' ' + existing.firstName : '');
+      if (obj.email) existing.email = obj.email;
+      if (obj.tel !== undefined) existing.tel = obj.tel;
+      if (obj.mobile !== undefined) existing.mobile = obj.mobile;
+      if (obj.deptId) existing.deptId = parseInt(obj.deptId) || existing.deptId;
+      if (obj.position !== undefined) existing.position = obj.position;
+      if (obj.employmentType) existing.employmentType = obj.employmentType;
+      if (obj.joinDate) existing.joinDate = obj.joinDate;
+      if (obj.role) existing.role = obj.role;
+      if (obj.staffFlag) existing.staffFlag = obj.staffFlag;
+      if (obj.memo !== undefined) existing.memo = obj.memo;
+      return 'updated';
+    } else {
+      const newId = generateId('u-', MOCK_DATA.users);
+      const code = obj.staffCode || 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+      const lastName = obj.lastName || '名称未設定';
+      const firstName = obj.firstName || '';
+      const name = firstName ? lastName + ' ' + firstName : lastName;
+      MOCK_DATA.users.push({
+        id: newId, staffCode: code, lastName, firstName,
+        lastNameKana: obj.lastNameKana || '', firstNameKana: obj.firstNameKana || '',
+        name, email: obj.email || '', tel: obj.tel || '', mobile: obj.mobile || '',
+        role: obj.role || 'member', deptId: obj.deptId ? parseInt(obj.deptId) : null,
+        team: null, position: obj.position || '', employmentType: obj.employmentType || '正社員',
+        joinDate: obj.joinDate || '', memo: obj.memo || '',
+        loginId: (obj.email || '').split('@')[0] || '', isActive: true,
+        baseRatio: null, staffFlag: obj.staffFlag || '税務',
+      });
+      return 'imported';
     }
-  };
-  input.click();
+  }, () => { if (currentPage === 'staff') navigateTo('staff'); });
 }
 
 registerPage('staff', renderStaff);
