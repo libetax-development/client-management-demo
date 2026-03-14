@@ -219,6 +219,35 @@ const MOCK_DATA = {
     { id: 'al-010', timestamp: '2026-02-01T00:00:00', ruleId: 'ar-006', ruleName: '決算期限自動算出', result: '成功', targetCount: 2 },
   ],
 
+  // タスクコメント
+  taskComments: [
+    { id: 'tc-001', taskId: 'tk-001', authorId: 'u-003', body: '仕訳データの確認が完了しました。申告書のドラフトに着手します。', createdAt: '2026-03-08T14:30:00' },
+    { id: 'tc-002', taskId: 'tk-001', authorId: 'u-002', body: '資料の追加が必要です。決算整理仕訳の根拠資料を確認してください。', createdAt: '2026-03-09T10:15:00' },
+    { id: 'tc-003', taskId: 'tk-001', authorId: 'u-003', body: '承知しました。本日中に確認して追記します。', createdAt: '2026-03-09T11:00:00' },
+    { id: 'tc-004', taskId: 'tk-004', authorId: 'u-005', body: '医療費控除の明細書が未提出です。顧客に連絡済み。', createdAt: '2026-03-07T16:00:00' },
+    { id: 'tc-005', taskId: 'tk-004', authorId: 'u-009', body: '3/10までに届かなければ先に他の部分を進めてください。', createdAt: '2026-03-08T09:00:00' },
+    { id: 'tc-006', taskId: 'tk-006', authorId: 'u-002', body: '売上計上のタイミングに誤りがあります。修正をお願いします。', createdAt: '2026-03-06T15:30:00' },
+    { id: 'tc-007', taskId: 'tk-006', authorId: 'u-006', body: '修正しました。再度レビューをお願いいたします。', createdAt: '2026-03-07T11:00:00' },
+    { id: 'tc-008', taskId: 'tk-008', authorId: 'u-007', body: '入力完了。売上仕訳の確認待ちです。', createdAt: '2026-03-10T17:00:00' },
+    { id: 'tc-009', taskId: 'tk-010', authorId: 'u-006', body: 'NPO法人の活動計算書フォーマットで作成中です。', createdAt: '2026-03-09T13:00:00' },
+  ],
+
+  // カレンダーイベント（面談・MTG等）
+  calendarEvents: [
+    { id: 'ev-001', title: '株式会社サンプル商事 決算打ち合わせ', date: '2026-03-18', time: '10:00', duration: 60, type: 'meeting', userId: 'u-003', clientId: 'c-001', location: 'Zoom' },
+    { id: 'ev-002', title: '田中一郎 確定申告面談', date: '2026-03-14', time: '14:00', duration: 30, type: 'meeting', userId: 'u-005', clientId: 'c-003', location: '来所' },
+    { id: 'ev-003', title: '全体ミーティング', date: '2026-03-17', time: '09:00', duration: 60, type: 'internal', userId: null, clientId: null, location: 'Zoom' },
+    { id: 'ev-004', title: '株式会社リベ不動産 月次報告', date: '2026-03-20', time: '15:00', duration: 45, type: 'meeting', userId: 'u-003', clientId: 'c-004', location: 'Zoom' },
+    { id: 'ev-005', title: 'デジタルソリューション 月次面談', date: '2026-03-14', time: '10:00', duration: 60, type: 'meeting', userId: 'u-004', clientId: 'c-007', location: 'Zoom' },
+    { id: 'ev-006', title: '新人研修（税務基礎）', date: '2026-03-19', time: '13:00', duration: 120, type: 'internal', userId: null, clientId: null, location: '会議室A' },
+    { id: 'ev-007', title: 'NPOサポートネット 決算説明', date: '2026-03-25', time: '11:00', duration: 60, type: 'meeting', userId: 'u-006', clientId: 'c-010', location: '来所' },
+    { id: 'ev-008', title: '佐藤二郎 確定申告最終確認', date: '2026-03-12', time: '16:00', duration: 30, type: 'meeting', userId: 'u-006', clientId: 'c-005', location: '電話' },
+    { id: 'ev-009', title: 'チームリーダー定例', date: '2026-03-21', time: '09:00', duration: 30, type: 'internal', userId: null, clientId: null, location: 'Zoom' },
+    { id: 'ev-010', title: '確定申告期限', date: '2026-03-16', time: null, duration: null, type: 'deadline', userId: null, clientId: null, location: null },
+    { id: 'ev-011', title: 'スカイブルー 法人税相談', date: '2026-03-26', time: '14:00', duration: 45, type: 'meeting', userId: 'u-003', clientId: 'c-009', location: 'Zoom' },
+    { id: 'ev-012', title: 'グリーンファーム 記帳確認', date: '2026-03-13', time: '11:00', duration: 30, type: 'meeting', userId: 'u-007', clientId: 'c-006', location: '電話' },
+  ],
+
   notifications: [
     { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
     { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },
@@ -235,6 +264,8 @@ function getTasksByAssignee(userId) { return MOCK_DATA.tasks.filter(t => t.assig
 
 function getChatRoomsByClient(clientId) { return MOCK_DATA.chatRooms.filter(r => r.clientIds.includes(clientId)); }
 function getChatRoomById(id) { return MOCK_DATA.chatRooms.find(r => r.id === id); }
+function getTaskComments(taskId) { return MOCK_DATA.taskComments.filter(c => c.taskId === taskId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)); }
+function getCalendarEvents(dateStr) { return MOCK_DATA.calendarEvents.filter(e => e.date === dateStr); }
 
 function getRoleBadge(role) {
   const map = { superadmin: 'SA', admin: '管理者', team_leader: 'TL', member: 'メンバー' };

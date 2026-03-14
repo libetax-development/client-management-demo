@@ -33,6 +33,7 @@ function navigateTo(pageName, params = {}) {
     'staff-detail': '職員詳細',
     timesheet: '工数管理',
     reports: '報告書',
+    'report-detail': '報告書詳細',
     calendar: 'カレンダー',
     rewards: '報酬管理',
     chatrooms: 'チャットマスタ',
@@ -765,6 +766,7 @@ function registerAllPages() {
   registerPage('staff-detail', renderStaffDetail);
   registerPage('timesheet', renderTimesheet);
   registerPage('reports', renderReports);
+  registerPage('report-detail', renderReportDetail);
   registerPage('calendar', renderCalendar);
   registerPage('rewards', renderRewards);
   registerPage('chatrooms', renderChatRooms);
@@ -1385,19 +1387,57 @@ function renderTaskDetail(el, params) {
         <div class="card">
           <div class="card-header"><h3>コメント</h3></div>
           <div class="card-body">
-            <div style="padding:12px;background:var(--gray-50);border-radius:6px;margin-bottom:12px;">
-              <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px;">齋藤 太郎 - 2026/03/08</div>
-              <div style="font-size:13px;">仕訳データの確認が完了しました。申告書のドラフトに着手します。</div>
-            </div>
+            <div id="task-comments-list"></div>
             <div style="display:flex;gap:8px;">
-              <input type="text" class="search-input" style="flex:1;width:auto" placeholder="コメントを入力...">
-              <button class="btn btn-primary btn-sm">送信</button>
+              <input type="text" class="search-input" id="task-comment-input" style="flex:1;width:auto" placeholder="コメントを入力...">
+              <button class="btn btn-primary btn-sm" id="task-comment-send">送信</button>
             </div>
           </div>
         </div>
       </div>
     </div>
   `;
+
+  renderTaskComments(t.id);
+
+  document.getElementById('task-comment-send').addEventListener('click', () => submitTaskComment(t.id));
+  document.getElementById('task-comment-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitTaskComment(t.id); }
+  });
+}
+
+function renderTaskComments(taskId) {
+  const comments = getTaskComments(taskId);
+  const container = document.getElementById('task-comments-list');
+  if (comments.length === 0) {
+    container.innerHTML = '<div style="padding:12px;color:var(--gray-400);font-size:13px;">コメントはまだありません</div>';
+    return;
+  }
+  container.innerHTML = comments.map(c => {
+    const author = getUserById(c.authorId);
+    return `<div style="padding:12px;background:var(--gray-50);border-radius:6px;margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px;">${author?.name || '-'} - ${formatDate(c.createdAt)}</div>
+      <div style="font-size:13px;">${escapeHtml(c.body)}</div>
+    </div>`;
+  }).join('');
+}
+
+function submitTaskComment(taskId) {
+  const input = document.getElementById('task-comment-input');
+  const body = input.value.trim();
+  if (!body) return;
+
+  const newId = 'tc-' + String(MOCK_DATA.taskComments.length + 1).padStart(3, '0');
+  MOCK_DATA.taskComments.push({
+    id: newId,
+    taskId: taskId,
+    authorId: MOCK_DATA.currentUser.id,
+    body: body,
+    createdAt: new Date().toISOString(),
+  });
+
+  input.value = '';
+  renderTaskComments(taskId);
 }
 
 // ===========================
@@ -2174,12 +2214,146 @@ function rpMarkAllRead() {
 function rpClickReport(id) {
   const r = MOCK_DATA.reports.find(x => x.id === id);
   if (r && r.readStatus === '未読') r.readStatus = '既読';
-  if (rpExpandedSet.has(id)) {
-    rpExpandedSet.delete(id);
-  } else {
-    rpExpandedSet.add(id);
+  navigateTo('report-detail', { id });
+}
+
+// ===========================
+// 報告書詳細
+// ===========================
+function renderReportDetail(el, params) {
+  const r = MOCK_DATA.reports.find(x => x.id === params.id);
+  if (!r) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>報告書が見つかりません</p></div>'; return; }
+  const author = getUserById(r.authorId);
+  document.getElementById('header-title').textContent = `報告書詳細 - ${r.title}`;
+
+  // モック本文を種別に応じて生成
+  const mockBody = generateReportBody(r);
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('reports')">&larr; 報告書一覧に戻る</a></div>
+    <div class="detail-grid">
+      <div class="card">
+        <div class="card-header">
+          <h3>${r.title}</h3>
+          <div style="display:flex;gap:8px;">
+            <span class="rp-row-badge ${r.readStatus === '未読' ? 'rp-badge-unread' : r.readStatus === '一時保存中' ? 'rp-badge-draft' : 'rp-badge-read'}">${r.readStatus}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="white-space:pre-wrap;font-size:13px;line-height:1.8;color:var(--gray-700);">${escapeHtml(mockBody)}</div>
+          ${r.hasAttachment ? '<div style="margin-top:16px;padding:12px;background:var(--gray-50);border-radius:6px;"><span style="font-size:13px;">&#128206; 添付ファイル: <a href="#" onclick="event.preventDefault();alert(\'ファイルを開きます（モック）\')">' + r.title.slice(0, 20) + '_資料.pdf</a></span></div>' : ''}
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h3>報告書情報</h3></div>
+          <div class="card-body">
+            <div class="detail-row"><div class="detail-label">作成者</div><div class="detail-value">${author?.name || '-'}</div></div>
+            <div class="detail-row"><div class="detail-label">作成日時</div><div class="detail-value">${formatDate(r.createdAt)}</div></div>
+            <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${r.type}</div></div>
+            <div class="detail-row"><div class="detail-label">業務分類</div><div class="detail-value">${r.category}</div></div>
+            <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value">${r.clientName || '-'}</div></div>
+            <div class="detail-row"><div class="detail-label">ランク</div><div class="detail-value"><span class="rp-rank-display rp-rank-${r.rank}">${r.rank}</span></div></div>
+            <div class="detail-row"><div class="detail-label">添付ファイル</div><div class="detail-value">${r.hasAttachment ? 'あり' : 'なし'}</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>操作</h3></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="alert('Chatworkに転送しました（モック）')">Chatworkに転送</button>
+            <button class="btn btn-secondary btn-sm" onclick="alert('PDFをダウンロードしました（モック）')">PDF出力</button>
+            ${r.readStatus === '一時保存中' ? '<button class="btn btn-primary btn-sm" onclick="rpSubmitDraft(\'' + r.id + '\')">提出する</button>' : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function rpSubmitDraft(id) {
+  const r = MOCK_DATA.reports.find(x => x.id === id);
+  if (r) {
+    r.readStatus = '未読';
+    navigateTo('report-detail', { id });
   }
-  rpRenderList();
+}
+
+function generateReportBody(r) {
+  if (r.type === '日報') {
+    return `【日報】${r.title}
+
+■ 本日の業務内容
+・顧客対応（面談・メール・チャット）
+・書類作成・チェック業務
+・社内ミーティング参加
+
+■ 明日の予定
+・申告書類の最終確認
+・顧客フォローアップ
+
+■ 所感・連絡事項
+特になし`;
+  }
+  const templates = {
+    '確定申告': `【確定申告】${r.clientName}
+
+■ 作業内容
+${r.title}
+
+■ 実施事項
+・会計帳簿のチェック（仕訳内容・勘定科目の確認）
+・前年度との比較分析
+・不明点の洗い出しと顧客への確認事項整理
+
+■ 確認事項
+・売上計上基準の確認が必要
+・経費の按分比率について顧客に確認中
+
+■ 次のアクション
+・顧客からの回答待ち → 回答後に申告書ドラフト作成予定
+・レビュー依頼予定日: 未定`,
+
+    '決算業務': `【決算業務】${r.clientName}
+
+■ 作業内容
+${r.title}
+
+■ 実施事項
+・決算整理仕訳の確認
+・減価償却費の計算
+・引当金の計上確認
+
+■ 特記事項
+・固定資産台帳との照合完了
+・税効果会計の適用確認中
+
+■ 次のアクション
+・申告書作成に着手予定`,
+
+    '月次業務': `【月次業務】${r.clientName}
+
+■ 作業内容
+${r.title}
+
+■ 実施事項
+・月次試算表の作成
+・前月比較分析
+・資金繰り表の更新
+
+■ 連絡事項
+・異常値なし
+・顧客への月次報告完了`,
+  };
+  return templates[r.category] || `【${r.category}】${r.clientName}
+
+■ 作業内容
+${r.title}
+
+■ 実施事項
+・業務対応実施
+
+■ 備考
+特になし`;
 }
 
 function rpExpandAll() {
@@ -2250,6 +2424,11 @@ function renderCalendar(el) {
       <h3 id="cal-title" style="margin:0 16px;min-width:140px;text-align:center;"></h3>
       <button class="btn btn-secondary" id="cal-next">次月 &rarr;</button>
       <div class="spacer"></div>
+      <select class="filter-select" id="cal-type-filter">
+        <option value="">全て表示</option>
+        <option value="task">タスク期限のみ</option>
+        <option value="event">イベントのみ</option>
+      </select>
       <select class="filter-select" id="cal-user-filter">
         <option value="">全担当者</option>
         ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
@@ -2260,19 +2439,26 @@ function renderCalendar(el) {
         <div class="cal-grid" id="cal-grid"></div>
       </div>
     </div>
+    <div id="cal-day-detail" style="display:none;margin-top:16px;"></div>
   `;
 
   function draw() {
     document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
     const userFilter = document.getElementById('cal-user-filter')?.value || '';
+    const typeFilter = document.getElementById('cal-type-filter')?.value || '';
     const firstDay = new Date(calYear, calMonth, 1).getDay();
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
     const today = new Date().toISOString().slice(0, 10);
 
-    let tasks = MOCK_DATA.tasks.filter(t => {
+    let tasks = typeFilter !== 'event' ? MOCK_DATA.tasks.filter(t => {
       if (userFilter && t.assigneeUserId !== userFilter) return false;
       return true;
-    });
+    }) : [];
+
+    let events = typeFilter !== 'task' ? MOCK_DATA.calendarEvents.filter(e => {
+      if (userFilter && e.userId && e.userId !== userFilter) return false;
+      return true;
+    }) : [];
 
     const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
     let html = dayHeaders.map((d, i) => `<div class="cal-header ${i === 0 ? 'cal-sun' : i === 6 ? 'cal-sat' : ''}">${d}</div>`).join('');
@@ -2286,23 +2472,101 @@ function renderCalendar(el) {
       const isToday = dateStr === today;
       const dow = (firstDay + d - 1) % 7;
       const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+      const dayEvents = events.filter(e => e.date === dateStr);
+      const allItems = [];
 
-      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 0 ? 'cal-sun' : dow === 6 ? 'cal-sat' : ''}">
+      dayTasks.forEach(t => {
+        const client = getClientById(t.clientId);
+        allItems.push({ html: `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>` });
+      });
+      dayEvents.forEach(e => {
+        const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+        const timeStr = e.time ? e.time + ' ' : '';
+        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}">${timeStr}${e.title.slice(0, 10)}</div>` });
+      });
+
+      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 0 ? 'cal-sun' : dow === 6 ? 'cal-sat' : ''}" data-date="${dateStr}" style="cursor:pointer;">
         <div class="cal-date">${d}</div>
-        ${dayTasks.slice(0, 3).map(t => {
-          const client = getClientById(t.clientId);
-          return `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>`;
-        }).join('')}
-        ${dayTasks.length > 3 ? `<div class="cal-more">+${dayTasks.length - 3}件</div>` : ''}
+        ${allItems.slice(0, 3).map(i => i.html).join('')}
+        ${allItems.length > 3 ? `<div class="cal-more">+${allItems.length - 3}件</div>` : ''}
       </div>`;
     }
 
     document.getElementById('cal-grid').innerHTML = html;
+
+    // 日付クリックで詳細表示
+    document.querySelectorAll('.cal-day[data-date]').forEach(cell => {
+      cell.addEventListener('click', () => showCalDayDetail(cell.dataset.date, userFilter, typeFilter));
+    });
+  }
+
+  function showCalDayDetail(dateStr, userFilter, typeFilter) {
+    const detail = document.getElementById('cal-day-detail');
+    const dayTasks = typeFilter !== 'event' ? MOCK_DATA.tasks.filter(t => {
+      if (t.dueDate !== dateStr) return false;
+      if (userFilter && t.assigneeUserId !== userFilter) return false;
+      return true;
+    }) : [];
+    const dayEvents = typeFilter !== 'task' ? MOCK_DATA.calendarEvents.filter(e => {
+      if (e.date !== dateStr) return false;
+      if (userFilter && e.userId && e.userId !== userFilter) return false;
+      return true;
+    }) : [];
+
+    if (dayTasks.length === 0 && dayEvents.length === 0) {
+      detail.style.display = 'none';
+      return;
+    }
+
+    const d = new Date(dateStr);
+    const dateLabel = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+
+    let html = `<div class="card">
+      <div class="card-header"><h3>${dateLabel} の予定</h3><button class="btn-icon" onclick="document.getElementById('cal-day-detail').style.display='none'">&times;</button></div>
+      <div class="card-body">`;
+
+    if (dayEvents.length > 0) {
+      html += '<div style="margin-bottom:12px;"><div style="font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:8px;">イベント</div>';
+      html += dayEvents.map(e => {
+        const user = e.userId ? getUserById(e.userId) : null;
+        const client = e.clientId ? getClientById(e.clientId) : null;
+        const typeLabel = { meeting: '面談', internal: '社内', deadline: '期限' }[e.type] || e.type;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+          <span class="cal-event-type-badge cal-event-${e.type}" style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">${typeLabel}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">${e.time ? e.time + ' ' : ''}${e.title}</div>
+            <div style="font-size:11px;color:var(--gray-400);">${[user?.name, client?.name, e.location].filter(Boolean).join(' / ')}</div>
+          </div>
+        </div>`;
+      }).join('');
+      html += '</div>';
+    }
+
+    if (dayTasks.length > 0) {
+      html += '<div><div style="font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:8px;">タスク期限</div>';
+      html += dayTasks.map(t => {
+        const client = getClientById(t.clientId);
+        const assignee = getUserById(t.assigneeUserId);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="navigateTo('task-detail',{id:'${t.id}'})">
+          <span class="status-badge ${getStatusClass(t.status)}">${t.status}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">${t.title}</div>
+            <div style="font-size:11px;color:var(--gray-400);">${client?.name || '-'} / ${assignee?.name || '-'}</div>
+          </div>
+        </div>`;
+      }).join('');
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+    detail.innerHTML = html;
+    detail.style.display = 'block';
   }
 
   document.getElementById('cal-prev').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } draw(); });
   document.getElementById('cal-next').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } draw(); });
   document.getElementById('cal-user-filter').addEventListener('change', draw);
+  document.getElementById('cal-type-filter').addEventListener('change', draw);
   draw();
 }
 
