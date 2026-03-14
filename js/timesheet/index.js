@@ -6,7 +6,7 @@ function renderTimesheet(el) {
     <div class="toolbar">
       <select class="filter-select" id="ts-user-filter">
         <option value="">全職員</option>
-        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+        ${buildUserOptions()}
       </select>
       <input type="date" class="filter-select" id="ts-date-filter" value="2026-03-07">
       <div class="spacer"></div>
@@ -28,8 +28,7 @@ function renderTimesheet(el) {
     </div>
   `;
   renderTimesheetData();
-  document.getElementById('ts-user-filter').addEventListener('change', renderTimesheetData);
-  document.getElementById('ts-date-filter').addEventListener('change', renderTimesheetData);
+  bindFilters(['ts-user-filter', 'ts-date-filter'], renderTimesheetData);
 }
 
 function renderTimesheetData() {
@@ -71,20 +70,17 @@ function renderTimesheetData() {
     </div>
   `;
 
-  const tbody = document.getElementById('ts-table-body');
-  tbody.innerHTML = entries.length === 0
-    ? '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px;">該当するデータがありません</td></tr>'
-    : entries.map(e => {
-      const user = getUserById(e.userId);
-      const client = getClientById(e.clientId);
-      return `<tr>
-        <td>${formatDate(e.date)}</td>
-        <td>${user?.name || '-'}</td>
-        <td>${client?.name || '-'}</td>
-        <td>${e.description}</td>
-        <td><strong>${e.hours.toFixed(1)}h</strong></td>
-      </tr>`;
-    }).join('');
+  renderTableBody('ts-table-body', entries, e => {
+    const user = getUserById(e.userId);
+    const client = getClientById(e.clientId);
+    return `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td>${user?.name || '-'}</td>
+      <td>${client?.name || '-'}</td>
+      <td>${e.description}</td>
+      <td><strong>${e.hours.toFixed(1)}h</strong></td>
+    </tr>`;
+  }, 5);
 }
 
 registerPage('timesheet', renderTimesheet);

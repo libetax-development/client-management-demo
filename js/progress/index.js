@@ -43,7 +43,7 @@ function renderProgress(el) {
     const container = document.getElementById('pg-list');
 
     if (sheets.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>該当する進捗管理表がありません</p></div>';
+      container.innerHTML = renderEmptyState('該当する進捗管理表がありません');
       return;
     }
 
@@ -142,7 +142,7 @@ function renderProgress(el) {
 // ===========================
 function renderProgressDetail(el, params) {
   const sheet = MOCK_DATA.progressSheets.find(s => s.id === params.id);
-  if (!sheet) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>進捗管理表が見つかりません</p></div>'; return; }
+  if (!sheet) { el.innerHTML = renderEmptyState('進捗管理表が見つかりません'); return; }
   document.getElementById('header-title').textContent = `進捗管理表 - ${sheet.name}`;
 
   el.innerHTML = `
@@ -151,7 +151,7 @@ function renderProgressDetail(el, params) {
     <div class="toolbar" style="flex-wrap:wrap;">
       <select class="filter-select" id="pd-assignee-filter">
         <option value="">全担当者</option>
-        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+        ${buildUserOptions()}
       </select>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;">
         <input type="checkbox" id="pd-main-only"> 主担当先のみ
@@ -234,7 +234,7 @@ function renderProgressDetail(el, params) {
 
     // Table body
     document.getElementById('pd-tbody').innerHTML = targets.length === 0
-      ? `<tr><td colspan="${4 + sheet.columns.length + 1}" style="text-align:center;color:var(--gray-400);padding:24px;">該当するデータがありません</td></tr>`
+      ? renderEmptyRow(4 + sheet.columns.length + 1)
       : targets.map(t => {
         const client = getClientById(t.clientId);
         const main = getUserById(client?.mainUserId);

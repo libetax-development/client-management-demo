@@ -14,7 +14,7 @@ function renderTasks(el) {
       </select>
       <select class="filter-select" id="task-assignee-filter">
         <option value="">全担当者</option>
-        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+        ${buildUserOptions()}
       </select>
       <div class="spacer"></div>
       <button class="btn btn-primary" onclick="openTaskModal()">+ 新規タスク</button>
@@ -29,10 +29,7 @@ function renderTasks(el) {
     </div>
   `;
   renderTaskTable();
-
-  document.getElementById('task-search').addEventListener('input', renderTaskTable);
-  document.getElementById('task-status-filter').addEventListener('change', renderTaskTable);
-  document.getElementById('task-assignee-filter').addEventListener('change', renderTaskTable);
+  bindFilters(['task-search', 'task-status-filter', 'task-assignee-filter'], renderTaskTable);
 }
 
 function renderTaskTable() {
@@ -50,8 +47,7 @@ function renderTaskTable() {
 
   tasks.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
-  const tbody = document.getElementById('task-table-body');
-  tbody.innerHTML = tasks.map(t => {
+  renderTableBody('task-table-body', tasks, t => {
     const client = getClientById(t.clientId);
     const assignee = getUserById(t.assigneeUserId);
     return `<tr class="clickable" onclick="navigateTo('task-detail',{id:'${t.id}'})">
@@ -59,9 +55,9 @@ function renderTaskTable() {
       <td><strong>${t.title}</strong></td>
       <td>${assignee?.name || '-'}</td>
       <td>${formatDate(t.dueDate)}</td>
-      <td><span class="status-badge ${getStatusClass(t.status)}">${t.status}</span></td>
+      <td>${renderStatusBadge(t.status)}</td>
     </tr>`;
-  }).join('');
+  }, 5);
 }
 
 // ===========================
@@ -69,7 +65,7 @@ function renderTaskTable() {
 // ===========================
 function renderTaskDetail(el, params) {
   const t = MOCK_DATA.tasks.find(tk => tk.id === params.id);
-  if (!t) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>タスクが見つかりません</p></div>'; return; }
+  if (!t) { el.innerHTML = renderEmptyState('タスクが見つかりません'); return; }
   const client = getClientById(t.clientId);
   const assignee = getUserById(t.assigneeUserId);
   document.getElementById('header-title').textContent = `タスク詳細 - ${t.title}`;
@@ -83,7 +79,7 @@ function renderTaskDetail(el, params) {
           <div class="detail-row"><div class="detail-label">タスク名</div><div class="detail-value">${t.title}</div></div>
           <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${t.clientId}'})">${client?.name || '-'}</a></div></div>
           <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${assignee?.name || '-'}</div></div>
-          <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value"><span class="status-badge ${getStatusClass(t.status)}">${t.status}</span></div></div>
+          <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${renderStatusBadge(t.status)}</div></div>
           <div class="detail-row"><div class="detail-label">期限</div><div class="detail-value">${formatDate(t.dueDate)}</div></div>
           <div class="detail-row"><div class="detail-label">作成日</div><div class="detail-value">${formatDate(t.createdAt)}</div></div>
         </div>
@@ -143,7 +139,7 @@ function submitTaskComment(taskId) {
   const body = input.value.trim();
   if (!body) return;
 
-  const newId = 'tc-' + String(MOCK_DATA.taskComments.length + 1).padStart(3, '0');
+  const newId = generateId('tc-', MOCK_DATA.taskComments);
   MOCK_DATA.taskComments.push({
     id: newId,
     taskId: taskId,

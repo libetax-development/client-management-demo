@@ -62,7 +62,7 @@ function renderReports(el) {
           <label>作成者：</label>
           <select id="rp-s-author">
             <option value="">すべて</option>
-            ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+            ${buildUserOptions()}
           </select>
         </div>
         <div class="rp-search-group">
@@ -148,7 +148,7 @@ function rpRenderList() {
 
   const body = document.getElementById('rp-list-body');
   if (all.length === 0) {
-    body.innerHTML = '<div class="empty-state" style="padding:40px"><div class="icon">\ud83d\udcdd</div><p>該当する報告書がありません</p></div>';
+    body.innerHTML = renderEmptyState('該当する報告書がありません', '\ud83d\udcdd');
   } else {
     body.innerHTML = page.map(r => {
       const author = getUserById(r.authorId);
@@ -209,7 +209,7 @@ function rpClickReport(id) {
 // ===========================
 function renderReportDetail(el, params) {
   const r = MOCK_DATA.reports.find(x => x.id === params.id);
-  if (!r) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>報告書が見つかりません</p></div>'; return; }
+  if (!r) { el.innerHTML = renderEmptyState('報告書が見つかりません'); return; }
   const author = getUserById(r.authorId);
   document.getElementById('header-title').textContent = `報告書詳細 - ${r.title}`;
 

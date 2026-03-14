@@ -421,7 +421,7 @@ function renderAISuggestionResults() {
   `;
 
   if (aiSuggestions.length === 0) {
-    listDiv.innerHTML = `<div class="empty-state"><div class="icon">&#x2705;</div><p>現在、AIからの提案はありません。すべて順調です。</p></div>`;
+    listDiv.innerHTML = renderEmptyState('現在、AIからの提案はありません。すべて順調です。', '&#x2705;');
     return;
   }
 
@@ -459,7 +459,7 @@ function createSuggestedTask(sgId) {
   const dueDateStr = dueDate.toISOString().slice(0, 10);
 
   const newTask = {
-    id: 'tk-' + String(MOCK_DATA.tasks.length + 1).padStart(3, '0'),
+    id: generateId('tk-', MOCK_DATA.tasks),
     clientId: sg.clientId,
     assigneeUserId: client.mainUserId || 'u-003',
     title: sg.taskTitle,

@@ -93,3 +93,142 @@ function formatDateTime(iso) {
   const d = new Date(iso);
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
+
+// ── UI共通ヘルパー ──
+
+// ID生成
+function generateId(prefix, collection) {
+  return prefix + String(collection.length + 1).padStart(3, '0');
+}
+
+// 空状態表示
+function renderEmptyState(message, icon) {
+  return `<div class="empty-state"><div class="icon">${icon || '?'}</div><p>${message}</p></div>`;
+}
+
+// テーブル空行
+function renderEmptyRow(colspan, message) {
+  return `<tr><td colspan="${colspan}" style="text-align:center;color:var(--gray-400);padding:24px;">${message || '該当するデータがありません'}</td></tr>`;
+}
+
+// ステータスバッジHTML
+function renderStatusBadge(status) {
+  return `<span class="status-badge ${getStatusClass(status)}">${status}</span>`;
+}
+
+// 種別バッジHTML
+function renderTypeBadge(clientType) {
+  return `<span class="type-badge ${clientType === '法人' ? 'type-corp' : 'type-individual'}">${clientType}</span>`;
+}
+
+// selectのoptions生成
+function buildUserOptions(filter) {
+  let users = MOCK_DATA.users.filter(u => u.isActive);
+  if (filter === 'staff') users = users.filter(u => u.role !== 'admin');
+  if (filter === 'leaders') users = users.filter(u => u.role === 'admin' || u.role === 'team_leader');
+  return users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+}
+
+function buildClientOptions(activeOnly) {
+  const clients = activeOnly ? MOCK_DATA.clients.filter(c => c.isActive) : MOCK_DATA.clients;
+  return clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+// フォーム値取得ヘルパー
+function getVal(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el) return fallback !== undefined ? fallback : '';
+  return el.value;
+}
+
+function getValTrim(id) {
+  return (getVal(id) || '').trim();
+}
+
+function getValInt(id, fallback) {
+  return parseInt(getVal(id)) || (fallback !== undefined ? fallback : 0);
+}
+
+// バリデーション
+function requireField(id, message) {
+  const val = getValTrim(id);
+  if (!val) { alert(message); return null; }
+  return val;
+}
+
+// テーブル本体レンダリング
+function renderTableBody(tbodyId, items, rowRenderer, emptyColspan, emptyMessage) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (items.length === 0) {
+    tbody.innerHTML = renderEmptyRow(emptyColspan, emptyMessage);
+    return;
+  }
+  tbody.innerHTML = items.map(rowRenderer).join('');
+}
+
+// フィルタ要素へのイベントバインド
+function bindFilters(ids, handler) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const event = el.tagName === 'SELECT' ? 'change' : el.type === 'checkbox' ? 'change' : 'input';
+    el.addEventListener(event, handler);
+  });
+}
+
+// モーダル表示・非表示
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// フォーム値一括セット { elementId: value, ... }
+function setFormValues(map) {
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = !!val;
+    else el.value = val != null ? val : '';
+  });
+}
+
+// フォーム値一括リセット（指定IDの値を空にする）
+function resetForm(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+}
+
+// CSV取り込み共通フレームワーク
+function runCSVImport(processRow, onComplete) {
+  const input = document.getElementById('csv-import-input');
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    input.value = '';
+    try {
+      const text = await readFileAsText(file);
+      const lines = parseCSV(text);
+      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
+      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
+      let imported = 0;
+      let updated = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        if (row.length < 2 || !row.some(v => v.trim())) continue;
+        const obj = {};
+        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+        const result = processRow(obj);
+        if (result === 'imported') imported++;
+        else if (result === 'updated') updated++;
+      }
+      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
+      if (onComplete) onComplete();
+    } catch (err) {
+      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+    }
+  };
+  input.click();
+}

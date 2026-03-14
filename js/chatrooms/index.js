@@ -35,7 +35,7 @@ function renderChatRooms(el) {
     </div>
   `;
   renderChatRoomTable();
-  document.getElementById('cr-search').addEventListener('input', renderChatRoomTable);
+  bindFilters(['cr-search'], renderChatRoomTable);
   document.getElementById('cr-mention-room').addEventListener('change', previewMentions);
 }
 
@@ -52,8 +52,7 @@ function renderChatRoomTable() {
     });
   }
 
-  const tbody = document.getElementById('cr-table-body');
-  tbody.innerHTML = rooms.map(r => {
+  renderTableBody('cr-table-body', rooms, r => {
     const clientNames = r.clientIds.map(cid => {
       const c = getClientById(cid);
       return c ? `<a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${cid}'})">${c.name}</a>` : cid;
@@ -65,7 +64,7 @@ function renderChatRoomTable() {
       <td style="color:var(--gray-500);font-size:12px;">${r.memo || '-'}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="openChatRoomModal('${r.id}')">編集</button></td>
     </tr>`;
-  }).join('');
+  }, 5);
 }
 
 function previewMentions() {
@@ -143,19 +142,19 @@ function openChatRoomModal(roomId) {
     document.querySelectorAll('.cr-client-cb').forEach(cb => { cb.checked = false; });
   }
 
-  modal.classList.add('show');
+  showModal('chatroom-create-modal');
 }
 
 function closeChatRoomModal() {
-  document.getElementById('chatroom-create-modal').classList.remove('show');
+  hideModal('chatroom-create-modal');
   editingChatRoomId = null;
 }
 
 function submitChatRoom() {
-  const roomName = document.getElementById('new-cr-name').value.trim();
-  const roomId = document.getElementById('new-cr-roomid').value.trim();
-  const roomUrl = document.getElementById('new-cr-url').value.trim();
-  const memo = document.getElementById('new-cr-memo').value.trim();
+  const roomName = getValTrim('new-cr-name');
+  const roomId = getValTrim('new-cr-roomid');
+  const roomUrl = getValTrim('new-cr-url');
+  const memo = getValTrim('new-cr-memo');
   const clientIds = [...document.querySelectorAll('.cr-client-cb:checked')].map(cb => cb.value);
 
   if (!roomName) { alert('ルーム名を入力してください'); return; }
@@ -171,7 +170,7 @@ function submitChatRoom() {
       r.memo = memo;
     }
   } else {
-    const newId = 'cr-' + String(MOCK_DATA.chatRooms.length + 1).padStart(3, '0');
+    const newId = generateId('cr-', MOCK_DATA.chatRooms);
     MOCK_DATA.chatRooms.push({
       id: newId,
       roomId,

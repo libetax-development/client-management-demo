@@ -4,55 +4,32 @@
 
 // ── タスク作成モーダル ──
 function openTaskModal() {
-  const modal = document.getElementById('task-create-modal');
-  const clientSelect = document.getElementById('new-task-client');
-  const assigneeSelect = document.getElementById('new-task-assignee');
-
-  clientSelect.innerHTML = MOCK_DATA.clients.filter(c => c.isActive).map(c =>
-    `<option value="${c.id}">${c.name}</option>`
-  ).join('');
-
-  assigneeSelect.innerHTML = MOCK_DATA.users.filter(u => u.isActive && u.role !== 'admin').map(u =>
-    `<option value="${u.id}">${u.name}</option>`
-  ).join('');
-
-  document.getElementById('new-task-title').value = '';
-  document.getElementById('new-task-due').value = '';
+  document.getElementById('new-task-client').innerHTML = buildClientOptions(true);
+  document.getElementById('new-task-assignee').innerHTML = buildUserOptions('staff');
+  resetForm(['new-task-title', 'new-task-due']);
   document.getElementById('new-task-status').value = '未着手';
-
-  modal.classList.add('show');
+  showModal('task-create-modal');
 }
 
-function closeTaskModal() {
-  document.getElementById('task-create-modal').classList.remove('show');
-}
+function closeTaskModal() { hideModal('task-create-modal'); }
 
 function submitNewTask() {
-  const title = document.getElementById('new-task-title').value.trim();
-  const clientId = document.getElementById('new-task-client').value;
-  const assigneeId = document.getElementById('new-task-assignee').value;
-  const dueDate = document.getElementById('new-task-due').value;
-  const status = document.getElementById('new-task-status').value;
+  const title = getValTrim('new-task-title');
+  const clientId = getVal('new-task-client');
+  const assigneeId = getVal('new-task-assignee');
+  const dueDate = getVal('new-task-due');
+  const status = getVal('new-task-status');
 
   if (!title) { alert('タスク名を入力してください'); return; }
   if (!dueDate) { alert('期限を入力してください'); return; }
 
-  const newId = 'tk-' + String(MOCK_DATA.tasks.length + 1).padStart(3, '0');
-  const now = new Date().toISOString().slice(0, 10);
-
   MOCK_DATA.tasks.push({
-    id: newId,
-    clientId,
-    assigneeUserId: assigneeId,
-    title,
-    status,
-    dueDate,
-    createdAt: now,
+    id: generateId('tk-', MOCK_DATA.tasks),
+    clientId, assigneeUserId: assigneeId, title, status, dueDate,
+    createdAt: new Date().toISOString().slice(0, 10),
   });
 
   closeTaskModal();
-
-  // 現在のページを再描画
   if (currentPage === 'tasks') navigateTo('tasks');
   else if (currentPage === 'dashboard') navigateTo('dashboard');
   else alert(`タスク「${title}」を作成しました`);
@@ -61,24 +38,16 @@ function submitNewTask() {
 // ── 顧客追加・編集モーダル ──
 let editingClientId = null;
 
-function openClientEditModal(clientId) {
-  openClientModal(clientId);
-}
+function openClientEditModal(clientId) { openClientModal(clientId); }
 
 function openClientModal(clientId) {
   editingClientId = clientId || null;
   const modal = document.getElementById('client-create-modal');
-  const mainSelect = document.getElementById('new-client-main');
-  const subSelect = document.getElementById('new-client-sub');
-  const fiscalSelect = document.getElementById('new-client-fiscal');
 
-  const staffOptions = MOCK_DATA.users.filter(u => u.isActive && u.role !== 'admin').map(u =>
-    `<option value="${u.id}">${u.name}</option>`
-  ).join('');
-  mainSelect.innerHTML = staffOptions;
-  subSelect.innerHTML = '<option value="">なし</option>' + staffOptions;
-
-  fiscalSelect.innerHTML = Array.from({length: 12}, (_, i) =>
+  const staffOptions = buildUserOptions('staff');
+  document.getElementById('new-client-main').innerHTML = staffOptions;
+  document.getElementById('new-client-sub').innerHTML = '<option value="">なし</option>' + staffOptions;
+  document.getElementById('new-client-fiscal').innerHTML = Array.from({length: 12}, (_, i) =>
     `<option value="${i + 1}" ${i + 1 === 3 ? 'selected' : ''}>${i + 1}月</option>`
   ).join('');
 
@@ -112,23 +81,21 @@ function openClientModal(clientId) {
     cfArea.innerHTML = '';
   }
 
+  const clientFields = ['new-client-name', 'new-client-address', 'new-client-tel',
+    'new-client-industry', 'new-client-representative', 'new-client-taxoffice', 'new-client-cw-id'];
+
   if (editingClientId) {
     const c = getClientById(editingClientId);
     if (c) {
-      document.getElementById('new-client-name').value = c.name || '';
-      document.getElementById('new-client-type').value = c.clientType || '法人';
-      document.getElementById('new-client-sales').value = c.monthlySales || '';
-      document.getElementById('new-client-address').value = c.address || '';
-      document.getElementById('new-client-tel').value = c.tel || '';
-      document.getElementById('new-client-industry').value = c.industry || '';
-      document.getElementById('new-client-representative').value = c.representative || '';
-      document.getElementById('new-client-taxoffice').value = c.taxOffice || '';
-      document.getElementById('new-client-main').value = c.mainUserId || '';
-      document.getElementById('new-client-sub').value = c.subUserId || '';
-      document.getElementById('new-client-fiscal').value = c.fiscalMonth || 3;
-      document.getElementById('new-client-cw-id').value = c.cwAccountId || '';
-      if (document.getElementById('new-client-annual-fee')) document.getElementById('new-client-annual-fee').value = c.annualFee || '';
-      // カスタムフィールド値セット
+      setFormValues({
+        'new-client-name': c.name, 'new-client-type': c.clientType || '法人',
+        'new-client-sales': c.monthlySales, 'new-client-address': c.address,
+        'new-client-tel': c.tel, 'new-client-industry': c.industry,
+        'new-client-representative': c.representative, 'new-client-taxoffice': c.taxOffice,
+        'new-client-main': c.mainUserId, 'new-client-sub': c.subUserId,
+        'new-client-fiscal': c.fiscalMonth || 3, 'new-client-cw-id': c.cwAccountId,
+        'new-client-annual-fee': c.annualFee,
+      });
       const cfv = c.customFieldValues || {};
       customFields.forEach(cf => {
         const el = document.getElementById('cf-val-' + cf.id);
@@ -136,49 +103,37 @@ function openClientModal(clientId) {
       });
     }
   } else {
-    document.getElementById('new-client-name').value = '';
+    resetForm([...clientFields, 'new-client-sales', 'new-client-annual-fee']);
     document.getElementById('new-client-type').value = '法人';
-    document.getElementById('new-client-sales').value = '';
-    document.getElementById('new-client-address').value = '';
-    document.getElementById('new-client-tel').value = '';
-    document.getElementById('new-client-industry').value = '';
-    document.getElementById('new-client-representative').value = '';
-    document.getElementById('new-client-taxoffice').value = '';
-    document.getElementById('new-client-cw-id').value = '';
-    if (document.getElementById('new-client-annual-fee')) document.getElementById('new-client-annual-fee').value = '';
-    // カスタムフィールド初期化
     customFields.forEach(cf => {
       const el = document.getElementById('cf-val-' + cf.id);
       if (el) el.value = '';
     });
   }
 
-  modal.classList.add('show');
+  showModal('client-create-modal');
 }
 
-function closeClientModal() {
-  document.getElementById('client-create-modal').classList.remove('show');
-}
+function closeClientModal() { hideModal('client-create-modal'); }
 
 function submitNewClient() {
-  const name = document.getElementById('new-client-name').value.trim();
-  const clientType = document.getElementById('new-client-type').value;
-  const fiscalMonth = parseInt(document.getElementById('new-client-fiscal').value);
-  const mainUserId = document.getElementById('new-client-main').value;
-  const subUserId = document.getElementById('new-client-sub').value || null;
-  const monthlySales = parseInt(document.getElementById('new-client-sales').value) || 0;
-  const address = document.getElementById('new-client-address').value.trim();
-  const tel = document.getElementById('new-client-tel').value.trim();
-  const industry = document.getElementById('new-client-industry').value.trim();
-  const representative = document.getElementById('new-client-representative').value.trim();
-  const taxOffice = document.getElementById('new-client-taxoffice').value.trim();
-  const annualFee = parseInt(document.getElementById('new-client-annual-fee')?.value) || 0;
-  const cwAccountId = document.getElementById('new-client-cw-id').value.trim();
+  const name = getValTrim('new-client-name');
+  const clientType = getVal('new-client-type');
+  const fiscalMonth = getValInt('new-client-fiscal');
+  const mainUserId = getVal('new-client-main');
+  const subUserId = getVal('new-client-sub') || null;
+  const monthlySales = getValInt('new-client-sales');
+  const address = getValTrim('new-client-address');
+  const tel = getValTrim('new-client-tel');
+  const industry = getValTrim('new-client-industry');
+  const representative = getValTrim('new-client-representative');
+  const taxOffice = getValTrim('new-client-taxoffice');
+  const annualFee = getValInt('new-client-annual-fee');
+  const cwAccountId = getValTrim('new-client-cw-id');
 
   if (!name) { alert('顧客名を入力してください'); return; }
   if (!monthlySales) { alert('月額報酬を入力してください'); return; }
 
-  // カスタムフィールド値を収集
   const customFieldValues = {};
   (MOCK_DATA.customFields || []).forEach(cf => {
     const el = document.getElementById('cf-val-' + cf.id);
@@ -186,61 +141,28 @@ function submitNewClient() {
   });
 
   if (editingClientId) {
-    // 編集モード
     const c = getClientById(editingClientId);
     if (c) {
-      c.name = name;
-      c.clientType = clientType;
-      c.fiscalMonth = fiscalMonth;
-      c.mainUserId = mainUserId;
-      c.subUserId = subUserId;
-      c.mgrUserId = mainUserId;
-      c.monthlySales = monthlySales;
-      c.annualFee = annualFee;
-      c.address = address;
-      c.tel = tel;
-      c.industry = industry;
-      c.representative = representative;
-      c.taxOffice = taxOffice;
-      c.cwAccountId = cwAccountId;
-      c.customFieldValues = customFieldValues;
+      Object.assign(c, { name, clientType, fiscalMonth, mainUserId, subUserId,
+        mgrUserId: mainUserId, monthlySales, annualFee, address, tel,
+        industry, representative, taxOffice, cwAccountId, customFieldValues });
     }
     closeClientModal();
     navigateTo('client-detail', { id: editingClientId });
     editingClientId = null;
   } else {
-    // 新規作成モード
     const nextCode = String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
-    const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
+    const newId = generateId('c-', MOCK_DATA.clients);
 
     MOCK_DATA.clients.push({
-      id: newId,
-      clientCode: nextCode,
-      name,
-      clientType,
-      fiscalMonth,
-      isActive: true,
-      mainUserId,
-      subUserId,
-      mgrUserId: mainUserId,
-      monthlySales,
-      annualFee,
-      spotFees: [],
-      address,
-      tel,
-      industry,
-      representative,
-      taxOffice,
-      memo: '',
-      establishDate: '',
-      cwAccountId,
-      cwRoomUrls: [],
-      relatedClientIds: [],
-      customFieldValues,
+      id: newId, clientCode: nextCode, name, clientType, fiscalMonth,
+      isActive: true, mainUserId, subUserId, mgrUserId: mainUserId,
+      monthlySales, annualFee, spotFees: [], address, tel, industry,
+      representative, taxOffice, memo: '', establishDate: '',
+      cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
     });
 
     closeClientModal();
-
     if (currentPage === 'clients') navigateTo('clients');
     else navigateTo('client-detail', { id: newId });
   }
@@ -252,73 +174,61 @@ let editingStaffId = null;
 function openStaffModal(staffId) {
   editingStaffId = staffId || null;
   const modal = document.getElementById('staff-create-modal');
-  const deptSelect = document.getElementById('new-staff-deptId');
 
-  deptSelect.innerHTML = '<option value="">選択してください</option>' +
+  document.getElementById('new-staff-deptId').innerHTML = '<option value="">選択してください</option>' +
     MOCK_DATA.departments.filter(d => d.status === 1)
       .map(d => `<option value="${d.deptId}">${d.deptName}</option>`).join('');
 
-  // モーダルタイトル更新
   const modalTitle = modal.querySelector('.modal-header h3');
   if (modalTitle) modalTitle.textContent = editingStaffId ? '職員情報編集' : '新規職員登録';
+
+  const staffFields = {
+    'new-staff-lastName': '', 'new-staff-firstName': '',
+    'new-staff-lastNameKana': '', 'new-staff-firstNameKana': '',
+    'new-staff-email': '', 'new-staff-tel': '', 'new-staff-mobile': '',
+    'new-staff-position': '', 'new-staff-employmentType': '正社員',
+    'new-staff-joinDate': '', 'new-staff-role': 'member',
+    'new-staff-staffFlag': '税務', 'new-staff-memo': '', 'new-staff-deptId': '',
+  };
 
   if (editingStaffId) {
     const u = getUserById(editingStaffId);
     if (u) {
-      document.getElementById('new-staff-lastName').value = u.lastName || '';
-      document.getElementById('new-staff-firstName').value = u.firstName || '';
-      document.getElementById('new-staff-lastNameKana').value = u.lastNameKana || '';
-      document.getElementById('new-staff-firstNameKana').value = u.firstNameKana || '';
-      document.getElementById('new-staff-email').value = u.email || '';
-      document.getElementById('new-staff-tel').value = u.tel || '';
-      document.getElementById('new-staff-mobile').value = u.mobile || '';
-      document.getElementById('new-staff-position').value = u.position || '';
-      document.getElementById('new-staff-employmentType').value = u.employmentType || '正社員';
-      document.getElementById('new-staff-joinDate').value = u.joinDate || '';
-      document.getElementById('new-staff-role').value = u.role || 'member';
-      document.getElementById('new-staff-staffFlag').value = u.staffFlag || '税務';
-      document.getElementById('new-staff-memo').value = u.memo || '';
-      document.getElementById('new-staff-deptId').value = u.deptId || '';
+      setFormValues({
+        'new-staff-lastName': u.lastName, 'new-staff-firstName': u.firstName,
+        'new-staff-lastNameKana': u.lastNameKana, 'new-staff-firstNameKana': u.firstNameKana,
+        'new-staff-email': u.email, 'new-staff-tel': u.tel, 'new-staff-mobile': u.mobile,
+        'new-staff-position': u.position, 'new-staff-employmentType': u.employmentType || '正社員',
+        'new-staff-joinDate': u.joinDate, 'new-staff-role': u.role || 'member',
+        'new-staff-staffFlag': u.staffFlag || '税務', 'new-staff-memo': u.memo,
+        'new-staff-deptId': u.deptId || '',
+      });
     }
   } else {
-    document.getElementById('new-staff-lastName').value = '';
-    document.getElementById('new-staff-firstName').value = '';
-    document.getElementById('new-staff-lastNameKana').value = '';
-    document.getElementById('new-staff-firstNameKana').value = '';
-    document.getElementById('new-staff-email').value = '';
-    document.getElementById('new-staff-tel').value = '';
-    document.getElementById('new-staff-mobile').value = '';
-    document.getElementById('new-staff-position').value = '';
-    document.getElementById('new-staff-employmentType').value = '正社員';
-    document.getElementById('new-staff-joinDate').value = '';
-    document.getElementById('new-staff-role').value = 'member';
-    document.getElementById('new-staff-staffFlag').value = '税務';
-    document.getElementById('new-staff-memo').value = '';
+    setFormValues(staffFields);
   }
 
-  modal.classList.add('show');
+  showModal('staff-create-modal');
 }
 
-function closeStaffModal() {
-  document.getElementById('staff-create-modal').classList.remove('show');
-}
+function closeStaffModal() { hideModal('staff-create-modal'); }
 
 function submitNewStaff() {
-  const lastName = document.getElementById('new-staff-lastName').value.trim();
-  const firstName = document.getElementById('new-staff-firstName').value.trim();
-  const lastNameKana = document.getElementById('new-staff-lastNameKana').value.trim();
-  const firstNameKana = document.getElementById('new-staff-firstNameKana').value.trim();
-  const email = document.getElementById('new-staff-email').value.trim();
-  const tel = document.getElementById('new-staff-tel').value.trim();
-  const mobile = document.getElementById('new-staff-mobile').value.trim();
-  const deptIdVal = document.getElementById('new-staff-deptId').value;
+  const lastName = getValTrim('new-staff-lastName');
+  const firstName = getValTrim('new-staff-firstName');
+  const lastNameKana = getValTrim('new-staff-lastNameKana');
+  const firstNameKana = getValTrim('new-staff-firstNameKana');
+  const email = getValTrim('new-staff-email');
+  const tel = getValTrim('new-staff-tel');
+  const mobile = getValTrim('new-staff-mobile');
+  const deptIdVal = getVal('new-staff-deptId');
   const deptId = deptIdVal ? parseInt(deptIdVal) : null;
-  const position = document.getElementById('new-staff-position').value.trim();
-  const employmentType = document.getElementById('new-staff-employmentType').value;
-  const joinDate = document.getElementById('new-staff-joinDate').value;
-  const role = document.getElementById('new-staff-role').value;
-  const staffFlag = document.getElementById('new-staff-staffFlag').value;
-  const memo = document.getElementById('new-staff-memo').value.trim();
+  const position = getValTrim('new-staff-position');
+  const employmentType = getVal('new-staff-employmentType');
+  const joinDate = getVal('new-staff-joinDate');
+  const role = getVal('new-staff-role');
+  const staffFlag = getVal('new-staff-staffFlag');
+  const memo = getValTrim('new-staff-memo');
 
   if (!lastName) { alert('姓を入力してください'); return; }
   if (!email) { alert('メールアドレスを入力してください'); return; }
@@ -328,30 +238,26 @@ function submitNewStaff() {
   if (editingStaffId) {
     const u = getUserById(editingStaffId);
     if (u) {
-      u.lastName = lastName; u.firstName = firstName;
-      u.lastNameKana = lastNameKana; u.firstNameKana = firstNameKana;
-      u.name = name; u.email = email; u.tel = tel; u.mobile = mobile;
-      u.deptId = deptId; u.position = position; u.employmentType = employmentType;
-      u.joinDate = joinDate; u.role = role; u.staffFlag = staffFlag; u.memo = memo;
-      u.loginId = email.split('@')[0];
+      Object.assign(u, { lastName, firstName, lastNameKana, firstNameKana,
+        name, email, tel, mobile, deptId, position, employmentType,
+        joinDate, role, staffFlag, memo, loginId: email.split('@')[0] });
     }
     closeStaffModal();
     navigateTo('staff-detail', { id: editingStaffId });
     editingStaffId = null;
   } else {
     const nextCode = 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
-    const newId = 'u-' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
-    const loginId = email.split('@')[0];
+    const newId = generateId('u-', MOCK_DATA.users);
 
     MOCK_DATA.users.push({
       id: newId, staffCode: nextCode, lastName, firstName,
       lastNameKana, firstNameKana, name, email, tel, mobile,
       role, deptId, team: null, position, employmentType,
-      joinDate, memo, loginId, isActive: true, baseRatio: null, staffFlag,
+      joinDate, memo, loginId: email.split('@')[0], isActive: true,
+      baseRatio: null, staffFlag,
     });
 
     closeStaffModal();
-
     if (currentPage === 'staff') navigateTo('staff');
     else alert(`職員「${name}」を登録しました`);
   }
@@ -361,38 +267,35 @@ function submitNewStaff() {
 function openTaskEditModal(taskId) {
   const t = MOCK_DATA.tasks.find(x => x.id === taskId);
   if (!t) return;
-  const modal = document.getElementById('task-edit-modal');
-  document.getElementById('edit-task-id').value = t.id;
-  document.getElementById('edit-task-title').value = t.title;
-  document.getElementById('edit-task-status').value = t.status;
-  document.getElementById('edit-task-due').value = t.dueDate;
+  setFormValues({
+    'edit-task-id': t.id, 'edit-task-title': t.title,
+    'edit-task-status': t.status, 'edit-task-due': t.dueDate,
+  });
 
   const assigneeSelect = document.getElementById('edit-task-assignee');
   assigneeSelect.innerHTML = MOCK_DATA.users.filter(u => u.isActive && u.role !== 'admin').map(u =>
     `<option value="${u.id}" ${u.id === t.assigneeUserId ? 'selected' : ''}>${u.name}</option>`
   ).join('');
 
-  modal.classList.add('show');
+  showModal('task-edit-modal');
 }
 
-function closeTaskEditModal() {
-  document.getElementById('task-edit-modal').classList.remove('show');
-}
+function closeTaskEditModal() { hideModal('task-edit-modal'); }
 
 function submitEditTask() {
-  const id = document.getElementById('edit-task-id').value;
+  const id = getVal('edit-task-id');
   const t = MOCK_DATA.tasks.find(x => x.id === id);
   if (!t) return;
-  t.title = document.getElementById('edit-task-title').value.trim();
-  t.assigneeUserId = document.getElementById('edit-task-assignee').value;
-  t.status = document.getElementById('edit-task-status').value;
-  t.dueDate = document.getElementById('edit-task-due').value;
+  t.title = getValTrim('edit-task-title');
+  t.assigneeUserId = getVal('edit-task-assignee');
+  t.status = getVal('edit-task-status');
+  t.dueDate = getVal('edit-task-due');
   closeTaskEditModal();
   navigateTo('task-detail', { id });
 }
 
 function deleteTask() {
-  const id = document.getElementById('edit-task-id').value;
+  const id = getVal('edit-task-id');
   if (!confirm('このタスクを削除しますか？')) return;
   MOCK_DATA.tasks = MOCK_DATA.tasks.filter(x => x.id !== id);
   closeTaskEditModal();
@@ -401,35 +304,29 @@ function deleteTask() {
 
 // ── 工数入力モーダル ──
 function openTimesheetModal() {
-  const modal = document.getElementById('timesheet-create-modal');
-  document.getElementById('new-ts-user').innerHTML = MOCK_DATA.users.filter(u => u.isActive).map(u =>
-    `<option value="${u.id}">${u.name}</option>`
-  ).join('');
-  document.getElementById('new-ts-client').innerHTML = MOCK_DATA.clients.filter(c => c.isActive).map(c =>
-    `<option value="${c.id}">${c.name}</option>`
-  ).join('');
-  document.getElementById('new-ts-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('new-ts-hours').value = '';
-  document.getElementById('new-ts-desc').value = '';
-  modal.classList.add('show');
+  document.getElementById('new-ts-user').innerHTML = buildUserOptions();
+  document.getElementById('new-ts-client').innerHTML = buildClientOptions(true);
+  setFormValues({ 'new-ts-date': new Date().toISOString().slice(0, 10) });
+  resetForm(['new-ts-hours', 'new-ts-desc']);
+  showModal('timesheet-create-modal');
 }
 
-function closeTimesheetModal() {
-  document.getElementById('timesheet-create-modal').classList.remove('show');
-}
+function closeTimesheetModal() { hideModal('timesheet-create-modal'); }
 
 function submitNewTimeEntry() {
-  const userId = document.getElementById('new-ts-user').value;
-  const clientId = document.getElementById('new-ts-client').value;
-  const date = document.getElementById('new-ts-date').value;
-  const hours = parseFloat(document.getElementById('new-ts-hours').value);
-  const description = document.getElementById('new-ts-desc').value.trim();
+  const userId = getVal('new-ts-user');
+  const clientId = getVal('new-ts-client');
+  const date = getVal('new-ts-date');
+  const hours = parseFloat(getVal('new-ts-hours'));
+  const description = getValTrim('new-ts-desc');
 
   if (!hours || hours <= 0) { alert('時間を入力してください'); return; }
   if (!description) { alert('作業内容を入力してください'); return; }
 
-  const newId = 'te-' + String(MOCK_DATA.timeEntries.length + 1).padStart(3, '0');
-  MOCK_DATA.timeEntries.push({ id: newId, userId, clientId, taskId: null, date, hours, description });
+  MOCK_DATA.timeEntries.push({
+    id: generateId('te-', MOCK_DATA.timeEntries),
+    userId, clientId, taskId: null, date, hours, description,
+  });
   closeTimesheetModal();
   if (currentPage === 'timesheet') navigateTo('timesheet');
   else alert('工数を登録しました');
@@ -437,34 +334,29 @@ function submitNewTimeEntry() {
 
 // ── 報告書作成モーダル ──
 function openReportModal() {
-  const modal = document.getElementById('report-create-modal');
-  document.getElementById('new-rp-type').value = '業務報告書';
-  document.getElementById('new-rp-category').value = '確定申告';
-  document.getElementById('new-rp-client').value = '';
-  document.getElementById('new-rp-title').value = '';
-  document.getElementById('new-rp-rank').value = 'B';
-  document.getElementById('new-rp-attach').checked = false;
-  modal.classList.add('show');
+  setFormValues({
+    'new-rp-type': '業務報告書', 'new-rp-category': '確定申告',
+    'new-rp-rank': 'B', 'new-rp-attach': false,
+  });
+  resetForm(['new-rp-client', 'new-rp-title']);
+  showModal('report-create-modal');
 }
 
-function closeReportModal() {
-  document.getElementById('report-create-modal').classList.remove('show');
-}
+function closeReportModal() { hideModal('report-create-modal'); }
 
 function submitNewReport() {
-  const title = document.getElementById('new-rp-title').value.trim();
-  const clientName = document.getElementById('new-rp-client').value.trim();
-  const type = document.getElementById('new-rp-type').value;
-  const category = document.getElementById('new-rp-category').value;
-  const rank = document.getElementById('new-rp-rank').value;
+  const title = getValTrim('new-rp-title');
+  const clientName = getValTrim('new-rp-client');
+  const type = getVal('new-rp-type');
+  const category = getVal('new-rp-category');
+  const rank = getVal('new-rp-rank');
   const hasAttachment = document.getElementById('new-rp-attach').checked;
 
   if (!title) { alert('タイトルを入力してください'); return; }
 
-  const newId = 'rp-' + String(MOCK_DATA.reports.length + 1).padStart(3, '0');
-
   MOCK_DATA.reports.push({
-    id: newId, createdAt: new Date().toISOString(),
+    id: generateId('rp-', MOCK_DATA.reports),
+    createdAt: new Date().toISOString(),
     authorId: MOCK_DATA.currentUser.id, type, category,
     clientName, title, rank, readStatus: '一時保存中', hasAttachment,
   });
@@ -475,49 +367,41 @@ function submitNewReport() {
 
 // ── 進捗管理表 作成モーダル ──
 function openProgressCreateModal(type) {
-  const modal = document.getElementById('progress-create-modal');
   document.getElementById('pg-modal-title').textContent = `進捗管理表の作成（${type}）`;
-  document.getElementById('new-pg-manager').innerHTML = MOCK_DATA.users.filter(u => u.isActive && (u.role === 'admin' || u.role === 'team_leader')).map(u =>
-    `<option value="${u.id}">${u.name}</option>`
-  ).join('');
-  document.getElementById('new-pg-name').value = '';
+  document.getElementById('new-pg-manager').innerHTML = buildUserOptions('leaders');
+  resetForm(['new-pg-name']);
   document.getElementById('new-pg-category').value = '法人決算';
 
   if (type === '中間申告・予定納付') {
-    document.getElementById('new-pg-category').value = '中間申告';
-    document.getElementById('new-pg-columns').value = '資料回収, 中間計算, 申告書作成, レビュー, 電子申告';
+    setFormValues({ 'new-pg-category': '中間申告', 'new-pg-columns': '資料回収, 中間計算, 申告書作成, レビュー, 電子申告' });
   } else if (type === 'サンプル') {
     document.getElementById('new-pg-columns').value = '資料回収, 記帳確認, 決算整理, 申告書作成, レビュー, 電子申告, 納品';
   } else {
     document.getElementById('new-pg-columns').value = '';
   }
 
-  // ドロップダウンを閉じる
   const menu = document.getElementById('pg-create-menu');
   if (menu) menu.style.display = 'none';
-
-  modal.classList.add('show');
+  showModal('progress-create-modal');
 }
 
-function closeProgressCreateModal() {
-  document.getElementById('progress-create-modal').classList.remove('show');
-}
+function closeProgressCreateModal() { hideModal('progress-create-modal'); }
 
 function submitNewProgress() {
-  const name = document.getElementById('new-pg-name').value.trim();
-  const category = document.getElementById('new-pg-category').value;
-  const managerId = document.getElementById('new-pg-manager').value;
-  const columnsText = document.getElementById('new-pg-columns').value.trim();
+  const name = getValTrim('new-pg-name');
+  const category = getVal('new-pg-category');
+  const managerId = getVal('new-pg-manager');
+  const columnsText = getValTrim('new-pg-columns');
 
   if (!name) { alert('管理表名を入力してください'); return; }
   if (!columnsText) { alert('工程列を入力してください'); return; }
 
   const columns = columnsText.split(',').map(c => c.trim()).filter(Boolean);
-  const newId = 'ps-' + String(MOCK_DATA.progressSheets.length + 1).padStart(3, '0');
 
   MOCK_DATA.progressSheets.push({
-    id: newId, name, category, status: '利用中',
-    managerId, createdAt: new Date().toISOString().slice(0, 10),
+    id: generateId('ps-', MOCK_DATA.progressSheets),
+    name, category, status: '利用中', managerId,
+    createdAt: new Date().toISOString().slice(0, 10),
     columns, targets: [],
   });
   closeProgressCreateModal();
@@ -529,29 +413,24 @@ function submitNewProgress() {
 function openProgressSettingsModal(sheetId) {
   const s = MOCK_DATA.progressSheets.find(x => x.id === sheetId);
   if (!s) return;
-  const modal = document.getElementById('progress-settings-modal');
-  document.getElementById('edit-pg-id').value = s.id;
-  document.getElementById('edit-pg-name').value = s.name;
-  document.getElementById('edit-pg-status').value = s.status;
+  setFormValues({ 'edit-pg-id': s.id, 'edit-pg-name': s.name, 'edit-pg-status': s.status });
 
   document.getElementById('edit-pg-manager').innerHTML = MOCK_DATA.users.filter(u => u.isActive && (u.role === 'admin' || u.role === 'team_leader')).map(u =>
     `<option value="${u.id}" ${u.id === s.managerId ? 'selected' : ''}>${u.name}</option>`
   ).join('');
 
-  modal.classList.add('show');
+  showModal('progress-settings-modal');
 }
 
-function closeProgressSettingsModal() {
-  document.getElementById('progress-settings-modal').classList.remove('show');
-}
+function closeProgressSettingsModal() { hideModal('progress-settings-modal'); }
 
 function submitEditProgress() {
-  const id = document.getElementById('edit-pg-id').value;
+  const id = getVal('edit-pg-id');
   const s = MOCK_DATA.progressSheets.find(x => x.id === id);
   if (!s) return;
-  s.name = document.getElementById('edit-pg-name').value.trim();
-  s.status = document.getElementById('edit-pg-status').value;
-  s.managerId = document.getElementById('edit-pg-manager').value;
+  s.name = getValTrim('edit-pg-name');
+  s.status = getVal('edit-pg-status');
+  s.managerId = getVal('edit-pg-manager');
   closeProgressSettingsModal();
   if (currentPage === 'progress') navigateTo('progress');
 }

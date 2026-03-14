@@ -64,7 +64,7 @@ function renderDashboard(el) {
                     <td>${client?.name || '-'}</td>
                     <td>${t.title}</td>
                     <td>${formatDate(t.dueDate)}</td>
-                    <td><span class="status-badge ${getStatusClass(t.status)}">${t.status}</span></td>
+                    <td>${renderStatusBadge(t.status)}</td>
                   </tr>`;
                 }).join('')}
               </tbody>

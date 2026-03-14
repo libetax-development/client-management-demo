@@ -19,7 +19,7 @@ function renderCalendar(el) {
       </select>
       <select class="filter-select" id="cal-user-filter">
         <option value="">全担当者</option>
-        ${MOCK_DATA.users.filter(u => u.isActive).map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+        ${buildUserOptions()}
       </select>
     </div>
     <div class="card">
@@ -136,7 +136,7 @@ function renderCalendar(el) {
         const client = getClientById(t.clientId);
         const assignee = getUserById(t.assigneeUserId);
         return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="navigateTo('task-detail',{id:'${t.id}'})">
-          <span class="status-badge ${getStatusClass(t.status)}">${t.status}</span>
+          ${renderStatusBadge(t.status)}
           <div style="flex:1;">
             <div style="font-size:13px;font-weight:500;">${t.title}</div>
             <div style="font-size:11px;color:var(--gray-400);">${client?.name || '-'} / ${assignee?.name || '-'}</div>

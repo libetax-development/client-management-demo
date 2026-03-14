@@ -2,12 +2,12 @@
 // カスタムフィールド設定
 // ===========================
 function openCustomFieldModal() {
-  document.getElementById('custom-field-modal').classList.add('show');
+  showModal('custom-field-modal');
   renderCustomFieldList();
 }
 
 function closeCustomFieldModal() {
-  document.getElementById('custom-field-modal').classList.remove('show');
+  hideModal('custom-field-modal');
   // 詳細ページを再描画
   if (currentPage === 'client-detail') {
     const hash = location.hash.slice(1);

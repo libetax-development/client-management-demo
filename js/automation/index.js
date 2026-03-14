@@ -45,24 +45,21 @@ function runAutomationRule(ruleId) {
 }
 
 function openAutomationModal() {
-  document.getElementById('new-auto-name').value = '';
-  document.getElementById('new-auto-type').value = 'reminder';
-  document.getElementById('new-auto-trigger').value = '';
-  document.getElementById('new-auto-action').value = '';
-  document.getElementById('new-auto-target').value = '';
-  document.getElementById('automation-create-modal').classList.add('show');
+  setFormValues({ 'new-auto-type': 'reminder' });
+  resetForm(['new-auto-name', 'new-auto-trigger', 'new-auto-action', 'new-auto-target']);
+  showModal('automation-create-modal');
 }
 
 function closeAutomationModal() {
-  document.getElementById('automation-create-modal').classList.remove('show');
+  hideModal('automation-create-modal');
 }
 
 function submitNewAutomationRule() {
-  const name = document.getElementById('new-auto-name').value.trim();
-  const type = document.getElementById('new-auto-type').value;
-  const trigger = document.getElementById('new-auto-trigger').value.trim();
-  const action = document.getElementById('new-auto-action').value.trim();
-  const target = document.getElementById('new-auto-target').value.trim();
+  const name = getValTrim('new-auto-name');
+  const type = getVal('new-auto-type');
+  const trigger = getValTrim('new-auto-trigger');
+  const action = getValTrim('new-auto-action');
+  const target = getValTrim('new-auto-target');
   if (!name) { alert('ルール名を入力してください'); return; }
   if (!trigger) { alert('トリガーを入力してください'); return; }
   if (!action) { alert('アクションを入力してください'); return; }

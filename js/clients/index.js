@@ -30,10 +30,7 @@ function renderClients(el) {
     </div>
   `;
   renderClientTable();
-
-  document.getElementById('client-search').addEventListener('input', renderClientTable);
-  document.getElementById('client-type-filter').addEventListener('change', renderClientTable);
-  document.getElementById('client-status-filter').addEventListener('change', renderClientTable);
+  bindFilters(['client-search', 'client-type-filter', 'client-status-filter'], renderClientTable);
 }
 
 function renderClientTable() {
@@ -49,19 +46,18 @@ function renderClientTable() {
     return true;
   });
 
-  const tbody = document.getElementById('client-table-body');
-  tbody.innerHTML = clients.map(c => {
+  renderTableBody('client-table-body', clients, c => {
     const main = getUserById(c.mainUserId);
     return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">
       <td>${c.clientCode}</td>
       <td><strong>${c.name}</strong></td>
-      <td><span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span></td>
+      <td>${renderTypeBadge(c.clientType)}</td>
       <td>${c.fiscalMonth}月</td>
       <td>${main?.name || '-'}</td>
       <td>${c.monthlySales.toLocaleString()}円</td>
       <td>${c.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>
     </tr>`;
-  }).join('');
+  }, 7);
 }
 
 // ===========================
@@ -73,11 +69,9 @@ function renderClientDetail(el, params) {
   const isNew = params.id === 'new';
   const editing = isNew || clientEditMode;
   const c = isNew ? null : getClientById(params.id);
-  if (!isNew && !c) { el.innerHTML = '<div class="empty-state"><div class="icon">?</div><p>顧客が見つかりません</p></div>'; return; }
+  if (!isNew && !c) { el.innerHTML = renderEmptyState('顧客が見つかりません'); return; }
 
-  const staffOptions = MOCK_DATA.users.filter(u => u.isActive && u.role !== 'admin').map(u =>
-    `<option value="${u.id}">${u.name}</option>`
-  ).join('');
+  const staffOptions = buildUserOptions('staff');
   const fiscalOptions = Array.from({length: 12}, (_, i) =>
     `<option value="${i + 1}">${i + 1}月</option>`
   ).join('');
@@ -174,7 +168,7 @@ function renderClientDetail(el, params) {
     : relatedClientIds.map(rid => {
         const rc = getClientById(rid);
         if (!rc) return '';
-        return `<div class="related-client-item"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${rc.id}'})">${rc.name}</a> <span class="type-badge ${rc.clientType === '法人' ? 'type-corp' : 'type-individual'}" style="font-size:10px;">${rc.clientType}</span></div>`;
+        return `<div class="related-client-item"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${rc.id}'})">${rc.name}</a> ${renderTypeBadge(rc.clientType)}</div>`;
       }).join('');
 
   // 関連顧客編集HTML
@@ -218,7 +212,7 @@ function renderClientDetail(el, params) {
         <div class="detail-section-title">基本情報</div>
         ${!isNew ? `<div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>` : ''}
         <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${editing ? inp('ed-name', c?.name, 'text', '例: 株式会社サンプル商事') : val(c.name)}</div></div>
-        <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${editing ? inp('ed-type', '', 'select-type') : `<span class="type-badge ${c.clientType === '法人' ? 'type-corp' : 'type-individual'}">${c.clientType}</span>`}</div></div>
+        <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${editing ? inp('ed-type', '', 'select-type') : renderTypeBadge(c.clientType)}</div></div>
         <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${editing ? inp('ed-fiscal', '', 'select-fiscal') : c.fiscalMonth + '月'}</div></div>
         <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-sales', c?.monthlySales, 'number', '50000') : (c.monthlySales || 0).toLocaleString() + '円'}</div></div>
         <div class="detail-row"><div class="detail-label">年1申告報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-annualfee', c?.annualFee, 'number', '150000') : (c?.annualFee || 0).toLocaleString() + '円'}</div></div>
@@ -285,7 +279,7 @@ function renderClientDetail(el, params) {
                   <td>${t.title}</td>
                   <td>${assignee?.name || '-'}</td>
                   <td>${formatDate(t.dueDate)}</td>
-                  <td><span class="status-badge ${getStatusClass(t.status)}">${t.status}</span></td>
+                  <td>${renderStatusBadge(t.status)}</td>
                 </tr>`;
               }).join('')}
             </tbody>
@@ -312,20 +306,20 @@ function renderClientDetail(el, params) {
 
 function saveClientInline(id) {
   const isNew = id === 'new';
-  const name = (document.getElementById('ed-name')?.value || '').trim();
-  const clientType = document.getElementById('ed-type')?.value || '法人';
-  const fiscalMonth = parseInt(document.getElementById('ed-fiscal')?.value) || 3;
-  const monthlySales = parseInt(document.getElementById('ed-sales')?.value) || 0;
-  const annualFee = parseInt(document.getElementById('ed-annualfee')?.value) || 0;
-  const address = (document.getElementById('ed-address')?.value || '').trim();
-  const tel = (document.getElementById('ed-tel')?.value || '').trim();
-  const representative = (document.getElementById('ed-representative')?.value || '').trim();
-  const industry = (document.getElementById('ed-industry')?.value || '').trim();
-  const taxOffice = (document.getElementById('ed-taxoffice')?.value || '').trim();
-  const mgrUserId = document.getElementById('ed-mgr')?.value || '';
-  const mainUserId = document.getElementById('ed-main')?.value || '';
-  const subUserId = document.getElementById('ed-sub')?.value || null;
-  const cwAccountId = (document.getElementById('ed-cwid')?.value || '').trim();
+  const name = getValTrim('ed-name');
+  const clientType = getVal('ed-type', '法人');
+  const fiscalMonth = getValInt('ed-fiscal', 3);
+  const monthlySales = getValInt('ed-sales');
+  const annualFee = getValInt('ed-annualfee');
+  const address = getValTrim('ed-address');
+  const tel = getValTrim('ed-tel');
+  const representative = getValTrim('ed-representative');
+  const industry = getValTrim('ed-industry');
+  const taxOffice = getValTrim('ed-taxoffice');
+  const mgrUserId = getVal('ed-mgr', '');
+  const mainUserId = getVal('ed-main', '');
+  const subUserId = getVal('ed-sub') || null;
+  const cwAccountId = getValTrim('ed-cwid');
 
   // カスタムフィールド値
   const customFieldValues = {};
@@ -339,7 +333,7 @@ function saveClientInline(id) {
   if (isNew) {
     const lastCode = MOCK_DATA.clients.length > 0 ? MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode : '030449';
     const nextCode = String(parseInt(lastCode) + 1).padStart(6, '0');
-    const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
+    const newId = generateId('c-', MOCK_DATA.clients);
     MOCK_DATA.clients.push({
       id: newId, clientCode: nextCode, name, clientType, fiscalMonth,
       isActive: true, mainUserId, subUserId, mgrUserId: mgrUserId || mainUserId,
@@ -466,92 +460,47 @@ function exportClientCSV() {
 }
 
 function importClientCSV() {
-  const input = document.getElementById('csv-import-input');
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    input.value = '';
-    try {
-      const text = await readFileAsText(file);
-      const lines = parseCSV(text);
-      if (lines.length < 2) { alert('CSVデータが不足しています'); return; }
-      const header = lines[0].map(h => h.trim().replace(/^\uFEFF/, ''));
-      const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
-      let imported = 0;
-      let updated = 0;
+  const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
 
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i];
-        if (row.length < 2 || !row.some(v => v.trim())) continue;
-        const obj = {};
-        header.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
-
-        const existing = MOCK_DATA.clients.find(c => c.clientCode === obj.clientCode);
-        if (existing) {
-          // 更新
-          if (obj.name) existing.name = obj.name;
-          if (obj.clientType) existing.clientType = obj.clientType;
-          if (obj.fiscalMonth) existing.fiscalMonth = parseInt(obj.fiscalMonth) || existing.fiscalMonth;
-          if (obj.address !== undefined) existing.address = obj.address;
-          if (obj.tel !== undefined) existing.tel = obj.tel;
-          if (obj.representative !== undefined) existing.representative = obj.representative;
-          if (obj.industry !== undefined) existing.industry = obj.industry;
-          if (obj.taxOffice !== undefined) existing.taxOffice = obj.taxOffice;
-          if (obj.monthlySales) existing.monthlySales = parseInt(obj.monthlySales) || existing.monthlySales;
-          if (obj.annualFee) existing.annualFee = parseInt(obj.annualFee) || existing.annualFee;
-          if (obj.spotFees) { try { existing.spotFees = JSON.parse(obj.spotFees); } catch(e) {} }
-          if (obj.cwAccountId !== undefined) existing.cwAccountId = obj.cwAccountId;
-          // カスタムフィールド
-          if (!existing.customFieldValues) existing.customFieldValues = {};
-          customFields.forEach(cf => {
-            if (obj[cf.name] !== undefined && obj[cf.name] !== '') {
-              existing.customFieldValues[cf.id] = obj[cf.name];
-            }
-          });
-          updated++;
-        } else {
-          // 新規
-          const newId = 'c-' + String(MOCK_DATA.clients.length + 1).padStart(3, '0');
-          const code = obj.clientCode || String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
-          const cfv = {};
-          customFields.forEach(cf => {
-            if (obj[cf.name]) cfv[cf.id] = obj[cf.name];
-          });
-          MOCK_DATA.clients.push({
-            id: newId,
-            clientCode: code,
-            name: obj.name || '名称未設定',
-            clientType: obj.clientType || '法人',
-            fiscalMonth: parseInt(obj.fiscalMonth) || 3,
-            isActive: true,
-            mainUserId: MOCK_DATA.users[1]?.id || 'u-002',
-            subUserId: null,
-            mgrUserId: MOCK_DATA.users[1]?.id || 'u-002',
-            monthlySales: parseInt(obj.monthlySales) || 0,
-            annualFee: parseInt(obj.annualFee) || 0,
-            spotFees: obj.spotFees ? (function(){ try { return JSON.parse(obj.spotFees); } catch(e) { return []; } })() : [],
-            address: obj.address || '',
-            tel: obj.tel || '',
-            representative: obj.representative || '',
-            industry: obj.industry || '',
-            taxOffice: obj.taxOffice || '',
-            memo: '',
-            establishDate: '',
-            cwAccountId: obj.cwAccountId || '',
-            cwRoomUrls: [],
-            relatedClientIds: [],
-            customFieldValues: cfv,
-          });
-          imported++;
-        }
-      }
-      alert(`CSV取り込み完了\n新規: ${imported}件\n更新: ${updated}件`);
-      if (currentPage === 'clients') navigateTo('clients');
-    } catch (err) {
-      alert('CSVファイルの読み込みに失敗しました: ' + err.message);
+  runCSVImport((obj) => {
+    const existing = MOCK_DATA.clients.find(c => c.clientCode === obj.clientCode);
+    if (existing) {
+      if (obj.name) existing.name = obj.name;
+      if (obj.clientType) existing.clientType = obj.clientType;
+      if (obj.fiscalMonth) existing.fiscalMonth = parseInt(obj.fiscalMonth) || existing.fiscalMonth;
+      if (obj.address !== undefined) existing.address = obj.address;
+      if (obj.tel !== undefined) existing.tel = obj.tel;
+      if (obj.representative !== undefined) existing.representative = obj.representative;
+      if (obj.industry !== undefined) existing.industry = obj.industry;
+      if (obj.taxOffice !== undefined) existing.taxOffice = obj.taxOffice;
+      if (obj.monthlySales) existing.monthlySales = parseInt(obj.monthlySales) || existing.monthlySales;
+      if (obj.annualFee) existing.annualFee = parseInt(obj.annualFee) || existing.annualFee;
+      if (obj.spotFees) { try { existing.spotFees = JSON.parse(obj.spotFees); } catch(e) {} }
+      if (obj.cwAccountId !== undefined) existing.cwAccountId = obj.cwAccountId;
+      if (!existing.customFieldValues) existing.customFieldValues = {};
+      customFields.forEach(cf => {
+        if (obj[cf.name] !== undefined && obj[cf.name] !== '') existing.customFieldValues[cf.id] = obj[cf.name];
+      });
+      return 'updated';
+    } else {
+      const newId = generateId('c-', MOCK_DATA.clients);
+      const code = obj.clientCode || String(parseInt(MOCK_DATA.clients[MOCK_DATA.clients.length - 1].clientCode) + 1).padStart(6, '0');
+      const cfv = {};
+      customFields.forEach(cf => { if (obj[cf.name]) cfv[cf.id] = obj[cf.name]; });
+      MOCK_DATA.clients.push({
+        id: newId, clientCode: code, name: obj.name || '名称未設定',
+        clientType: obj.clientType || '法人', fiscalMonth: parseInt(obj.fiscalMonth) || 3,
+        isActive: true, mainUserId: MOCK_DATA.users[1]?.id || 'u-002', subUserId: null,
+        mgrUserId: MOCK_DATA.users[1]?.id || 'u-002',
+        monthlySales: parseInt(obj.monthlySales) || 0, annualFee: parseInt(obj.annualFee) || 0,
+        spotFees: obj.spotFees ? (function(){ try { return JSON.parse(obj.spotFees); } catch(e) { return []; } })() : [],
+        address: obj.address || '', tel: obj.tel || '', representative: obj.representative || '',
+        industry: obj.industry || '', taxOffice: obj.taxOffice || '', memo: '', establishDate: '',
+        cwAccountId: obj.cwAccountId || '', cwRoomUrls: [], relatedClientIds: [], customFieldValues: cfv,
+      });
+      return 'imported';
     }
-  };
-  input.click();
+  }, () => { if (currentPage === 'clients') navigateTo('clients'); });
 }
 
 registerPage('clients', renderClients);
