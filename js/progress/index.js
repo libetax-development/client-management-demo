@@ -246,7 +246,11 @@ function renderProgressDetail(el, params) {
           <td>${mgr?.name || '-'}</td>
           ${sheet.columns.map(c => {
             const val = t.steps[c] || '未着手';
-            return `<td class="pg-step-cell"><span class="status-badge ${getStatusClass(val)}" style="cursor:pointer;" onclick="event.stopPropagation();cycleProgressStatus('${sheet.id}','${t.clientId}','${c}')">${val}</span></td>`;
+            const doneDate = t.completedDates && t.completedDates[c] ? t.completedDates[c] : '';
+            return `<td class="pg-step-cell" style="text-align:center;">
+              <span class="status-badge ${getStatusClass(val)}" style="cursor:pointer;" onclick="event.stopPropagation();openStatusSelect('${sheet.id}','${t.clientId}','${c}',this)">${val}</span>
+              ${doneDate ? `<div style="font-size:10px;color:var(--gray-400);margin-top:2px;">${escapeHtml(doneDate)}</div>` : ''}
+            </td>`;
           }).join('')}
           <td class="pg-note-cell" style="font-size:12px;color:var(--gray-500);max-width:200px;min-width:120px;cursor:pointer;white-space:pre-wrap;" onclick="event.stopPropagation();editProgressNote('${sheet.id}','${t.clientId}',this)" title="クリックでメモ編集">${t.note ? escapeHtml(t.note) : '<span style="color:var(--gray-300)">メモを追加...</span>'}</td>
         </tr>`;
@@ -262,17 +266,44 @@ function renderProgressDetail(el, params) {
   draw();
 }
 
-function cycleProgressStatus(sheetId, clientId, colName) {
-  const cycle = ['未着手', '進行中', '完了', '差戻し'];
+function openStatusSelect(sheetId, clientId, colName, badge) {
+  const td = badge.closest('td');
+  if (td.querySelector('select')) return; // 二重起動防止
   const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
   if (!sheet) return;
   const target = sheet.targets.find(t => t.clientId === clientId);
   if (!target) return;
   const current = target.steps[colName] || '未着手';
-  const idx = cycle.indexOf(current);
-  target.steps[colName] = cycle[(idx + 1) % cycle.length];
-  navigateTo('progress-detail', { id: sheetId });
+  const statuses = ['未着手', '進行中', '完了', '差戻し'];
+  const sel = document.createElement('select');
+  sel.style.cssText = 'font-size:12px;padding:2px 4px;border:1px solid var(--primary);border-radius:4px;';
+  statuses.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  badge.style.display = 'none';
+  td.insertBefore(sel, badge);
+  sel.focus();
+  const save = () => {
+    const newVal = sel.value;
+    target.steps[colName] = newVal;
+    if (!target.completedDates) target.completedDates = {};
+    if (newVal === '完了') {
+      target.completedDates[colName] = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+    } else {
+      delete target.completedDates[colName];
+    }
+    navigateTo('progress-detail', { id: sheetId });
+  };
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', () => {
+    sel.remove();
+    badge.style.display = '';
+  });
 }
+
 
 function editProgressNote(sheetId, clientId, td) {
   if (td.querySelector('textarea')) return; // 二重起動防止
@@ -330,9 +361,18 @@ function bulkStatusUpdate(sheetId) {
   const map = { '1': '未着手', '2': '進行中', '3': '完了' };
   const target = map[status];
   if (!target) return;
+  const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   sheet.targets.forEach(t => {
+    if (!t.completedDates) t.completedDates = {};
     sheet.columns.forEach(c => {
-      if (t.steps[c] !== '完了') t.steps[c] = target;
+      if (t.steps[c] !== '完了') {
+        t.steps[c] = target;
+        if (target === '完了') {
+          t.completedDates[c] = todayStr;
+        } else {
+          delete t.completedDates[c];
+        }
+      }
     });
   });
   navigateTo('progress-detail', { id: sheetId });
