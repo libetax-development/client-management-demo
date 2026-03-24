@@ -248,7 +248,7 @@ function renderProgressDetail(el, params) {
             const val = t.steps[c] || '未着手';
             return `<td class="pg-step-cell"><span class="status-badge ${getStatusClass(val)}" style="cursor:pointer;" onclick="event.stopPropagation();cycleProgressStatus('${sheet.id}','${t.clientId}','${c}')">${val}</span></td>`;
           }).join('')}
-          <td style="font-size:12px;color:var(--gray-500);max-width:160px;">${t.note || ''}</td>
+          <td class="pg-note-cell" style="font-size:12px;color:var(--gray-500);max-width:200px;min-width:120px;cursor:pointer;white-space:pre-wrap;" onclick="event.stopPropagation();editProgressNote('${sheet.id}','${t.clientId}',this)" title="クリックでメモ編集">${t.note ? escapeHtml(t.note) : '<span style="color:var(--gray-300)">メモを追加...</span>'}</td>
         </tr>`;
       }).join('');
 
@@ -274,13 +274,41 @@ function cycleProgressStatus(sheetId, clientId, colName) {
   navigateTo('progress-detail', { id: sheetId });
 }
 
+function editProgressNote(sheetId, clientId, td) {
+  if (td.querySelector('textarea')) return; // 二重起動防止
+  const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
+  if (!sheet) return;
+  const target = sheet.targets.find(t => t.clientId === clientId);
+  if (!target) return;
+  const current = target.note || '';
+  const textarea = document.createElement('textarea');
+  textarea.value = current;
+  textarea.style.cssText = 'width:100%;min-height:48px;font-size:12px;border:1px solid var(--primary);border-radius:4px;padding:4px;resize:vertical;';
+  td.innerHTML = '';
+  td.appendChild(textarea);
+  textarea.focus();
+  let saved = false;
+  const save = () => {
+    if (saved) return;
+    saved = true;
+    target.note = textarea.value.trim();
+    td.innerHTML = target.note ? escapeHtml(target.note) : '<span style="color:var(--gray-300)">メモを追加...</span>';
+    td.style.cssText += 'white-space:pre-wrap;';
+  };
+  textarea.addEventListener('blur', save);
+  textarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); textarea.blur(); }
+    if (e.key === 'Escape') { textarea.value = current; textarea.blur(); }
+  });
+}
+
 function exportProgressCSV(sheetId) {
   const sheet = MOCK_DATA.progressSheets.find(s => s.id === sheetId);
   if (!sheet) return;
-  const header = ['顧客コード', '顧客名', ...sheet.columns];
+  const header = ['顧客コード', '顧客名', ...sheet.columns, '備考'];
   const rows = sheet.targets.map(t => {
     const client = getClientById(t.clientId);
-    return [client?.clientCode || '', client?.name || '', ...sheet.columns.map(c => t.steps[c] || '未着手')];
+    return [client?.clientCode || '', client?.name || '', ...sheet.columns.map(c => t.steps[c] || '未着手'), t.note || ''];
   });
   const csvContent = [header, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
   const bom = '\uFEFF';

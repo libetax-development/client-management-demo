@@ -5,12 +5,19 @@ function renderCalendar(el) {
   const now = new Date();
   let calYear = now.getFullYear();
   let calMonth = now.getMonth();
+  let calViewMode = 'month'; // 'month' | 'week' | 'day'
+  let calCurrentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   el.innerHTML = `
-    <div class="toolbar">
-      <button class="btn btn-secondary" id="cal-prev">&larr; 前月</button>
+    <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-secondary" id="cal-prev">&larr; <span id="cal-prev-label">前月</span></button>
       <h3 id="cal-title" style="margin:0 16px;min-width:140px;text-align:center;"></h3>
-      <button class="btn btn-secondary" id="cal-next">次月 &rarr;</button>
+      <button class="btn btn-secondary" id="cal-next"><span id="cal-next-label">次月</span> &rarr;</button>
+      <div class="view-tabs" style="margin:0 12px;">
+        <button class="view-tab active" data-cal-view="month">月</button>
+        <button class="view-tab" data-cal-view="week">週</button>
+        <button class="view-tab" data-cal-view="day">日</button>
+      </div>
       <div class="spacer"></div>
       <select class="filter-select" id="cal-type-filter">
         <option value="">全て表示</option>
@@ -31,37 +38,74 @@ function renderCalendar(el) {
     <div id="cal-day-detail" style="display:none;margin-top:16px;"></div>
   `;
 
-  function draw() {
-    document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
+  function getTodayStr() {
+    return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  }
+
+  function dateStr(y, m, d) {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  function dateStrFromDate(dt) {
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  }
+
+  function getWeekStart(dt) {
+    const d = new Date(dt);
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1)); // 月曜始まり
+    return d;
+  }
+
+  function getFilteredData() {
     const userFilter = document.getElementById('cal-user-filter')?.value || '';
     const typeFilter = document.getElementById('cal-type-filter')?.value || '';
-    const firstDay = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const today = new Date().toISOString().slice(0, 10);
-
-    let tasks = typeFilter !== 'event' ? MOCK_DATA.tasks.filter(t => {
+    const tasks = typeFilter !== 'event' ? MOCK_DATA.tasks.filter(t => {
       if (userFilter && t.assigneeUserId !== userFilter) return false;
       return true;
     }) : [];
-
-    let events = typeFilter !== 'task' ? MOCK_DATA.calendarEvents.filter(e => {
+    const events = typeFilter !== 'task' ? MOCK_DATA.calendarEvents.filter(e => {
       if (userFilter && e.userId && e.userId !== userFilter) return false;
       return true;
     }) : [];
+    return { tasks, events, userFilter, typeFilter };
+  }
 
-    const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
-    let html = dayHeaders.map((d, i) => `<div class="cal-header ${i === 0 ? 'cal-sun' : i === 6 ? 'cal-sat' : ''}">${d}</div>`).join('');
+  function updateNavLabels() {
+    const labels = { month: ['前月', '次月'], week: ['前週', '次週'], day: ['前日', '次日'] };
+    document.getElementById('cal-prev-label').textContent = labels[calViewMode][0];
+    document.getElementById('cal-next-label').textContent = labels[calViewMode][1];
+  }
+
+  function draw() {
+    updateNavLabels();
+    if (calViewMode === 'month') drawMonth();
+    else if (calViewMode === 'week') drawWeek();
+    else drawDay();
+  }
+
+  // ── 月表示 ──
+  function drawMonth() {
+    document.getElementById('cal-title').textContent = `${calYear}年${calMonth + 1}月`;
+    const { tasks, events, userFilter, typeFilter } = getFilteredData();
+    const rawFirstDay = new Date(calYear, calMonth, 1).getDay();
+    const firstDay = rawFirstDay === 0 ? 6 : rawFirstDay - 1; // 月曜始まり（0=月, 6=日）
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = getTodayStr();
+
+    const dayHeaders = ['月', '火', '水', '木', '金', '土', '日'];
+    let html = dayHeaders.map((d, i) => `<div class="cal-header ${i === 5 ? 'cal-sat' : i === 6 ? 'cal-sun' : ''}">${d}</div>`).join('');
 
     for (let i = 0; i < firstDay; i++) {
       html += '<div class="cal-day cal-empty"></div>';
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isToday = dateStr === today;
-      const dow = (firstDay + d - 1) % 7;
-      const dayTasks = tasks.filter(t => t.dueDate === dateStr);
-      const dayEvents = events.filter(e => e.date === dateStr);
+      const ds = dateStr(calYear, calMonth, d);
+      const isToday = ds === today;
+      const dow = (firstDay + d - 1) % 7; // 0=月, 5=土, 6=日
+      const dayTasks = tasks.filter(t => t.dueDate === ds);
+      const dayEvents = events.filter(e => e.date === ds);
       const allItems = [];
 
       dayTasks.forEach(t => {
@@ -74,19 +118,165 @@ function renderCalendar(el) {
         allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}">${timeStr}${e.title.slice(0, 10)}</div>` });
       });
 
-      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 0 ? 'cal-sun' : dow === 6 ? 'cal-sat' : ''}" data-date="${dateStr}" style="cursor:pointer;">
+      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 6 ? 'cal-sun' : dow === 5 ? 'cal-sat' : ''}" data-date="${ds}" style="cursor:pointer;">
         <div class="cal-date">${d}</div>
         ${allItems.slice(0, 3).map(i => i.html).join('')}
         ${allItems.length > 3 ? `<div class="cal-more">+${allItems.length - 3}件</div>` : ''}
       </div>`;
     }
 
-    document.getElementById('cal-grid').innerHTML = html;
+    const grid = document.getElementById('cal-grid');
+    grid.className = 'cal-grid';
+    grid.innerHTML = html;
 
-    // 日付クリックで詳細表示
     document.querySelectorAll('.cal-day[data-date]').forEach(cell => {
       cell.addEventListener('click', () => showCalDayDetail(cell.dataset.date, userFilter, typeFilter));
     });
+  }
+
+  // ── 週表示 ──
+  function drawWeek() {
+    const weekStart = getWeekStart(calCurrentDate);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const startLabel = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+    const endLabel = `${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+    document.getElementById('cal-title').textContent = `${weekStart.getFullYear()}年 ${startLabel}〜${endLabel}`;
+
+    const { tasks, events, userFilter, typeFilter } = getFilteredData();
+    const today = getTodayStr();
+    const weekDayHeaders = ['月', '火', '水', '木', '金', '土', '日'];
+    const hours = [];
+    for (let h = 8; h <= 20; h++) hours.push(h);
+
+    // Build dates for the week (月〜日)
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(weekStart);
+      dt.setDate(dt.getDate() + i);
+      weekDates.push(dt);
+    }
+
+    let html = '<table class="cal-week-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
+    // Header row
+    html += '<thead><tr><th style="width:60px;padding:8px;border:1px solid var(--gray-200);background:var(--gray-50);">時間</th>';
+    weekDates.forEach((dt, i) => {
+      const ds = dateStrFromDate(dt);
+      const isToday = ds === today;
+      html += `<th style="padding:8px;border:1px solid var(--gray-200);background:${isToday ? 'var(--primary-light, #e8f0fe)' : 'var(--gray-50)'};text-align:center;${i === 5 ? 'color:var(--primary);' : i === 6 ? 'color:var(--danger);' : ''}">
+        ${weekDayHeaders[i]} ${dt.getDate()}
+      </th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    // Allday row for tasks
+    html += '<tr><td style="padding:6px;border:1px solid var(--gray-200);background:var(--gray-50);font-weight:500;text-align:center;font-size:11px;">終日</td>';
+    weekDates.forEach(dt => {
+      const ds = dateStrFromDate(dt);
+      const dayTasks = tasks.filter(t => t.dueDate === ds);
+      const alldayEvents = events.filter(e => e.date === ds && !e.time);
+      const items = [];
+      dayTasks.forEach(t => {
+        const client = getClientById(t.clientId);
+        items.push(`<div class="cal-event ${getStatusClass(t.status)}" style="font-size:10px;margin:1px 0;" title="${client?.name}: ${t.title}">${t.title.slice(0, 10)}</div>`);
+      });
+      alldayEvents.forEach(e => {
+        const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+        items.push(`<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;" title="${e.title}">${e.title.slice(0, 10)}</div>`);
+      });
+      html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;min-width:100px;">${items.join('')}</td>`;
+    });
+    html += '</tr>';
+
+    // Time rows
+    hours.forEach(h => {
+      const timeLabel = `${String(h).padStart(2, '0')}:00`;
+      html += `<tr><td style="padding:6px;border:1px solid var(--gray-200);background:var(--gray-50);text-align:center;font-size:11px;">${timeLabel}</td>`;
+      weekDates.forEach(dt => {
+        const ds = dateStrFromDate(dt);
+        const hourEvents = events.filter(e => {
+          if (e.date !== ds || !e.time) return false;
+          const eHour = parseInt(e.time.split(':')[0], 10);
+          return eHour === h;
+        });
+        const items = hourEvents.map(e => {
+          const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+          const dur = e.duration ? ` (${e.duration}分)` : '';
+          return `<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;cursor:pointer;" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}${dur}">${e.time} ${e.title.slice(0, 12)}</div>`;
+        });
+        html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;height:36px;">${items.join('')}</td>`;
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+
+    const grid = document.getElementById('cal-grid');
+    grid.className = '';
+    grid.innerHTML = html;
+  }
+
+  // ── 日表示 ──
+  function drawDay() {
+    const ds = dateStrFromDate(calCurrentDate);
+    const dow = ['日', '月', '火', '水', '木', '金', '土'][calCurrentDate.getDay()];
+    document.getElementById('cal-title').textContent = `${calCurrentDate.getFullYear()}年${calCurrentDate.getMonth() + 1}月${calCurrentDate.getDate()}日（${dow}）`;
+
+    const { tasks, events } = getFilteredData();
+    const today = getTodayStr();
+    const isToday = ds === today;
+    const hours = [];
+    for (let h = 8; h <= 20; h++) hours.push(h);
+
+    const dayTasks = tasks.filter(t => t.dueDate === ds);
+    const alldayEvents = events.filter(e => e.date === ds && !e.time);
+
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;max-width:700px;">';
+
+    // Allday row
+    if (dayTasks.length > 0 || alldayEvents.length > 0) {
+      html += '<tr><td style="padding:8px;border:1px solid var(--gray-200);background:var(--gray-50);width:80px;font-weight:500;text-align:center;">終日</td><td style="padding:8px;border:1px solid var(--gray-200);vertical-align:top;">';
+      dayTasks.forEach(t => {
+        const client = getClientById(t.clientId);
+        html += `<div class="cal-event ${getStatusClass(t.status)}" style="margin:2px 0;" title="${client?.name}: ${t.title}">${t.title}</div>`;
+      });
+      alldayEvents.forEach(e => {
+        const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+        html += `<div class="cal-event ${typeClass}" style="margin:2px 0;" title="${e.title}">${e.title}</div>`;
+      });
+      html += '</td></tr>';
+    }
+
+    // Time rows
+    hours.forEach(h => {
+      const timeLabel = `${String(h).padStart(2, '0')}:00`;
+      const hourEvents = events.filter(e => {
+        if (e.date !== ds || !e.time) return false;
+        return parseInt(e.time.split(':')[0], 10) === h;
+      });
+      const bgColor = isToday ? 'var(--primary-light, #f8f9ff)' : '';
+      html += `<tr>
+        <td style="padding:8px;border:1px solid var(--gray-200);background:var(--gray-50);text-align:center;font-size:12px;width:80px;">${timeLabel}</td>
+        <td style="padding:8px;border:1px solid var(--gray-200);min-height:40px;height:40px;vertical-align:top;${bgColor ? 'background:' + bgColor + ';' : ''}">`;
+      hourEvents.forEach(e => {
+        const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+        const user = e.userId ? getUserById(e.userId) : null;
+        const client = e.clientId ? getClientById(e.clientId) : null;
+        const dur = e.duration ? ` (${e.duration}分)` : '';
+        const meta = [user?.name, client?.name, e.location].filter(Boolean).join(' / ');
+        html += `<div class="cal-event ${typeClass}" style="margin:2px 0;padding:4px 8px;">
+          <div style="font-weight:500;">${e.time} ${e.title}${dur}</div>
+          ${meta ? `<div style="font-size:11px;opacity:0.8;">${meta}</div>` : ''}
+        </div>`;
+      });
+      html += '</td></tr>';
+    });
+
+    html += '</table>';
+
+    const grid = document.getElementById('cal-grid');
+    grid.className = '';
+    grid.innerHTML = html;
   }
 
   function showCalDayDetail(dateStr, userFilter, typeFilter) {
@@ -152,8 +342,56 @@ function renderCalendar(el) {
     detail.style.display = 'block';
   }
 
-  document.getElementById('cal-prev').addEventListener('click', () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } draw(); });
-  document.getElementById('cal-next').addEventListener('click', () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } draw(); });
+  // ── ナビゲーション ──
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    if (calViewMode === 'month') {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      calCurrentDate = new Date(calYear, calMonth, 1);
+    } else if (calViewMode === 'week') {
+      calCurrentDate.setDate(calCurrentDate.getDate() - 7);
+      calYear = calCurrentDate.getFullYear();
+      calMonth = calCurrentDate.getMonth();
+    } else {
+      calCurrentDate.setDate(calCurrentDate.getDate() - 1);
+      calYear = calCurrentDate.getFullYear();
+      calMonth = calCurrentDate.getMonth();
+    }
+    draw();
+  });
+
+  document.getElementById('cal-next').addEventListener('click', () => {
+    if (calViewMode === 'month') {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      calCurrentDate = new Date(calYear, calMonth, 1);
+    } else if (calViewMode === 'week') {
+      calCurrentDate.setDate(calCurrentDate.getDate() + 7);
+      calYear = calCurrentDate.getFullYear();
+      calMonth = calCurrentDate.getMonth();
+    } else {
+      calCurrentDate.setDate(calCurrentDate.getDate() + 1);
+      calYear = calCurrentDate.getFullYear();
+      calMonth = calCurrentDate.getMonth();
+    }
+    draw();
+  });
+
+  // ── ビュー切替タブ ──
+  document.querySelectorAll('[data-cal-view]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      calViewMode = tab.dataset.calView;
+      document.querySelectorAll('[data-cal-view]').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      // 月表示に戻る場合、calYear/calMonthを現在日付に合わせる
+      if (calViewMode === 'month') {
+        calYear = calCurrentDate.getFullYear();
+        calMonth = calCurrentDate.getMonth();
+      }
+      draw();
+    });
+  });
+
   document.getElementById('cal-user-filter').addEventListener('change', draw);
   document.getElementById('cal-type-filter').addEventListener('change', draw);
   document.getElementById('cal-add-event').addEventListener('click', openEventModal);
