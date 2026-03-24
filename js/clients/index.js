@@ -287,6 +287,12 @@ function renderClientDetail(el, params) {
         </div>
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>報告書サマリー</h3><span style="font-size:11px;color:var(--gray-400);margin-left:8px;">AI自動生成（準備中）</span></div>
+      <div class="card-body">
+        ${renderReportSummaryCard(c)}
+      </div>
+    </div>
     <div style="text-align:right;">
       <button class="btn btn-danger" onclick="deleteClient('${c.id}')" style="background:var(--danger);color:#fff;border:none;">顧客を削除</button>
     </div>
@@ -501,6 +507,33 @@ function importClientCSV() {
       return 'imported';
     }
   }, () => { if (currentPage === 'clients') navigateTo('clients'); });
+}
+
+function renderReportSummaryCard(c) {
+  const clientReports = MOCK_DATA.reports.filter(r => r.clientName === c.name);
+  if (clientReports.length === 0) return '<div style="text-align:center;color:var(--gray-400);padding:16px;">この顧客の報告書はまだありません</div>';
+  const sorted = [...clientReports].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const cardStyle = 'background:#fff;padding:10px;border-radius:6px;border:1px dashed var(--gray-300);';
+  return `
+    <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">🤖</span>
+        <span style="font-size:13px;font-weight:600;color:var(--gray-600);">AIによる顧客状況サマリー</span>
+        <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">今後実装予定</span>
+      </div>
+      <div style="color:var(--gray-400);font-size:13px;line-height:1.8;">
+        この機能では、${escapeHtml(c.name)}に関する全ての業務報告書（${clientReports.length}件）をAIが分析し、<br>
+        以下の情報を自動で集約・要約します：
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">
+          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">📋 対応履歴の要約</div><div style="font-size:12px;color:var(--gray-400);">直近の対応内容・経緯を時系列で要約</div></div>
+          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">⚠️ 未解決事項</div><div style="font-size:12px;color:var(--gray-400);">確認待ち・保留中の事項を自動抽出</div></div>
+          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">📊 業務傾向</div><div style="font-size:12px;color:var(--gray-400);">月次・決算・確定申告等の業務バランス</div></div>
+          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">💡 次のアクション</div><div style="font-size:12px;color:var(--gray-400);">報告書から抽出した次回対応事項</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--gray-400);">関連報告書: ${clientReports.length}件（直近: ${formatDate(sorted[0]?.createdAt)}）</div>
+  `;
 }
 
 registerPage('clients', renderClients);
