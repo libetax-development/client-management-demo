@@ -451,10 +451,45 @@
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:6px;cursor:pointer;"><input type="checkbox" id="new-rp-attach"> あり</label>
         </div>
       </div>
+      <div class="form-group">
+        <label>テンプレート</label>
+        <select id="new-rp-template" onchange="applyReportTemplate()">
+          <option value="">テンプレートを選択...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>本文</label>
+        <textarea id="new-rp-body" rows="10" style="width:100%;height:200px;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="本文を入力、またはテンプレートを選択してください..."></textarea>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeReportModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="submitNewReport()">作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- テンプレート編集モーダル -->
+<div class="modal-overlay" id="template-edit-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="tpl-modal-title">テンプレート編集</h3>
+      <button class="btn-icon" onclick="hideModal('template-edit-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tpl-edit-id">
+      <div class="form-group">
+        <label>テンプレート名</label>
+        <input type="text" id="tpl-edit-name" placeholder="例: 確定申告 帳簿チェック">
+      </div>
+      <div class="form-group">
+        <label>本文 <span style="font-size:11px;color:var(--gray-400);">変数: {顧客名} {タイトル} {日付}</span></label>
+        <textarea id="tpl-edit-body" rows="12" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="テンプレート本文を入力..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('template-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveReportTemplate()">保存</button>
     </div>
   </div>
 </div>

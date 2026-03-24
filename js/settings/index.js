@@ -105,6 +105,7 @@ function renderSettings(el) {
     { key: 'security', label: 'セキュリティ管理' },
     { key: 'crm', label: 'CRM設定' },
     { key: 'features', label: '機能設定' },
+    { key: 'reportTemplates', label: '報告書テンプレート' },
   ];
 
   const logoutOpts = [5,10,15,30,60,120].map(m =>
@@ -283,6 +284,36 @@ function renderSettings(el) {
           </div>
         </div>
       </div>`,
+
+    reportTemplates: (() => {
+      const templates = MOCK_DATA.reportTemplates || [];
+      return `
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>報告書テンプレート</h3>
+          <button class="btn btn-primary btn-sm" onclick="addReportTemplate()">+ 新規テンプレート</button>
+        </div>
+        <div class="card-body">
+          <div id="rt-flash"></div>
+          ${templates.length === 0 ? '<p style="color:var(--gray-500);font-size:13px;">テンプレートが登録されていません。</p>' : `
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>テンプレート名</th><th>本文プレビュー</th><th>操作</th></tr></thead>
+              <tbody>
+                ${templates.map(t => `<tr>
+                  <td style="white-space:nowrap;">${escapeHtml(t.name)}</td>
+                  <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--gray-500);">${escapeHtml(t.body.replace(/\n/g, ' ').slice(0, 80))}${t.body.length > 80 ? '...' : ''}</td>
+                  <td style="white-space:nowrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="editReportTemplate('${t.id}')">編集</button>
+                    <button class="btn btn-secondary btn-sm" style="color:var(--danger);" onclick="deleteReportTemplate('${t.id}')">削除</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`}
+        </div>
+      </div>`;
+    })(),
   };
 
   const activeKey = tabs[settingsActiveTab]?.key || 'personal';
@@ -302,6 +333,61 @@ function renderSettings(el) {
       document.getElementById('settings-panel').innerHTML = panels[btn.dataset.tab] || '';
     });
   });
+}
+
+// ── 報告書テンプレート CRUD ──
+function addReportTemplate() {
+  document.getElementById('tpl-modal-title').textContent = '新規テンプレート';
+  document.getElementById('tpl-edit-id').value = '';
+  document.getElementById('tpl-edit-name').value = '';
+  document.getElementById('tpl-edit-body').value = '■ 作業内容\n{タイトル}\n\n■ 実施事項\n・\n\n■ 確認事項\n・\n\n■ 次のアクション\n・';
+  showModal('template-edit-modal');
+}
+
+function editReportTemplate(id) {
+  const t = (MOCK_DATA.reportTemplates || []).find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tpl-modal-title').textContent = 'テンプレート編集';
+  document.getElementById('tpl-edit-id').value = id;
+  document.getElementById('tpl-edit-name').value = t.name;
+  document.getElementById('tpl-edit-body').value = t.body;
+  showModal('template-edit-modal');
+}
+
+function saveReportTemplate() {
+  const id = document.getElementById('tpl-edit-id').value;
+  const name = document.getElementById('tpl-edit-name').value.trim();
+  const body = document.getElementById('tpl-edit-body').value;
+  if (!name) { alert('テンプレート名を入力してください'); return; }
+
+  if (!MOCK_DATA.reportTemplates) MOCK_DATA.reportTemplates = [];
+
+  if (id) {
+    const t = MOCK_DATA.reportTemplates.find(x => x.id === id);
+    if (t) { t.name = name; t.body = body; }
+  } else {
+    const maxNum = MOCK_DATA.reportTemplates.reduce((m, t) => {
+      const n = parseInt(t.id.replace('rt-', ''));
+      return n > m ? n : m;
+    }, 0);
+    MOCK_DATA.reportTemplates.push({
+      id: 'rt-' + String(maxNum + 1).padStart(3, '0'),
+      name, body,
+    });
+  }
+
+  hideModal('template-edit-modal');
+  settingsActiveTab = 6;
+  settingsRerender();
+  setTimeout(() => settingsFlash('rt-flash', id ? 'テンプレートを更新しました' : 'テンプレートを追加しました'), 50);
+}
+
+function deleteReportTemplate(id) {
+  if (!confirm('このテンプレートを削除しますか？')) return;
+  MOCK_DATA.reportTemplates = (MOCK_DATA.reportTemplates || []).filter(x => x.id !== id);
+  settingsActiveTab = 6;
+  settingsRerender();
+  setTimeout(() => settingsFlash('rt-flash', 'テンプレートを削除しました'), 50);
 }
 
 registerPage('settings', renderSettings);

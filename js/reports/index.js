@@ -159,10 +159,10 @@ function rpRenderList() {
       const isExpanded = rpExpandedSet.has(r.id);
       return `<div class="rp-row ${isUnread ? 'unread' : ''}" onclick="rpClickReport('${r.id}')">
         <span class="rp-row-date">${formatDate(r.createdAt)}</span>
-        <span class="rp-row-author">${author?.name || '-'}</span>
-        <span class="rp-row-title">${r.hasAttachment ? '<span class="attach-icon">\ud83d\udcce</span>' : ''}${r.title}</span>
+        <span class="rp-row-author">${escapeHtml(author?.name || '-')}</span>
+        <span class="rp-row-title">${r.hasAttachment ? '<span class="attach-icon">\ud83d\udcce</span>' : ''}${escapeHtml(r.title)}</span>
         ${badgeText ? `<span class="rp-row-badge ${badgeClass}">${badgeText}</span>` : '<span></span>'}
-      </div>${isExpanded ? `<div class="rp-row-detail" style="padding:8px 16px 12px;font-size:13px;color:var(--gray-500);background:var(--gray-50);border-bottom:1px solid var(--gray-200);"><strong>タイトル：</strong>${r.title}<br><strong>種別：</strong>${r.category || r.type || '-'}\u3000<strong>ランク：</strong>${r.rank || '-'}\u3000<strong>顧客：</strong>${r.clientName || '-'}</div>` : ''}`;
+      </div>${isExpanded ? `<div class="rp-row-detail" style="padding:8px 16px 12px;font-size:13px;color:var(--gray-500);background:var(--gray-50);border-bottom:1px solid var(--gray-200);"><strong>タイトル：</strong>${escapeHtml(r.title)}<br><strong>種別：</strong>${escapeHtml(r.category || r.type || '-')}\u3000<strong>ランク：</strong>${escapeHtml(r.rank || '-')}\u3000<strong>顧客：</strong>${escapeHtml(r.clientName || '-')}</div>` : ''}`;
     }).join('');
   }
 
@@ -213,33 +213,33 @@ function renderReportDetail(el, params) {
   const author = getUserById(r.authorId);
   document.getElementById('header-title').textContent = `報告書詳細 - ${r.title}`;
 
-  // モック本文を種別に応じて生成
-  const mockBody = generateReportBody(r);
+  // bodyフィールドがあればそれを使用、なければモック本文を生成
+  const mockBody = r.body || generateReportBody(r);
 
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('reports')">&larr; 報告書一覧に戻る</a></div>
     <div class="detail-grid">
       <div class="card">
         <div class="card-header">
-          <h3>${r.title}</h3>
+          <h3>${escapeHtml(r.title)}</h3>
           <div style="display:flex;gap:8px;">
-            <span class="rp-row-badge ${r.readStatus === '未読' ? 'rp-badge-unread' : r.readStatus === '一時保存中' ? 'rp-badge-draft' : 'rp-badge-read'}">${r.readStatus}</span>
+            <span class="rp-row-badge ${r.readStatus === '未読' ? 'rp-badge-unread' : r.readStatus === '一時保存中' ? 'rp-badge-draft' : 'rp-badge-read'}">${escapeHtml(r.readStatus)}</span>
           </div>
         </div>
         <div class="card-body">
           <div class="pre-wrap">${escapeHtml(mockBody)}</div>
-          ${r.hasAttachment ? '<div class="info-box" style="margin-top:16px;"><span style="font-size:13px;">&#128206; 添付ファイル: <a href="#" onclick="event.preventDefault();alert(\'ファイルを開きます（モック）\')">' + r.title.slice(0, 20) + '_資料.pdf</a></span></div>' : ''}
+          ${r.hasAttachment ? '<div class="info-box" style="margin-top:16px;"><span style="font-size:13px;">&#128206; 添付ファイル: <a href="#" onclick="event.preventDefault();alert(\'ファイルを開きます（モック）\')">' + escapeHtml(r.title.slice(0, 20)) + '_資料.pdf</a></span></div>' : ''}
         </div>
       </div>
       <div>
         <div class="card" style="margin-bottom:16px;">
           <div class="card-header"><h3>報告書情報</h3></div>
           <div class="card-body">
-            <div class="detail-row"><div class="detail-label">作成者</div><div class="detail-value">${author?.name || '-'}</div></div>
+            <div class="detail-row"><div class="detail-label">作成者</div><div class="detail-value">${escapeHtml(author?.name || '-')}</div></div>
             <div class="detail-row"><div class="detail-label">作成日時</div><div class="detail-value">${formatDate(r.createdAt)}</div></div>
-            <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${r.type}</div></div>
-            <div class="detail-row"><div class="detail-label">業務分類</div><div class="detail-value">${r.category}</div></div>
-            <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value">${r.clientName || '-'}</div></div>
+            <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${escapeHtml(r.type)}</div></div>
+            <div class="detail-row"><div class="detail-label">業務分類</div><div class="detail-value">${escapeHtml(r.category)}</div></div>
+            <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value">${escapeHtml(r.clientName || '-')}</div></div>
             <div class="detail-row"><div class="detail-label">ランク</div><div class="detail-value"><span class="rp-rank-display rp-rank-${r.rank}">${r.rank}</span></div></div>
             <div class="detail-row"><div class="detail-label">添付ファイル</div><div class="detail-value">${r.hasAttachment ? 'あり' : 'なし'}</div></div>
           </div>

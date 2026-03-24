@@ -248,6 +248,14 @@ const MOCK_DATA = {
     { id: 'ev-012', title: 'グリーンファーム 記帳確認', date: '2026-03-13', time: '11:00', duration: 30, type: 'meeting', userId: 'u-007', clientId: 'c-006', location: '電話' },
   ],
 
+  reportTemplates: [
+    { id: 'rt-001', name: '確定申告 帳簿チェック', body: '■ 作業内容\n{タイトル}\n\n■ 実施事項\n・会計帳簿のチェック（仕訳内容・勘定科目の確認）\n・前年度との比較分析\n・不明点の洗い出しと顧客への確認事項整理\n\n■ 確認事項\n・\n\n■ 次のアクション\n・' },
+    { id: 'rt-002', name: '決算業務 決算整理', body: '■ 作業内容\n{タイトル}\n\n■ 実施事項\n・決算整理仕訳の確認\n・減価償却費の計算\n・引当金の計上確認\n\n■ 確認事項\n・\n\n■ 次のアクション\n・' },
+    { id: 'rt-003', name: '月次業務 月次報告', body: '■ 作業内容\n{タイトル}\n\n■ 実施事項\n・月次試算表の作成\n・前月比較分析\n・資金繰り表の更新\n\n■ 確認事項\n・\n\n■ 次のアクション\n・' },
+    { id: 'rt-004', name: '日報', body: '■ 本日の業務内容\n・\n\n■ 明日の予定\n・\n\n■ 所感・連絡事項\n・' },
+    { id: 'rt-005', name: '面談記録', body: '■ 作業内容\n{タイトル}\n\n■ 面談日時\n{日付}\n\n■ 参加者\n・{顧客名}\n・\n\n■ 議題・内容\n・\n\n■ 決定事項\n・\n\n■ 次のアクション\n・' },
+  ],
+
   notifications: [
     { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
     { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },

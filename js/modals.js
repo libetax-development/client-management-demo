@@ -367,10 +367,40 @@ function openReportModal() {
     'new-rp-rank': 'B', 'new-rp-attach': false,
   });
   resetForm(['new-rp-client', 'new-rp-title']);
+  // テンプレートドロップダウンを構築
+  const tplSelect = document.getElementById('new-rp-template');
+  if (tplSelect) {
+    const templates = MOCK_DATA.reportTemplates || [];
+    tplSelect.innerHTML = '<option value="">テンプレートを選択...</option>' +
+      templates.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  }
+  // 本文をクリア
+  const bodyEl = document.getElementById('new-rp-body');
+  if (bodyEl) bodyEl.value = '';
   showModal('report-create-modal');
 }
 
 function closeReportModal() { hideModal('report-create-modal'); }
+
+function applyReportTemplate() {
+  const tplId = getVal('new-rp-template');
+  if (!tplId) return;
+  const tpl = (MOCK_DATA.reportTemplates || []).find(t => t.id === tplId);
+  if (!tpl) return;
+
+  const clientName = getValTrim('new-rp-client') || '';
+  const title = getValTrim('new-rp-title') || '';
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+
+  let body = tpl.body;
+  body = body.replace(/\{顧客名\}/g, clientName);
+  body = body.replace(/\{タイトル\}/g, title);
+  body = body.replace(/\{日付\}/g, dateStr);
+
+  const bodyEl = document.getElementById('new-rp-body');
+  if (bodyEl) bodyEl.value = body;
+}
 
 function submitNewReport() {
   const title = getValTrim('new-rp-title');
@@ -379,6 +409,8 @@ function submitNewReport() {
   const category = getVal('new-rp-category');
   const rank = getVal('new-rp-rank');
   const hasAttachment = document.getElementById('new-rp-attach').checked;
+  const bodyEl = document.getElementById('new-rp-body');
+  const body = bodyEl ? bodyEl.value.trim() : '';
 
   if (!title) { alert('タイトルを入力してください'); return; }
 
@@ -386,7 +418,7 @@ function submitNewReport() {
     id: generateId('rp-', MOCK_DATA.reports),
     createdAt: new Date().toISOString(),
     authorId: MOCK_DATA.currentUser.id, type, category,
-    clientName, title, rank, readStatus: '一時保存中', hasAttachment,
+    clientName, title, rank, readStatus: '一時保存中', hasAttachment, body,
   });
   closeReportModal();
   if (currentPage === 'reports') navigateTo('reports');
