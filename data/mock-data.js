@@ -27,9 +27,9 @@ const MOCK_DATA = {
   },
 
   users: [
-    { id: 'u-001', staffCode: 'A001', lastName: 'ひろ', firstName: '', lastNameKana: 'ヒロ', firstNameKana: '', name: 'ひろ', email: 'hiro@libetax.jp', tel: '06-1234-5678', mobile: '090-1111-0001', role: 'admin', deptId: 4, team: null, position: '代表', employmentType: '正社員', joinDate: '2023-04-01', memo: '', loginId: 'hiro', isActive: true, baseRatio: null, staffFlag: '他', fixedReward: 700000 },
-    { id: 'u-002', staffCode: 'A002', lastName: '朝倉', firstName: 'ゆうこ', lastNameKana: 'アサクラ', firstNameKana: 'ユウコ', name: '朝倉 ゆうこ', email: 'asakura@libetax.jp', tel: '', mobile: '090-1111-0002', role: 'team_leader', deptId: 1, team: '第1チーム', position: 'チームリーダー', employmentType: '正社員', joinDate: '2023-06-01', memo: '', loginId: 'asakura', isActive: true, baseRatio: null, staffFlag: '他', fixedReward: 350000 },
-    { id: 'u-003', staffCode: 'A003', lastName: '望月', firstName: '太郎', lastNameKana: 'モチヅキ', firstNameKana: 'タロウ', name: '望月 太郎', email: 'mochizuki@libetax.jp', tel: '', mobile: '090-1111-0003', role: 'member', deptId: 1, team: '第1チーム', position: '税理士', employmentType: '正社員', joinDate: '2023-08-01', memo: '', loginId: 'mochizuki', isActive: true, baseRatio: 30, staffFlag: '税務' },
+    { id: 'u-001', staffCode: 'A001', lastName: 'ひろ', firstName: '', lastNameKana: 'ヒロ', firstNameKana: '', name: 'ひろ', email: 'hiro@libetax.jp', tel: '06-1234-5678', mobile: '090-1111-0001', role: 'admin', deptId: 4, team: null, position: '代表', employmentType: '正社員', joinDate: '2023-04-01', memo: '', loginId: 'hiro', isActive: true, baseRatio: null, staffFlag: '他', fixedReward: 700000, cwAccountId: '4115870' },
+    { id: 'u-002', staffCode: 'A002', lastName: '朝倉', firstName: 'ゆうこ', lastNameKana: 'アサクラ', firstNameKana: 'ユウコ', name: '朝倉 ゆうこ', email: 'asakura@libetax.jp', tel: '', mobile: '090-1111-0002', role: 'team_leader', deptId: 1, team: '第1チーム', position: 'チームリーダー', employmentType: '正社員', joinDate: '2023-06-01', memo: '', loginId: 'asakura', isActive: true, baseRatio: null, staffFlag: '他', fixedReward: 350000, cwAccountId: '5001001' },
+    { id: 'u-003', staffCode: 'A003', lastName: '望月', firstName: '太郎', lastNameKana: 'モチヅキ', firstNameKana: 'タロウ', name: '望月 太郎', email: 'mochizuki@libetax.jp', tel: '', mobile: '090-1111-0003', role: 'member', deptId: 1, team: '第1チーム', position: '税理士', employmentType: '正社員', joinDate: '2023-08-01', memo: '', loginId: 'mochizuki', isActive: true, baseRatio: 30, staffFlag: '税務', cwAccountId: '5001002' },
     { id: 'u-004', staffCode: 'A004', lastName: '八木', firstName: '花子', lastNameKana: 'ヤギ', firstNameKana: 'ハナコ', name: '八木 花子', email: 'yagi@libetax.jp', tel: '', mobile: '090-1111-0004', role: 'member', deptId: 1, team: '第1チーム', position: '税理士', employmentType: '正社員', joinDate: '2023-10-01', memo: '', loginId: 'yagi', isActive: true, baseRatio: 25, staffFlag: '税務' },
     { id: 'u-005', staffCode: 'A005', lastName: '宮本', firstName: '次郎', lastNameKana: 'ミヤモト', firstNameKana: 'ジロウ', name: '宮本 次郎', email: 'miyamoto@libetax.jp', tel: '', mobile: '090-1111-0005', role: 'member', deptId: 2, team: '第2チーム', position: '税理士', employmentType: '正社員', joinDate: '2024-01-15', memo: '', loginId: 'miyamoto', isActive: true, baseRatio: 30, staffFlag: '税務' },
     { id: 'u-006', staffCode: 'A006', lastName: '長谷川', firstName: '綾', lastNameKana: 'ハセガワ', firstNameKana: 'アヤ', name: '長谷川 綾', email: 'hasegawa@libetax.jp', tel: '', mobile: '090-1111-0006', role: 'member', deptId: 2, team: '第2チーム', position: 'スタッフ', employmentType: 'パート', joinDate: '2024-04-01', memo: '週3日勤務', loginId: 'hasegawa', isActive: true, baseRatio: 20, staffFlag: '税務' },
@@ -45,7 +45,7 @@ const MOCK_DATA = {
   ],
 
   clients: [
-    { id: 'c-001', clientCode: '030450', name: '株式会社サンプル商事', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-003', subUserId: 'u-007', mgrUserId: 'u-003', monthlySales: 50000, annualFee: 150000, spotFees: [{id:'sf-001', timing:'2026-05', amount:100000, description:'株価算定'}], address: '東京都千代田区大手町1-1-1', tel: '03-1234-5001', representative: '山本 太郎', establishDate: '2010-05-20', industry: '卸売業', taxOffice: '千代田税務署', memo: '', cwAccountId: '1234001', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000001', name:'【リベ税】株式会社サンプル商事'}], relatedClientIds: ['c-003'], customFieldValues: { 'cf-001': 'MK-12345', 'cf-002': '2023-04-01', 'cf-003': '優良顧客。毎月定例ミーティングあり。' } },
+    { id: 'c-001', clientCode: '030450', name: '株式会社サンプル商事', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-003', subUserId: 'u-007', mgrUserId: 'u-003', monthlySales: 50000, annualFee: 150000, spotFees: [{id:'sf-001', timing:'2026-05', amount:100000, description:'株価算定'}], address: '東京都千代田区大手町1-1-1', tel: '03-1234-5001', representative: '山本 太郎', establishDate: '2010-05-20', industry: '卸売業', taxOffice: '千代田税務署', memo: '', cwAccountId: '1234001', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000001', name:'【リベ税】株式会社サンプル商事'}], relatedClientIds: ['c-003'], customFieldValues: { 'cf-001': 'MK-12345', 'cf-002': '2023-04-01', 'cf-003': '優良顧客。毎月定例ミーティングあり。' }, contractStatus: '契約中', nichizeiCode: 'NT-001234', managementNo: 'M-0450', cityName: 'やまもとたろう', cityUrl: 'https://libecity.com/user/yamamoto', email: 'yamamoto@sample.co.jp', directDebitStatus: '設定済み', etaxId: '0012345678901234', eltaxId: 'LT001234', dropboxPath: '/リベ税/顧客/株式会社サンプル商事', contractEndDate: '', paymentInfo: { directDebit: true, transferAccount: '三井住友銀行 大手町支店', remarks: '法人税・消費税ともにダイレクト納付' } },
     { id: 'c-002', clientCode: '030451', name: '合同会社テスト工業', clientType: '法人', fiscalMonth: 9, isActive: true, mainUserId: 'u-004', subUserId: null, mgrUserId: 'u-004', monthlySales: 30000, annualFee: 0, spotFees: [], address: '大阪府大阪市中央区本町2-2-2', tel: '06-1234-5002', representative: '鈴木 一郎', establishDate: '2015-03-10', industry: '製造業', taxOffice: '東税務署', memo: '', cwAccountId: '1234002', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000002', name:'【リベ税】合同会社テスト工業'}], relatedClientIds: [], customFieldValues: { 'cf-001': 'MK-67890', 'cf-002': '2024-01-15' } },
     { id: 'c-003', clientCode: '030452', name: '田中 一郎', clientType: '個人', fiscalMonth: 12, isActive: true, mainUserId: 'u-005', subUserId: 'u-006', mgrUserId: 'u-005', monthlySales: 20000, annualFee: 0, spotFees: [], address: '愛知県名古屋市中区栄3-3-3', tel: '052-1234-5003', representative: '', establishDate: '', industry: '不動産賃貸', taxOffice: '名古屋中税務署', memo: '不動産所得あり', cwAccountId: '1234003', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000003', name:'【リベ税】田中一郎'}], relatedClientIds: ['c-001'] },
     { id: 'c-004', clientCode: '030453', name: '株式会社リベ不動産', clientType: '法人', fiscalMonth: 6, isActive: true, mainUserId: 'u-003', subUserId: null, mgrUserId: 'u-003', monthlySales: 80000, annualFee: 200000, spotFees: [{id:'sf-002', timing:'2026-08', amount:150000, description:'相続税申告'}, {id:'sf-003', timing:'2026-04-15', amount:50000, description:'議事録作成'}], address: '大阪府大阪市北区梅田1-4-4', tel: '06-1234-5004', representative: '高橋 花子', establishDate: '2018-01-15', industry: '不動産業', taxOffice: '北税務署', memo: '', cwAccountId: '1234004', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000004', name:'【リベ税】株式会社リベ不動産'}], relatedClientIds: [], customFieldValues: { 'cf-001': 'MK-11111', 'cf-002': '2023-06-01', 'cf-003': '不動産管理メイン。決算前にヒアリング必要。' } },
@@ -349,14 +349,24 @@ const MOCK_DATA = {
       interim1: true,
       interimPayment: true,
       interim2: true,
+      consumptionTaxReview: true,
     }
   },
 
+  externalLinks: [
+    { id: 'el-001', title: '顧客管理表（スポット報酬リスト）', url: 'https://docs.google.com/spreadsheets/d/XXXXXXXXXX', category: '報酬', description: 'SPOT報酬の入力・管理用スプレッドシート' },
+    { id: 'el-002', title: '【リベ税】新規スタッフマニュアル', url: 'https://docs.google.com/document/d/XXXXXXXXXX', category: 'マニュアル', description: '新規入社スタッフ向けマニュアル' },
+    { id: 'el-003', title: '達人シリーズ', url: 'https://www.tatsuzin.info/', category: 'ツール', description: '税務申告ソフト' },
+    { id: 'el-004', title: 'マネーフォワードクラウド', url: 'https://biz.moneyforward.com/', category: 'ツール', description: '会計ソフト' },
+    { id: 'el-005', title: 'e-Tax (国税)', url: 'https://www.e-tax.nta.go.jp/', category: 'ツール', description: '国税電子申告・納税システム' },
+    { id: 'el-006', title: 'eLTAX (地方税)', url: 'https://www.eltax.lta.go.jp/', category: 'ツール', description: '地方税電子申告システム' },
+  ],
+
   notifications: [
-    { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00' },
-    { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00' },
-    { id: 'n-003', type: 'report_created', message: '朝倉さんが報告書「第1チーム 週次報告（3/7）」を作成しました', isRead: true, createdAt: '2026-03-07T17:00:00' },
-    { id: 'n-004', type: 'task_due', message: '佐藤 二郎「確定申告書作成」が差し戻されています', isRead: false, createdAt: '2026-03-09T10:00:00' },
+    { id: 'n-001', type: 'task_due', message: '株式会社サンプル商事「法人税確定申告書作成」の期限が3日後です', isRead: false, createdAt: '2026-03-10T09:00:00', linkPage: 'task-detail', linkParams: { id: 'tk-001' } },
+    { id: 'n-002', type: 'task_assigned', message: '新しいタスク「決算報告書レビュー」が割り当てられました', isRead: false, createdAt: '2026-03-10T08:30:00', linkPage: 'task-detail', linkParams: { id: 'tk-011' } },
+    { id: 'n-003', type: 'report_created', message: '朝倉さんが報告書「第1チーム 週次報告（3/7）」を作成しました', isRead: true, createdAt: '2026-03-07T17:00:00', linkPage: 'report-detail', linkParams: { id: 'rp-021' } },
+    { id: 'n-004', type: 'task_due', message: '佐藤 二郎「確定申告書作成」が差し戻されています', isRead: false, createdAt: '2026-03-09T10:00:00', linkPage: 'task-detail', linkParams: { id: 'tk-006' } },
   ],
 };
 

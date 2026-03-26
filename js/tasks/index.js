@@ -7,6 +7,7 @@ function renderTasks(el) {
       <input type="text" class="search-input" placeholder="タスク名・顧客名で検索..." id="task-search">
       <select class="filter-select" id="task-status-filter">
         <option value="">全ステータス</option>
+        <option value="overdue">期限超過</option>
         <option value="未着手">未着手</option>
         <option value="進行中">進行中</option>
         <option value="完了">完了</option>
@@ -28,6 +29,12 @@ function renderTasks(el) {
       </div>
     </div>
   `;
+  // ダッシュボードからのフィルタ適用
+  if (typeof dashTaskFilter !== 'undefined' && dashTaskFilter) {
+    const sel = document.getElementById('task-status-filter');
+    if (sel) sel.value = dashTaskFilter;
+    dashTaskFilter = '';
+  }
   renderTaskTable();
   bindFilters(['task-search', 'task-status-filter', 'task-assignee-filter'], renderTaskTable);
 }
@@ -37,10 +44,13 @@ function renderTaskTable() {
   const statusFilter = document.getElementById('task-status-filter')?.value || '';
   const assigneeFilter = document.getElementById('task-assignee-filter')?.value || '';
 
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   let tasks = MOCK_DATA.tasks.filter(t => {
     const client = getClientById(t.clientId);
     if (search && !t.title.toLowerCase().includes(search) && !(client?.name || '').toLowerCase().includes(search)) return false;
-    if (statusFilter && t.status !== statusFilter) return false;
+    if (statusFilter === 'overdue') {
+      if (t.status === '完了' || t.dueDate >= today) return false;
+    } else if (statusFilter && t.status !== statusFilter) return false;
     if (assigneeFilter && t.assigneeUserId !== assigneeFilter) return false;
     return true;
   });

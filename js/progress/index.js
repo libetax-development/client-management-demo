@@ -172,6 +172,8 @@ function renderProgressDetail(el, params) {
     </div>
   `;
 
+  let pdStatusFilter = '';
+
   function draw() {
     const assigneeFilter = document.getElementById('pd-assignee-filter')?.value || '';
     const mainOnly = document.getElementById('pd-main-only')?.checked || false;
@@ -185,6 +187,9 @@ function renderProgressDetail(el, params) {
       if (mainOnly && client.mainUserId !== MOCK_DATA.currentUser.id) return false;
       if (search && !client.name.toLowerCase().includes(search) && !client.clientCode.includes(search)) return false;
       if (incompleteOnly && Object.values(t.steps).every(v => v === '完了')) return false;
+      if (pdStatusFilter === 'complete' && Object.values(t.steps).some(v => v !== '完了')) return false;
+      if (pdStatusFilter === 'incomplete' && Object.values(t.steps).every(v => v === '完了')) return false;
+      if (pdStatusFilter === 'returned' && !Object.values(t.steps).some(v => v === '差戻し')) return false;
       return true;
     });
 
@@ -195,22 +200,22 @@ function renderProgressDetail(el, params) {
     const returnedAll = sheet.targets.filter(t => Object.values(t.steps).some(v => v === '差戻し')).length;
 
     document.getElementById('pd-summary').innerHTML = `
-      <div class="stat-card accent-blue">
+      <div class="stat-card accent-blue clickable${pdStatusFilter === '' ? ' stat-card-active' : ''}" onclick="window._pdFilter('')">
         <div class="stat-label">対象件数</div>
         <div class="stat-value">${totalAll}</div>
         <div class="stat-sub">件</div>
       </div>
-      <div class="stat-card accent-green">
+      <div class="stat-card accent-green clickable${pdStatusFilter === 'complete' ? ' stat-card-active' : ''}" onclick="window._pdFilter('complete')">
         <div class="stat-label">完了</div>
         <div class="stat-value">${completeAll}</div>
         <div class="stat-sub">件</div>
       </div>
-      <div class="stat-card accent-yellow">
+      <div class="stat-card accent-yellow clickable${pdStatusFilter === 'incomplete' ? ' stat-card-active' : ''}" onclick="window._pdFilter('incomplete')">
         <div class="stat-label">未完了</div>
         <div class="stat-value">${incompleteAll}</div>
         <div class="stat-sub">件</div>
       </div>
-      <div class="stat-card accent-red">
+      <div class="stat-card accent-red clickable${pdStatusFilter === 'returned' ? ' stat-card-active' : ''}" onclick="window._pdFilter('returned')">
         <div class="stat-label">差戻し</div>
         <div class="stat-value">${returnedAll}</div>
         <div class="stat-sub">件</div>
@@ -265,6 +270,11 @@ function renderProgressDetail(el, params) {
 
     document.getElementById('pd-count').textContent = `${targets.length}/${sheet.targets.length}件 表示中`;
   }
+
+  window._pdFilter = (f) => {
+    pdStatusFilter = pdStatusFilter === f ? '' : f;
+    draw();
+  };
 
   document.getElementById('pd-assignee-filter').addEventListener('change', draw);
   document.getElementById('pd-main-only').addEventListener('change', draw);

@@ -212,6 +212,7 @@ function getTaxDeadlines(fiscalMonth) {
   deadlines.push({ type: 'interim1', label: '中間申告(1回目)', deadlineMonth: addMonth(fiscalMonth, 5) });
   deadlines.push({ type: 'interimPayment', label: '中間予定納付', deadlineMonth: addMonth(fiscalMonth, 8) });
   deadlines.push({ type: 'interim2', label: '中間申告(2回目)', deadlineMonth: addMonth(fiscalMonth, 11) });
+  deadlines.push({ type: 'consumptionTaxReview', label: '翌期消費税検討', deadlineMonth: addMonth(fiscalMonth, 1) });
 
   return deadlines;
 }
@@ -222,16 +223,20 @@ function getTaxAlerts() {
   if (!settings || !settings.enabled) return [];
 
   const now = new Date();
-  // JST基準で現在月を取得
+  // JST基準で現在月・日を取得
   const currentMonth = parseInt(now.toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo', month: 'numeric' }));
+  const currentDay = parseInt(now.toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo', day: 'numeric' }));
+  // 前月21日以降なら翌月分も表示
+  const showNextMonth = currentDay >= 21;
 
   const alerts = [];
   MOCK_DATA.clients.filter(function(c) { return c.isActive; }).forEach(function(client) {
     const deadlines = getTaxDeadlines(client.fiscalMonth);
     deadlines.forEach(function(d) {
       if (!settings.types[d.type]) return;
-      // leadMonths分の前月も含めてチェック
-      for (var i = 0; i <= settings.leadMonths; i++) {
+      // 当月分は常に表示、翌月分は21日以降のみ表示
+      const maxLead = showNextMonth ? settings.leadMonths : 0;
+      for (var i = 0; i <= maxLead; i++) {
         const checkMonth = ((currentMonth - 1 + i) % 12) + 1;
         if (d.deadlineMonth === checkMonth) {
           alerts.push({
@@ -260,6 +265,7 @@ function getTaxAlertColorClass(type) {
   if (type === 'settlement') return 'accent-blue';
   if (type === 'interim1' || type === 'interim2') return 'accent-yellow';
   if (type === 'interimPayment') return 'accent-red';
+  if (type === 'consumptionTaxReview') return 'accent-green';
   return '';
 }
 

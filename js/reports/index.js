@@ -262,6 +262,22 @@ function renderReportDetail(el, params) {
             <div class="detail-row"><div class="detail-label">添付ファイル</div><div class="detail-value">${r.hasAttachment ? 'あり' : 'なし'}</div></div>
           </div>
         </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h3>外部リンク</h3></div>
+          <div class="card-body">
+            <div id="rp-links-list">${(r.links || []).map((lnk, i) => `
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
+                <a href="${escapeHtml(lnk.url)}" target="_blank" rel="noopener" style="flex:1;font-size:13px;word-break:break-all;">${escapeHtml(lnk.label || lnk.url)}</a>
+                <button class="btn-icon" title="削除" style="font-size:14px;color:var(--gray-400);" onclick="rpRemoveLink('${r.id}',${i})">×</button>
+              </div>
+            `).join('') || '<div style="padding:4px 0;font-size:13px;color:var(--gray-400);">リンクはまだありません</div>'}</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <input type="text" class="search-input" id="rp-link-url" style="flex:2;width:auto;font-size:13px;" placeholder="URL（例: https://drive.google.com/...）">
+              <input type="text" class="search-input" id="rp-link-label" style="flex:1;width:auto;font-size:13px;" placeholder="表示名（任意）">
+              <button class="btn btn-primary btn-sm" onclick="rpAddLink('${r.id}')">追加</button>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header"><h3>操作</h3></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
@@ -273,6 +289,25 @@ function renderReportDetail(el, params) {
       </div>
     </div>
   `;
+}
+
+function rpAddLink(reportId) {
+  const urlInput = document.getElementById('rp-link-url');
+  const labelInput = document.getElementById('rp-link-label');
+  const url = urlInput.value.trim();
+  if (!url) { alert('URLを入力してください'); return; }
+  const r = MOCK_DATA.reports.find(x => x.id === reportId);
+  if (!r) return;
+  if (!r.links) r.links = [];
+  r.links.push({ url: url, label: labelInput.value.trim() || url });
+  navigateTo('report-detail', { id: reportId });
+}
+
+function rpRemoveLink(reportId, idx) {
+  const r = MOCK_DATA.reports.find(x => x.id === reportId);
+  if (!r || !r.links) return;
+  r.links.splice(idx, 1);
+  navigateTo('report-detail', { id: reportId });
 }
 
 function rpSubmitDraft(id) {

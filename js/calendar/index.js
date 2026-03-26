@@ -110,12 +110,12 @@ function renderCalendar(el) {
 
       dayTasks.forEach(t => {
         const client = getClientById(t.clientId);
-        allItems.push({ html: `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>` });
+        allItems.push({ html: `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}" onclick="event.stopPropagation();navigateTo('task-detail',{id:'${t.id}'})" style="cursor:pointer;">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>` });
       });
       dayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
         const timeStr = e.time ? e.time + ' ' : '';
-        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}">${timeStr}${e.title.slice(0, 10)}</div>` });
+        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${timeStr}${e.title.slice(0, 10)}</div>` });
       });
 
       html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 6 ? 'cal-sun' : dow === 5 ? 'cal-sat' : ''}" data-date="${ds}" style="cursor:pointer;">
@@ -426,6 +426,30 @@ function submitNewEvent() {
   });
   closeEventModal();
   navigateTo('calendar');
+}
+
+function showCalEventDetail(eventId) {
+  const e = MOCK_DATA.calendarEvents.find(x => x.id === eventId);
+  if (!e) return;
+  const user = e.userId ? getUserById(e.userId) : null;
+  const client = e.clientId ? getClientById(e.clientId) : null;
+  const typeLabel = { meeting: '面談', internal: '社内', deadline: '期限' }[e.type] || e.type;
+  const dur = e.duration ? e.duration + '分' : '-';
+  const detail = document.getElementById('cal-day-detail');
+  detail.innerHTML = `<div class="card">
+    <div class="card-header"><h3>イベント詳細</h3><button class="btn-icon" onclick="document.getElementById('cal-day-detail').style.display='none'">&times;</button></div>
+    <div class="card-body">
+      <div class="detail-row"><div class="detail-label">タイトル</div><div class="detail-value"><strong>${escapeHtml(e.title)}</strong></div></div>
+      <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${escapeHtml(typeLabel)}</div></div>
+      <div class="detail-row"><div class="detail-label">日付</div><div class="detail-value">${formatDate(e.date)}</div></div>
+      <div class="detail-row"><div class="detail-label">時間</div><div class="detail-value">${e.time || '終日'}</div></div>
+      <div class="detail-row"><div class="detail-label">所要時間</div><div class="detail-value">${dur}</div></div>
+      <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${user?.name || '-'}</div></div>
+      ${client ? `<div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${client.id}'})">${escapeHtml(client.name)}</a></div></div>` : ''}
+      <div class="detail-row"><div class="detail-label">場所</div><div class="detail-value">${e.location ? escapeHtml(e.location) : '-'}</div></div>
+    </div>
+  </div>`;
+  detail.style.display = 'block';
 }
 
 registerPage('calendar', renderCalendar);

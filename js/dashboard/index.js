@@ -24,7 +24,7 @@ function renderDashboard(el) {
               ${taxAlerts.map(a => {
                 const timingLabel = a.isCurrentMonth ? '今月' : '来月';
                 const timingClass = a.isCurrentMonth ? 'status-returned' : 'status-todo';
-                const typeColor = a.type === 'settlement' ? 'var(--primary)' : (a.type === 'interimPayment' ? 'var(--danger)' : 'var(--warning)');
+                const typeColor = a.type === 'settlement' ? 'var(--primary)' : a.type === 'interimPayment' ? 'var(--danger)' : a.type === 'consumptionTaxReview' ? 'var(--success, #22c55e)' : 'var(--warning)';
                 return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${escapeHtml(a.clientId)}'})">
                   <td><strong>${escapeHtml(a.clientName)}</strong> <span style="font-size:11px;color:var(--gray-400);">${escapeHtml(a.clientCode)}</span></td>
                   <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500;background:${typeColor};color:#fff;">${escapeHtml(a.label)}</span></td>
@@ -41,22 +41,22 @@ function renderDashboard(el) {
 
   el.innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card accent-red">
+      <div class="stat-card accent-red clickable" onclick="dashFilterTasks('overdue')">
         <div class="stat-label">期限超過</div>
         <div class="stat-value">${overdue}</div>
         <div class="stat-sub">件のタスク</div>
       </div>
-      <div class="stat-card accent-blue">
+      <div class="stat-card accent-blue clickable" onclick="dashFilterTasks('進行中')">
         <div class="stat-label">進行中</div>
         <div class="stat-value">${inProgress}</div>
         <div class="stat-sub">件のタスク</div>
       </div>
-      <div class="stat-card accent-yellow">
+      <div class="stat-card accent-yellow clickable" onclick="dashFilterTasks('未着手')">
         <div class="stat-label">未着手</div>
         <div class="stat-value">${todo}</div>
         <div class="stat-sub">件のタスク</div>
       </div>
-      <div class="stat-card accent-green">
+      <div class="stat-card accent-green clickable" onclick="dashFilterTasks('差戻し')">
         <div class="stat-label">差戻し</div>
         <div class="stat-value">${returned}</div>
         <div class="stat-sub">件 要対応</div>
@@ -70,15 +70,17 @@ function renderDashboard(el) {
         <div class="card-header"><h3>通知</h3></div>
         <div class="card-body">
           <ul class="notification-list">
-            ${MOCK_DATA.notifications.map(n => `
-              <li class="notification-item">
+            ${MOCK_DATA.notifications.map(n => {
+              const clickAttr = n.linkPage ? ` class="clickable" onclick="dashNotifClick('${escapeHtml(n.id)}')" style="cursor:pointer;"` : '';
+              return `
+              <li class="notification-item"${clickAttr}>
                 <div class="notification-dot ${n.isRead ? 'read' : 'unread'}"></div>
                 <div>
                   <div class="notification-text">${n.message}</div>
                   <div class="notification-time">${formatDate(n.createdAt)}</div>
                 </div>
-              </li>
-            `).join('')}
+              </li>`;
+            }).join('')}
           </ul>
         </div>
       </div>
@@ -106,6 +108,21 @@ function renderDashboard(el) {
       </div>
     </div>
   `;
+}
+
+// タスク一覧にフィルタ付きで遷移するためのグローバル変数
+let dashTaskFilter = '';
+
+function dashFilterTasks(filter) {
+  dashTaskFilter = filter;
+  navigateTo('tasks');
+}
+
+function dashNotifClick(notifId) {
+  const n = MOCK_DATA.notifications.find(x => x.id === notifId);
+  if (!n) return;
+  n.isRead = true;
+  if (n.linkPage) navigateTo(n.linkPage, n.linkParams || {});
 }
 
 registerPage('dashboard', renderDashboard);

@@ -38,7 +38,7 @@ function renderStaff(el) {
     <div class="card">
       <div class="table-wrapper">
         <table>
-          <thead><tr><th>コード</th><th>氏名</th><th>フリガナ</th><th>メール</th><th>部署</th><th>役職</th><th>雇用形態</th><th>ステータス</th></tr></thead>
+          <thead><tr><th>コード</th><th>氏名</th><th>フリガナ</th><th>メール</th><th>CWID</th><th>部署</th><th>役職</th><th>雇用形態</th><th>ステータス</th></tr></thead>
           <tbody id="staff-table-body"></tbody>
         </table>
       </div>
@@ -75,6 +75,7 @@ function renderStaffTable() {
       <td><strong>${displayName || u.name}</strong></td>
       <td>${displayKana || '-'}</td>
       <td>${u.email || '-'}</td>
+      <td>${u.cwAccountId || '-'}</td>
       <td>${getDeptName(u.deptId)}</td>
       <td>${u.position || '-'}</td>
       <td>${u.employmentType || '-'}</td>
@@ -84,7 +85,7 @@ function renderStaffTable() {
         </button>
       </td>
     </tr>`;
-  }, 8);
+  }, 9);
 }
 
 function toggleStaffActive(userId) {

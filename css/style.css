@@ -111,6 +111,9 @@ a:hover { text-decoration: underline; }
 .stat-card.accent-green { border-left: 4px solid var(--success); }
 .stat-card.accent-yellow { border-left: 4px solid var(--warning); }
 .stat-card.accent-red { border-left: 4px solid var(--danger); }
+.stat-card.clickable { cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
+.stat-card.clickable:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+.stat-card.stat-card-active { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 /* ── テーブル ── */
 .table-wrapper { overflow-x: auto; }

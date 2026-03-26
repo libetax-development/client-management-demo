@@ -1,9 +1,22 @@
 // ===========================
 // 顧客一覧
 // ===========================
+// 顧客一覧の列定義
+const CLIENT_COLUMNS = [
+  { key: 'code', label: 'コード', visible: true },
+  { key: 'name', label: '顧客名', visible: true, required: true },
+  { key: 'type', label: '種別', visible: true },
+  { key: 'fiscal', label: '決算月', visible: true },
+  { key: 'main', label: '主担当', visible: true },
+  { key: 'sales', label: '売上（税抜）', visible: true },
+  { key: 'status', label: '状態', visible: true },
+];
+
 function renderClients(el) {
+  const fiscalOpts = Array.from({length: 12}, (_, i) => `<option value="${i+1}">${i+1}月</option>`).join('');
+
   el.innerHTML = `
-    <div class="toolbar">
+    <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
       <input type="text" class="search-input" placeholder="顧客名・コードで検索..." id="client-search">
       <select class="filter-select" id="client-type-filter">
         <option value="">全種別</option>
@@ -11,11 +24,29 @@ function renderClients(el) {
         <option value="個人">個人</option>
       </select>
       <select class="filter-select" id="client-status-filter">
+        <option value="active" selected>有効</option>
         <option value="">全ステータス</option>
-        <option value="active">有効</option>
         <option value="inactive">無効</option>
       </select>
+      <select class="filter-select" id="client-main-filter">
+        <option value="">全担当者</option>
+        ${buildUserOptions()}
+      </select>
+      <select class="filter-select" id="client-fiscal-filter">
+        <option value="">全決算月</option>
+        ${fiscalOpts}
+      </select>
       <div class="spacer"></div>
+      <div style="position:relative;">
+        <button class="btn btn-secondary btn-sm" id="client-col-toggle-btn" title="表示列の設定">列 ▼</button>
+        <div id="client-col-dropdown" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;min-width:160px;">
+          ${CLIENT_COLUMNS.filter(c => !c.required).map(c => `
+            <label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;cursor:pointer;">
+              <input type="checkbox" class="client-col-check" data-key="${c.key}" ${c.visible ? 'checked' : ''}> ${c.label}
+            </label>
+          `).join('')}
+        </div>
+      </div>
       <button class="btn btn-csv btn-sm" onclick="exportClientCSV()">CSV出力</button>
       <button class="btn btn-csv btn-sm" onclick="importClientCSV()">CSV取り込み</button>
       <button class="btn btn-primary" onclick="navigateTo('client-detail',{id:'new'})">+ 新規顧客</button>
@@ -23,41 +54,72 @@ function renderClients(el) {
     <div class="card">
       <div class="table-wrapper">
         <table>
-          <thead><tr><th>コード</th><th>顧客名</th><th>種別</th><th>決算月</th><th>主担当</th><th>売上（税抜）</th><th>状態</th></tr></thead>
+          <thead><tr id="client-thead-row"></tr></thead>
           <tbody id="client-table-body"></tbody>
         </table>
       </div>
     </div>
   `;
   renderClientTable();
-  bindFilters(['client-search', 'client-type-filter', 'client-status-filter'], renderClientTable);
+  bindFilters(['client-search', 'client-type-filter', 'client-status-filter', 'client-main-filter', 'client-fiscal-filter'], renderClientTable);
+
+  // 列表示トグル
+  const toggleBtn = document.getElementById('client-col-toggle-btn');
+  const dropdown = document.getElementById('client-col-dropdown');
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  });
+  // 前回のリスナーを除去してから登録（ページ再訪問時のリーク防止）
+  if (window._clientColClose) document.removeEventListener('click', window._clientColClose);
+  window._clientColClose = () => { const d = document.getElementById('client-col-dropdown'); if (d) d.style.display = 'none'; };
+  document.addEventListener('click', window._clientColClose);
+  dropdown.addEventListener('click', (e) => e.stopPropagation());
+  dropdown.querySelectorAll('.client-col-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const col = CLIENT_COLUMNS.find(c => c.key === cb.dataset.key);
+      if (col) col.visible = cb.checked;
+      renderClientTable();
+    });
+  });
 }
 
 function renderClientTable() {
   const search = (document.getElementById('client-search')?.value || '').toLowerCase();
   const typeFilter = document.getElementById('client-type-filter')?.value || '';
   const statusFilter = document.getElementById('client-status-filter')?.value || '';
+  const mainFilter = document.getElementById('client-main-filter')?.value || '';
+  const fiscalFilter = document.getElementById('client-fiscal-filter')?.value || '';
 
   let clients = MOCK_DATA.clients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
     if (typeFilter && c.clientType !== typeFilter) return false;
     if (statusFilter === 'active' && !c.isActive) return false;
     if (statusFilter === 'inactive' && c.isActive) return false;
+    if (mainFilter && c.mainUserId !== mainFilter) return false;
+    if (fiscalFilter && String(c.fiscalMonth) !== fiscalFilter) return false;
     return true;
   });
 
+  // thead更新
+  const visibleCols = CLIENT_COLUMNS.filter(c => c.visible);
+  const thead = document.getElementById('client-thead-row');
+  if (thead) thead.innerHTML = visibleCols.map(c => `<th>${c.label}</th>`).join('');
+
+  const colMap = {
+    code: c => `<td>${c.clientCode}</td>`,
+    name: c => `<td><strong>${c.name}</strong></td>`,
+    type: c => `<td>${renderTypeBadge(c.clientType)}</td>`,
+    fiscal: c => `<td>${c.fiscalMonth}月</td>`,
+    main: c => { const m = getUserById(c.mainUserId); return `<td>${m?.name || '-'}</td>`; },
+    sales: c => `<td>${c.monthlySales.toLocaleString()}円</td>`,
+    status: c => `<td>${c.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>`,
+  };
+
   renderTableBody('client-table-body', clients, c => {
-    const main = getUserById(c.mainUserId);
-    return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">
-      <td>${c.clientCode}</td>
-      <td><strong>${c.name}</strong></td>
-      <td>${renderTypeBadge(c.clientType)}</td>
-      <td>${c.fiscalMonth}月</td>
-      <td>${main?.name || '-'}</td>
-      <td>${c.monthlySales.toLocaleString()}円</td>
-      <td>${c.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>
-    </tr>`;
-  }, 7);
+    const cells = visibleCols.map(col => colMap[col.key](c)).join('');
+    return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">${cells}</tr>`;
+  }, visibleCols.length);
 }
 
 // ===========================
@@ -193,6 +255,21 @@ function renderClientDetail(el, params) {
       ` : ''}
     </div>`;
 
+  // 業種選択肢
+  const industryOptions = ['卸売業','製造業','不動産業','不動産賃貸','小売業','サービス業','IT・ソフトウェア','建設業','飲食業','医療・福祉','農業','NPO・福祉','フリーランス（IT）','その他'].map(i =>
+    `<option value="${i}" ${c?.industry === i ? 'selected' : ''}>${i}</option>`
+  ).join('');
+
+  // 契約ステータス選択肢
+  const contractStatusOptions = ['契約中','契約終了','休止中','見込み'].map(s =>
+    `<option value="${s}" ${c?.contractStatus === s ? 'selected' : ''}>${s}</option>`
+  ).join('');
+
+  // 決算月選択肢（「個人」含む）
+  const fiscalOptionsWithPersonal = Array.from({length: 12}, (_, i) =>
+    `<option value="${i + 1}">${i + 1}月</option>`
+  ).join('') + '<option value="personal">個人（12月）</option>';
+
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('clients')">&larr; 顧客一覧に戻る</a></div>
 
@@ -208,40 +285,72 @@ function renderClientDetail(el, params) {
         </div>
       </div>
       <div class="card-body">
+        <div class="view-tabs" id="client-detail-tabs" style="margin-bottom:16px;">
+          <button class="view-tab active" data-ctab="basic">基本情報</button>
+          <button class="view-tab" data-ctab="tax">税務・申告</button>
+          <button class="view-tab" data-ctab="contact">連絡先・連携</button>
+        </div>
 
-        <div class="detail-section-title">基本情報</div>
-        ${!isNew ? `<div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>` : ''}
-        <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${editing ? inp('ed-name', c?.name, 'text', '例: 株式会社サンプル商事') : val(c.name)}</div></div>
-        <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${editing ? inp('ed-type', '', 'select-type') : renderTypeBadge(c.clientType)}</div></div>
-        <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${editing ? inp('ed-fiscal', '', 'select-fiscal') : c.fiscalMonth + '月'}</div></div>
-        <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-sales', c?.monthlySales, 'number', '50000') : (c.monthlySales || 0).toLocaleString() + '円'}</div></div>
-        <div class="detail-row"><div class="detail-label">年1申告報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-annualfee', c?.annualFee, 'number', '150000') : (c?.annualFee || 0).toLocaleString() + '円'}</div></div>
-        <div class="detail-row"><div class="detail-label">SPOT報酬</div><div class="detail-value">${editing ? spotFeesEditHtml : spotFeesViewHtml}</div></div>
-        <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${editing ? inp('ed-address', c?.address, 'text', '例: 東京都千代田区大手町1-1-1') : val(c.address)}</div></div>
-        <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${editing ? inp('ed-tel', c?.tel, 'text', '例: 03-1234-5678') : val(c.tel)}</div></div>
-        <div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${editing ? inp('ed-representative', c?.representative, 'text', '例: 山本 太郎') : val(c?.representative)}</div></div>
-        <div class="detail-row"><div class="detail-label">業種</div><div class="detail-value">${editing ? inp('ed-industry', c?.industry, 'text', '例: 卸売業') : val(c.industry)}</div></div>
-        <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${editing ? inp('ed-taxoffice', c?.taxOffice, 'text', '例: 千代田税務署') : val(c.taxOffice)}</div></div>
-        ${!editing && c.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
-        ${!isNew ? `<div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${c.isActive ? '有効' : '無効'}</div></div>` : ''}
+        <div id="ctab-basic">
+          <div class="detail-section-title">基本情報</div>
+          ${!isNew ? `<div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${c.clientCode}</div></div>` : ''}
+          <div class="detail-row"><div class="detail-label">契約ステータス</div><div class="detail-value">${editing ? `<select id="ed-contractStatus" class="inline-edit-input">${contractStatusOptions}</select>` : val(c?.contractStatus, '未設定')}</div></div>
+          <div class="detail-row"><div class="detail-label">顧客名</div><div class="detail-value">${editing ? inp('ed-name', c?.name, 'text', '例: 株式会社サンプル商事') : val(c.name)}</div></div>
+          <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${editing ? inp('ed-type', '', 'select-type') : renderTypeBadge(c.clientType)}</div></div>
+          <div class="detail-row"><div class="detail-label">決算月</div><div class="detail-value">${editing ? `<select id="ed-fiscal" class="inline-edit-input">${fiscalOptionsWithPersonal}</select>` : (c.fiscalMonth === 'personal' ? '個人（12月）' : c.fiscalMonth + '月')}</div></div>
+          <div class="detail-row"><div class="detail-label">業種</div><div class="detail-value">${editing ? `<select id="ed-industry-select" class="inline-edit-input"><option value="">選択...</option>${industryOptions}<option value="_other">その他（手入力）</option></select>` : val(c?.industry)}</div></div>
+          <div class="detail-row"><div class="detail-label">月額報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-sales', c?.monthlySales, 'number', '50000') : (c.monthlySales || 0).toLocaleString() + '円'}</div></div>
+          <div class="detail-row"><div class="detail-label">年1申告報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-annualfee', c?.annualFee, 'number', '150000') : (c?.annualFee || 0).toLocaleString() + '円'}</div></div>
+          <div class="detail-row"><div class="detail-label">消費税申告報酬（税抜）</div><div class="detail-value">${editing ? inp('ed-consumptionTaxFee', c?.consumptionTaxFee, 'number', '50000') : (c?.consumptionTaxFee || 0).toLocaleString() + '円'}</div></div>
+          <div class="detail-row"><div class="detail-label">消費税申告頻度</div><div class="detail-value">${editing ? `<select id="ed-consumptionTaxFreq" class="inline-edit-input"><option value="年1回" ${c?.consumptionTaxFreq === '年1回' ? 'selected' : ''}>年1回</option><option value="四半期" ${c?.consumptionTaxFreq === '四半期' ? 'selected' : ''}>四半期</option><option value="毎月" ${c?.consumptionTaxFreq === '毎月' ? 'selected' : ''}>毎月</option><option value="なし" ${c?.consumptionTaxFreq === 'なし' || !c?.consumptionTaxFreq ? 'selected' : ''}>なし</option></select>` : val(c?.consumptionTaxFreq, 'なし')}</div></div>
+          <div class="detail-row"><div class="detail-label">SPOT報酬</div><div class="detail-value">${editing ? spotFeesEditHtml : spotFeesViewHtml}</div></div>
+          <div class="detail-row"><div class="detail-label">住所</div><div class="detail-value">${editing ? inp('ed-address', c?.address, 'text', '例: 東京都千代田区大手町1-1-1') : val(c.address)}</div></div>
+          <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${editing ? inp('ed-tel', c?.tel, 'text', '例: 03-1234-5678') : val(c.tel)}</div></div>
+          <div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${editing ? inp('ed-representative', c?.representative, 'text', '例: 山本 太郎') : val(c?.representative)}</div></div>
+          <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${editing ? inp('ed-taxoffice', c?.taxOffice, 'text', '例: 千代田税務署') : val(c.taxOffice)}</div></div>
+          <div class="detail-row"><div class="detail-label">契約終了日</div><div class="detail-value">${editing ? inp('ed-contractEndDate', c?.contractEndDate, 'date') : val(c?.contractEndDate ? formatDate(c.contractEndDate) : '')}</div></div>
+          ${!editing && c?.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
 
-        ${!isNew ? `
-        <div class="detail-section-title">関連顧客</div>
-        <div class="detail-row"><div class="detail-label">関連顧客</div><div class="detail-value">${editing ? relatedClientsEditHtml : relatedClientsViewHtml}</div></div>
-        ` : ''}
+          ${!isNew ? `
+          <div class="detail-section-title">関連顧客</div>
+          <div class="detail-row"><div class="detail-label">関連顧客</div><div class="detail-value">${editing ? relatedClientsEditHtml : relatedClientsViewHtml}</div></div>
+          ` : ''}
 
-        <div class="detail-section-title">担当者</div>
-        <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${editing ? inp('ed-mgr', '', 'select-staff') : val(mgr?.name)}</div></div>
-        <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${editing ? inp('ed-main', '', 'select-staff') : val(main?.name)}</div></div>
-        <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${editing ? inp('ed-sub', '', 'select-staff') : val(sub?.name)}</div></div>
-        ${!editing ? `<div class="detail-row"><div class="detail-label">外部リンク</div><div class="detail-value"><a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">Dropboxフォルダを開く</a></div></div>` : ''}
+          <div class="detail-section-title">担当者</div>
+          <div class="detail-row"><div class="detail-label">担当税理士</div><div class="detail-value">${editing ? inp('ed-mgr', '', 'select-staff') : val(mgr?.name)}</div></div>
+          <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${editing ? inp('ed-main', '', 'select-staff') : val(main?.name)}</div></div>
+          <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${editing ? inp('ed-sub', '', 'select-staff') : val(sub?.name)}</div></div>
+        </div>
 
-        <div class="detail-section-title">Chatwork連携</div>
-        <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${editing ? inp('ed-cwid', c?.cwAccountId, 'text', '例: 1234567') : val(c?.cwAccountId, '未設定')}</div></div>
+        <div id="ctab-tax" style="display:none;">
+          <div class="detail-section-title">税務情報</div>
+          <div class="detail-row"><div class="detail-label">日税コード</div><div class="detail-value">${editing ? inp('ed-nichizeiCode', c?.nichizeiCode, 'text', '例: NT-001234') : val(c?.nichizeiCode)}</div></div>
+          <div class="detail-row"><div class="detail-label">管理表No</div><div class="detail-value">${editing ? inp('ed-managementNo', c?.managementNo, 'text', '例: M-0450') : val(c?.managementNo)}</div></div>
+          <div class="detail-row"><div class="detail-label">e-Tax利用者識別番号</div><div class="detail-value">${editing ? inp('ed-etaxId', c?.etaxId, 'text', '例: 0012345678901234') : val(c?.etaxId)}</div></div>
+          <div class="detail-row"><div class="detail-label">eLTAX利用者ID</div><div class="detail-value">${editing ? inp('ed-eltaxId', c?.eltaxId, 'text', '例: LT001234') : val(c?.eltaxId)}</div></div>
+
+          <div class="detail-section-title">納付情報</div>
+          <div class="detail-row"><div class="detail-label">ダイレクト納付</div><div class="detail-value">${editing ? `<select id="ed-directDebit" class="inline-edit-input"><option value="true" ${c?.paymentInfo?.directDebit ? 'selected' : ''}>設定済み</option><option value="false" ${!c?.paymentInfo?.directDebit ? 'selected' : ''}>未設定</option></select>` : (c?.paymentInfo?.directDebit ? '<span style="color:var(--success)">設定済み</span>' : '<span style="color:var(--gray-400)">未設定</span>')}</div></div>
+          <div class="detail-row"><div class="detail-label">ダイレクト納付書類依頼状況</div><div class="detail-value">${editing ? inp('ed-directDebitStatus', c?.directDebitStatus, 'text', '例: 設定済み / 依頼中 / 未依頼') : val(c?.directDebitStatus)}</div></div>
+          <div class="detail-row"><div class="detail-label">振替口座</div><div class="detail-value">${editing ? inp('ed-transferAccount', c?.paymentInfo?.transferAccount, 'text', '例: 三井住友銀行 大手町支店') : val(c?.paymentInfo?.transferAccount)}</div></div>
+          <div class="detail-row"><div class="detail-label">納付備考</div><div class="detail-value">${editing ? inp('ed-paymentRemarks', c?.paymentInfo?.remarks, 'textarea', '納付に関する備考') : val(c?.paymentInfo?.remarks)}</div></div>
+        </div>
+
+        <div id="ctab-contact" style="display:none;">
+          <div class="detail-section-title">連絡先</div>
+          <div class="detail-row"><div class="detail-label">メールアドレス</div><div class="detail-value">${editing ? inp('ed-email', c?.email, 'text', '例: info@example.com') : val(c?.email)}</div></div>
+          <div class="detail-row"><div class="detail-label">シティネーム</div><div class="detail-value">${editing ? inp('ed-cityName', c?.cityName, 'text', '例: やまもとたろう') : val(c?.cityName)}</div></div>
+          <div class="detail-row"><div class="detail-label">シティURL</div><div class="detail-value">${editing ? inp('ed-cityUrl', c?.cityUrl, 'text', 'https://libecity.com/user/...') : (c?.cityUrl ? `<a href="${escapeHtml(c.cityUrl)}" target="_blank">${escapeHtml(c.cityUrl)}</a>` : val(''))}</div></div>
+
+          <div class="detail-section-title">Chatwork連携</div>
+          <div class="detail-row"><div class="detail-label">CWアカウントID</div><div class="detail-value">${editing ? inp('ed-cwid', c?.cwAccountId, 'text', '例: 1234567') : val(c?.cwAccountId, '未設定')}</div></div>
         ${!editing ? `
           <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + c.name + 'さん</code>' : val('', '-')}</div></div>
         ` : ''}
         <div class="detail-row"><div class="detail-label">CWルームURL</div><div class="detail-value">${editing ? cwRoomUrlsEditHtml : cwRoomUrlsViewHtml}</div></div>
+
+          <div class="detail-section-title">外部サービス</div>
+          <div class="detail-row"><div class="detail-label">Dropbox</div><div class="detail-value">${editing ? inp('ed-dropboxPath', c?.dropboxPath, 'text', '例: /リベ税/顧客/顧客名') : (c?.dropboxPath ? `<a href="#" onclick="event.preventDefault();window.open('https://www.dropbox.com','_blank')">${escapeHtml(c.dropboxPath)}</a>` : val(''))}</div></div>
 
         ${customFields.length > 0 || editing ? `
           <div class="detail-section-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -262,6 +371,7 @@ function renderClientDetail(el, params) {
             return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${val(cfValues[cf.id])}</div></div>`;
           }).join('')}
         ` : ''}
+        </div>
       </div>
     </div>
 
@@ -301,11 +411,22 @@ function renderClientDetail(el, params) {
     ` : ''}
   `;
 
+  // タブ切り替え
+  document.getElementById('client-detail-tabs')?.addEventListener('click', e => {
+    const tab = e.target.dataset?.ctab;
+    if (!tab) return;
+    document.querySelectorAll('#client-detail-tabs .view-tab').forEach(b => b.classList.toggle('active', b.dataset.ctab === tab));
+    ['basic', 'tax', 'contact'].forEach(t => {
+      const el = document.getElementById('ctab-' + t);
+      if (el) el.style.display = t === tab ? '' : 'none';
+    });
+  });
+
   // 編集モード: selectの値をセット（innerHTML後でないと反映されない）
   if (editing) {
     const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
     setVal('ed-type', c?.clientType || '法人');
-    setVal('ed-fiscal', c?.fiscalMonth || 3);
+    setVal('ed-fiscal', c?.fiscalMonth === 'personal' ? 'personal' : (c?.fiscalMonth || 3));
     setVal('ed-mgr', c?.mgrUserId || '');
     setVal('ed-main', c?.mainUserId || '');
     setVal('ed-sub', c?.subUserId || '');
@@ -316,18 +437,39 @@ function saveClientInline(id) {
   const isNew = id === 'new';
   const name = getValTrim('ed-name');
   const clientType = getVal('ed-type', '法人');
-  const fiscalMonth = getValInt('ed-fiscal', 3);
+  const fiscalRaw = getVal('ed-fiscal', '3');
+  const fiscalMonth = fiscalRaw === 'personal' ? 'personal' : parseInt(fiscalRaw) || 3;
   const monthlySales = getValInt('ed-sales');
   const annualFee = getValInt('ed-annualfee');
   const address = getValTrim('ed-address');
   const tel = getValTrim('ed-tel');
   const representative = getValTrim('ed-representative');
-  const industry = getValTrim('ed-industry');
+  const industrySelect = getVal('ed-industry-select', '');
+  const industry = industrySelect === '_other' ? getValTrim('ed-industry') : (industrySelect || getValTrim('ed-industry'));
   const taxOffice = getValTrim('ed-taxoffice');
   const mgrUserId = getVal('ed-mgr', '');
   const mainUserId = getVal('ed-main', '');
   const subUserId = getVal('ed-sub') || null;
   const cwAccountId = getValTrim('ed-cwid');
+  // 新規フィールド
+  const contractStatus = getVal('ed-contractStatus', '');
+  const contractEndDate = getVal('ed-contractEndDate', '');
+  const nichizeiCode = getValTrim('ed-nichizeiCode');
+  const managementNo = getValTrim('ed-managementNo');
+  const etaxId = getValTrim('ed-etaxId');
+  const eltaxId = getValTrim('ed-eltaxId');
+  const directDebitStatus = getValTrim('ed-directDebitStatus');
+  const email = getValTrim('ed-email');
+  const cityName = getValTrim('ed-cityName');
+  const cityUrl = getValTrim('ed-cityUrl');
+  const dropboxPath = getValTrim('ed-dropboxPath');
+  const consumptionTaxFee = getValInt('ed-consumptionTaxFee');
+  const consumptionTaxFreq = getVal('ed-consumptionTaxFreq', 'なし');
+  const paymentInfo = {
+    directDebit: getVal('ed-directDebit', 'false') === 'true',
+    transferAccount: getValTrim('ed-transferAccount'),
+    remarks: getValTrim('ed-paymentRemarks'),
+  };
 
   // カスタムフィールド値
   const customFieldValues = {};
@@ -347,6 +489,8 @@ function saveClientInline(id) {
       isActive: true, mainUserId, subUserId, mgrUserId: mgrUserId || mainUserId,
       monthlySales, annualFee, spotFees: [], address, tel, industry, representative, taxOffice,
       memo: '', establishDate: '', cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
+      contractStatus, contractEndDate, nichizeiCode, managementNo, etaxId, eltaxId, directDebitStatus,
+      email, cityName, cityUrl, dropboxPath, consumptionTaxFee, consumptionTaxFreq, paymentInfo,
     });
     clientEditMode = false;
     navigateTo('client-detail', { id: newId });
@@ -360,6 +504,12 @@ function saveClientInline(id) {
       c.industry = industry; c.representative = representative; c.taxOffice = taxOffice;
       c.cwAccountId = cwAccountId;
       c.customFieldValues = customFieldValues;
+      c.contractStatus = contractStatus; c.contractEndDate = contractEndDate;
+      c.nichizeiCode = nichizeiCode; c.managementNo = managementNo;
+      c.etaxId = etaxId; c.eltaxId = eltaxId; c.directDebitStatus = directDebitStatus;
+      c.email = email; c.cityName = cityName; c.cityUrl = cityUrl;
+      c.dropboxPath = dropboxPath; c.paymentInfo = paymentInfo;
+      c.consumptionTaxFee = consumptionTaxFee; c.consumptionTaxFreq = consumptionTaxFreq;
     }
     clientEditMode = false;
     navigateTo('client-detail', { id });
@@ -445,11 +595,16 @@ function exportClientCSV() {
   const typeFilter = document.getElementById('client-type-filter')?.value || '';
   const statusFilter = document.getElementById('client-status-filter')?.value || '';
 
+  const mainFilter = document.getElementById('client-main-filter')?.value || '';
+  const fiscalFilter = document.getElementById('client-fiscal-filter')?.value || '';
+
   let clients = MOCK_DATA.clients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
     if (typeFilter && c.clientType !== typeFilter) return false;
     if (statusFilter === 'active' && !c.isActive) return false;
     if (statusFilter === 'inactive' && c.isActive) return false;
+    if (mainFilter && c.mainUserId !== mainFilter) return false;
+    if (fiscalFilter && String(c.fiscalMonth) !== fiscalFilter) return false;
     return true;
   });
 
