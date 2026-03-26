@@ -17,6 +17,7 @@ function renderRewards(el) {
     <div class="view-tabs" id="rw-tabs">
       <button class="view-tab active" data-view="by-staff">職員別</button>
       <button class="view-tab" data-view="by-client">顧客別</button>
+      <button class="view-tab" data-view="spot">SPOT報酬</button>
     </div>
 
     <div class="stats-grid" id="rw-summary"></div>
@@ -57,11 +58,22 @@ function renderRewardData(month, viewType) {
   const totalClients = new Set(rewards.map(r => r.clientId)).size;
   const totalStaff = new Set(rewards.map(r => r.userId)).size;
 
+  // SPOT報酬の集計（全タブ共通で表示）
+  let spotTotal = 0;
+  MOCK_DATA.clients.filter(c => c.isActive).forEach(c => {
+    (c.spotFees || []).forEach(sf => {
+      if (sf.timing === month || sf.timing?.startsWith(month)) {
+        spotTotal += sf.amount || 0;
+      }
+    });
+  });
+  const grandTotal = totalAmount + spotTotal;
+
   document.getElementById('rw-summary').innerHTML = `
     <div class="stat-card accent-blue">
       <div class="stat-label">報酬合計</div>
-      <div class="stat-value">${totalAmount.toLocaleString()}</div>
-      <div class="stat-sub">円</div>
+      <div class="stat-value">${grandTotal.toLocaleString()}</div>
+      <div class="stat-sub">円${spotTotal > 0 ? `<span style="font-size:11px;color:var(--gray-400);"> (うちSPOT: ${spotTotal.toLocaleString()}円)</span>` : ''}</div>
     </div>
     <div class="stat-card accent-green">
       <div class="stat-label">対象職員</div>
@@ -99,7 +111,7 @@ function renderRewardData(month, viewType) {
         <td><strong>${data.total.toLocaleString()}円</strong></td>
       </tr>`;
     }).join('');
-  } else {
+  } else if (viewType === 'by-client') {
     title.textContent = '顧客別 報酬内訳';
     thead.innerHTML = '<tr><th>顧客名</th><th>種別</th><th>月額報酬</th><th>担当者</th><th>配分額</th></tr>';
     const grouped = {};
@@ -121,6 +133,44 @@ function renderRewardData(month, viewType) {
       });
     });
     tbody.innerHTML = rows;
+  } else if (viewType === 'spot') {
+    title.textContent = 'SPOT報酬一覧';
+    thead.innerHTML = '<tr><th>顧客名</th><th>種別</th><th>時期</th><th>内容</th><th>金額</th><th>主担当</th></tr>';
+
+    // 全顧客のSPOT報酬から該当月のものを抽出
+    const spotRows = [];
+    MOCK_DATA.clients.filter(c => c.isActive).forEach(c => {
+      (c.spotFees || []).forEach(sf => {
+        if (sf.timing === month || sf.timing?.startsWith(month)) {
+          spotRows.push({ client: c, spot: sf });
+        }
+      });
+    });
+
+    const spotTotal = spotRows.reduce((sum, r) => sum + (r.spot.amount || 0), 0);
+
+    // サマリーにSPOT合計を追加
+    document.getElementById('rw-summary').innerHTML += `
+      <div class="stat-card accent-red">
+        <div class="stat-label">SPOT報酬計</div>
+        <div class="stat-value">${spotTotal.toLocaleString()}</div>
+        <div class="stat-sub">円</div>
+      </div>
+    `;
+
+    tbody.innerHTML = spotRows.length === 0
+      ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);">該当月のSPOT報酬はありません</td></tr>'
+      : spotRows.map(r => {
+        const main = getUserById(r.client.mainUserId);
+        return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${r.client.id}'})">
+          <td><strong>${escapeHtml(r.client.name)}</strong></td>
+          <td>${renderTypeBadge(r.client.clientType)}</td>
+          <td>${escapeHtml(r.spot.timing || '-')}</td>
+          <td>${escapeHtml(r.spot.description || '-')}</td>
+          <td><strong>${(r.spot.amount || 0).toLocaleString()}円</strong></td>
+          <td>${main?.name || '-'}</td>
+        </tr>`;
+      }).join('');
   }
 }
 
@@ -143,6 +193,16 @@ function exportRewardCSV() {
     const user = getUserById(a.userId);
     const client = a.clientId ? getClientById(a.clientId) : null;
     rows.push([month, user?.name || '-', client?.name || '-', a.reason, a.amount, '調整']);
+  });
+
+  // SPOT報酬
+  MOCK_DATA.clients.filter(c => c.isActive).forEach(c => {
+    (c.spotFees || []).forEach(sf => {
+      if (sf.timing === month || sf.timing?.startsWith(month)) {
+        const main = getUserById(c.mainUserId);
+        rows.push([month, main?.name || '-', c.name, sf.description || 'SPOT', sf.amount || 0, 'SPOT']);
+      }
+    });
   });
 
   downloadCSV(`報酬明細_${month}.csv`, header, rows);

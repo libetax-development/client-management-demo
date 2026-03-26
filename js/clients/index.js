@@ -728,22 +728,53 @@ function renderReportSummaryCard(c) {
   const clientReports = MOCK_DATA.reports.filter(r => r.clientName === c.name);
   if (clientReports.length === 0) return '<div style="text-align:center;color:var(--gray-400);padding:16px;">この顧客の報告書はまだありません</div>';
   const sorted = [...clientReports].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const cardStyle = 'background:#fff;padding:10px;border-radius:6px;border:1px dashed var(--gray-300);';
+  const cardStyle = 'background:#fff;padding:10px;border-radius:6px;border:1px solid var(--gray-200);';
+
+  // 実データから集計
+  const categories = {};
+  const authors = {};
+  const recent5 = sorted.slice(0, 5);
+  clientReports.forEach(r => {
+    categories[r.category || '未分類'] = (categories[r.category || '未分類'] || 0) + 1;
+    if (r.authorId) {
+      const author = getUserById(r.authorId);
+      if (author) authors[author.name] = (authors[author.name] || 0) + 1;
+    }
+  });
+  const catSummary = Object.entries(categories).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}: ${v}件`).join('、');
+  const authorSummary = Object.entries(authors).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}(${v}件)`).join('、');
+
+  // 関連タスク（未完了）
+  const openTasks = MOCK_DATA.tasks.filter(t => t.clientId === c.id && t.status !== '完了');
+
   return `
     <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <span style="font-size:18px;">🤖</span>
-        <span style="font-size:13px;font-weight:600;color:var(--gray-600);">AIによる顧客状況サマリー</span>
-        <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">今後実装予定</span>
+        <span style="font-size:13px;font-weight:600;color:var(--gray-600);">顧客状況サマリー</span>
+        <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">報告書${clientReports.length}件から自動生成</span>
       </div>
-      <div style="color:var(--gray-400);font-size:13px;line-height:1.8;">
-        この機能では、${escapeHtml(c.name)}に関する全ての業務報告書（${clientReports.length}件）をAIが分析し、<br>
-        以下の情報を自動で集約・要約します：
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">
-          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">📋 対応履歴の要約</div><div style="font-size:12px;color:var(--gray-400);">直近の対応内容・経緯を時系列で要約</div></div>
-          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">⚠️ 未解決事項</div><div style="font-size:12px;color:var(--gray-400);">確認待ち・保留中の事項を自動抽出</div></div>
-          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">📊 業務傾向</div><div style="font-size:12px;color:var(--gray-400);">月次・決算・確定申告等の業務バランス</div></div>
-          <div style="${cardStyle}"><div style="font-weight:600;color:var(--gray-500);margin-bottom:4px;">💡 次のアクション</div><div style="font-size:12px;color:var(--gray-400);">報告書から抽出した次回対応事項</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="${cardStyle}">
+          <div style="font-weight:600;color:var(--gray-600);margin-bottom:6px;">📋 直近の対応</div>
+          ${recent5.map(r => `<div style="font-size:12px;color:var(--gray-500);margin-bottom:2px;">${formatDate(r.createdAt)} ${escapeHtml(r.title?.slice(0, 30) || r.category || '')}</div>`).join('')}
+        </div>
+        <div style="${cardStyle}">
+          <div style="font-weight:600;color:var(--gray-600);margin-bottom:6px;">📊 業務内訳</div>
+          <div style="font-size:12px;color:var(--gray-500);">${catSummary || 'データなし'}</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">担当: ${authorSummary || '-'}</div>
+        </div>
+        <div style="${cardStyle}">
+          <div style="font-weight:600;color:var(--gray-600);margin-bottom:6px;">⚠️ 未完了タスク</div>
+          ${openTasks.length === 0 ? '<div style="font-size:12px;color:var(--success);">未完了タスクなし</div>' :
+            openTasks.slice(0, 3).map(t => `<div style="font-size:12px;color:var(--gray-500);margin-bottom:2px;">${escapeHtml(t.title?.slice(0, 25))} <span style="color:var(--gray-400);">${formatDate(t.dueDate)}</span></div>`).join('') +
+            (openTasks.length > 3 ? `<div style="font-size:11px;color:var(--gray-400);">他${openTasks.length - 3}件</div>` : '')}
+        </div>
+        <div style="${cardStyle}">
+          <div style="font-weight:600;color:var(--gray-600);margin-bottom:6px;">💡 基本情報</div>
+          <div style="font-size:12px;color:var(--gray-500);">月額: ${(c.monthlySales || 0).toLocaleString()}円</div>
+          <div style="font-size:12px;color:var(--gray-500);">決算: ${c.fiscalMonth === 'personal' ? '個人(12月)' : c.fiscalMonth + '月'}</div>
+          <div style="font-size:12px;color:var(--gray-500);">種別: ${c.clientType} / ${c.industry || '-'}</div>
         </div>
       </div>
     </div>
