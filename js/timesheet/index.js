@@ -119,26 +119,10 @@ function renderTimesheet(el) {
     const avgHours = uniqueUsers > 0 ? (totalHours / uniqueUsers).toFixed(1) : '0';
 
     document.getElementById('ts-summary').innerHTML = `
-      <div class="stat-card accent-blue">
-        <div class="stat-label">合計工数</div>
-        <div class="stat-value">${totalHours.toFixed(1)}</div>
-        <div class="stat-sub">時間</div>
-      </div>
-      <div class="stat-card accent-green">
-        <div class="stat-label">入力済み人数</div>
-        <div class="stat-value">${uniqueUsers}</div>
-        <div class="stat-sub">名</div>
-      </div>
-      <div class="stat-card accent-yellow">
-        <div class="stat-label">平均工数/人</div>
-        <div class="stat-value">${avgHours}</div>
-        <div class="stat-sub">時間</div>
-      </div>
-      <div class="stat-card accent-red">
-        <div class="stat-label">件数</div>
-        <div class="stat-value">${entries.length}</div>
-        <div class="stat-sub">エントリ</div>
-      </div>
+      ${buildStatCard('blue', '合計工数', totalHours.toFixed(1), '時間')}
+      ${buildStatCard('green', '入力済み人数', uniqueUsers, '名')}
+      ${buildStatCard('yellow', '平均工数/人', avgHours, '時間')}
+      ${buildStatCard('red', '件数', entries.length, 'エントリ')}
     `;
 
     renderTableBody('ts-table-body', entries, e => {

@@ -45,26 +45,10 @@ function renderSummary(el) {
 
   el.innerHTML = `
     <div class="stats-grid" style="margin-bottom:24px;">
-      <div class="stat-card accent-blue">
-        <div class="stat-label">契約中顧客</div>
-        <div class="stat-value">${activeClients.length}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-green">
-        <div class="stat-label">法人</div>
-        <div class="stat-value">${typeCounts['法人'] || 0}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-yellow">
-        <div class="stat-label">個人</div>
-        <div class="stat-value">${typeCounts['個人'] || 0}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-red">
-        <div class="stat-label">月額報酬合計</div>
-        <div class="stat-value" style="font-size:20px;">${totalMonthly.toLocaleString()}</div>
-        <div class="stat-sub">円（税抜）</div>
-      </div>
+      ${buildStatCard('blue', '契約中顧客', activeClients.length, '件')}
+      ${buildStatCard('green', '法人', typeCounts['法人'] || 0, '件')}
+      ${buildStatCard('yellow', '個人', typeCounts['個人'] || 0, '件')}
+      ${buildStatCard('red', '月額報酬合計', totalMonthly.toLocaleString(), '円（税抜）', { valueStyle: 'font-size:20px' })}
     </div>
 
     <div class="detail-grid">

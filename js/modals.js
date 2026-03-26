@@ -62,20 +62,7 @@ function openClientModal(clientId) {
     cfArea.innerHTML = `
       <div class="section-divider">
         <div class="section-title-sm">カスタム項目</div>
-        ${customFields.map(cf => {
-          let input = '';
-          const inputId = 'cf-val-' + cf.id;
-          if (cf.type === 'textarea') {
-            input = `<textarea id="${inputId}" rows="2" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;"></textarea>`;
-          } else if (cf.type === 'date') {
-            input = `<input type="date" id="${inputId}">`;
-          } else if (cf.type === 'number') {
-            input = `<input type="number" id="${inputId}">`;
-          } else {
-            input = `<input type="text" id="${inputId}">`;
-          }
-          return `<div class="form-group"><label>${cf.name}</label>${input}</div>`;
-        }).join('')}
+        ${customFields.map(cf => `<div class="form-group"><label>${cf.name}</label>${buildCustomFieldInput(cf)}</div>`).join('')}
       </div>`;
   } else {
     cfArea.innerHTML = '';

@@ -48,13 +48,13 @@ function renderStaff(el) {
   bindFilters(['staff-search', 'staff-role-filter', 'staff-dept-filter', 'staff-emptype-filter'], renderStaffTable);
 }
 
-function renderStaffTable() {
+function getFilteredStaff() {
   const search = (document.getElementById('staff-search')?.value || '').toLowerCase();
   const roleFilter = document.getElementById('staff-role-filter')?.value || '';
   const deptFilter = document.getElementById('staff-dept-filter')?.value || '';
   const empTypeFilter = document.getElementById('staff-emptype-filter')?.value || '';
 
-  let users = MOCK_DATA.users.filter(u => {
+  return MOCK_DATA.users.filter(u => {
     if (search) {
       const kana = ((u.lastNameKana || '') + ' ' + (u.firstNameKana || '')).toLowerCase();
       const fullName = ((u.lastName || '') + ' ' + (u.firstName || '')).toLowerCase();
@@ -65,6 +65,10 @@ function renderStaffTable() {
     if (empTypeFilter && u.employmentType !== empTypeFilter) return false;
     return true;
   });
+}
+
+function renderStaffTable() {
+  let users = getFilteredStaff();
 
   renderTableBody('staff-table-body', users, u => {
     const displayName = (u.lastName || '') + (u.firstName ? ' ' + u.firstName : '');
@@ -175,22 +179,7 @@ function renderStaffDetail(el, params) {
 // 職員CSV出力・取り込み
 // ===========================
 function exportStaffCSV() {
-  const search = (document.getElementById('staff-search')?.value || '').toLowerCase();
-  const roleFilter = document.getElementById('staff-role-filter')?.value || '';
-  const deptFilter = document.getElementById('staff-dept-filter')?.value || '';
-  const empTypeFilter = document.getElementById('staff-emptype-filter')?.value || '';
-
-  let users = MOCK_DATA.users.filter(u => {
-    if (search) {
-      const kana = ((u.lastNameKana || '') + ' ' + (u.firstNameKana || '')).toLowerCase();
-      const fullName = ((u.lastName || '') + ' ' + (u.firstName || '')).toLowerCase();
-      if (!u.name.toLowerCase().includes(search) && !u.staffCode.toLowerCase().includes(search) && !kana.includes(search) && !fullName.includes(search)) return false;
-    }
-    if (roleFilter && u.role !== roleFilter) return false;
-    if (deptFilter && String(u.deptId) !== deptFilter) return false;
-    if (empTypeFilter && u.employmentType !== empTypeFilter) return false;
-    return true;
-  });
+  let users = getFilteredStaff();
 
   const header = ['staffCode', 'lastName', 'firstName', 'lastNameKana', 'firstNameKana', 'email', 'tel', 'mobile', 'deptId', 'position', 'employmentType', 'joinDate', 'role', 'staffFlag', 'memo'];
   const rows = users.map(u => [u.staffCode || '', u.lastName || '', u.firstName || '', u.lastNameKana || '', u.firstNameKana || '', u.email || '', u.tel || '', u.mobile || '', u.deptId || '', u.position || '', u.employmentType || '', u.joinDate || '', u.role || '', u.staffFlag || '', u.memo || '']);

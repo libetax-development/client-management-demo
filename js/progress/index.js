@@ -200,26 +200,10 @@ function renderProgressDetail(el, params) {
     const returnedAll = sheet.targets.filter(t => Object.values(t.steps).some(v => v === '差戻し')).length;
 
     document.getElementById('pd-summary').innerHTML = `
-      <div class="stat-card accent-blue clickable${pdStatusFilter === '' ? ' stat-card-active' : ''}" onclick="window._pdFilter('')">
-        <div class="stat-label">対象件数</div>
-        <div class="stat-value">${totalAll}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-green clickable${pdStatusFilter === 'complete' ? ' stat-card-active' : ''}" onclick="window._pdFilter('complete')">
-        <div class="stat-label">完了</div>
-        <div class="stat-value">${completeAll}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-yellow clickable${pdStatusFilter === 'incomplete' ? ' stat-card-active' : ''}" onclick="window._pdFilter('incomplete')">
-        <div class="stat-label">未完了</div>
-        <div class="stat-value">${incompleteAll}</div>
-        <div class="stat-sub">件</div>
-      </div>
-      <div class="stat-card accent-red clickable${pdStatusFilter === 'returned' ? ' stat-card-active' : ''}" onclick="window._pdFilter('returned')">
-        <div class="stat-label">差戻し</div>
-        <div class="stat-value">${returnedAll}</div>
-        <div class="stat-sub">件</div>
-      </div>
+      ${buildStatCard('blue', '対象件数', totalAll, '件', { clickable: true, active: pdStatusFilter === '', onclick: "window._pdFilter('')" })}
+      ${buildStatCard('green', '完了', completeAll, '件', { clickable: true, active: pdStatusFilter === 'complete', onclick: "window._pdFilter('complete')" })}
+      ${buildStatCard('yellow', '未完了', incompleteAll, '件', { clickable: true, active: pdStatusFilter === 'incomplete', onclick: "window._pdFilter('incomplete')" })}
+      ${buildStatCard('red', '差戻し', returnedAll, '件', { clickable: true, active: pdStatusFilter === 'returned', onclick: "window._pdFilter('returned')" })}
     `;
 
     // Table header
@@ -358,17 +342,7 @@ function exportProgressCSV(sheetId) {
     const client = getClientById(t.clientId);
     return [client?.clientCode || '', client?.name || '', ...sheet.columns.map(c => t.steps[c] || '未着手'), t.note || ''];
   });
-  const csvContent = [header, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
-  const bom = '\uFEFF';
-  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = sheet.name + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadCSV(sheet.name + '.csv', header, rows);
 }
 
 function bulkStatusUpdate(sheetId) {

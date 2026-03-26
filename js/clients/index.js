@@ -85,14 +85,14 @@ function renderClients(el) {
   });
 }
 
-function renderClientTable() {
+function getFilteredClients() {
   const search = (document.getElementById('client-search')?.value || '').toLowerCase();
   const typeFilter = document.getElementById('client-type-filter')?.value || '';
   const statusFilter = document.getElementById('client-status-filter')?.value || '';
   const mainFilter = document.getElementById('client-main-filter')?.value || '';
   const fiscalFilter = document.getElementById('client-fiscal-filter')?.value || '';
 
-  let clients = MOCK_DATA.clients.filter(c => {
+  return MOCK_DATA.clients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
     if (typeFilter && c.clientType !== typeFilter) return false;
     if (statusFilter === 'active' && !c.isActive) return false;
@@ -101,6 +101,10 @@ function renderClientTable() {
     if (fiscalFilter && String(c.fiscalMonth) !== fiscalFilter) return false;
     return true;
   });
+}
+
+function renderClientTable() {
+  let clients = getFilteredClients();
 
   // thead更新
   const visibleCols = CLIENT_COLUMNS.filter(c => c.visible);
@@ -360,14 +364,7 @@ function renderClientDetail(el, params) {
           </div>
           ${customFields.map(cf => {
             if (editing) {
-              let cfInp = '';
-              const cfId = 'cf-val-' + cf.id;
-              const cfVal = cfValues[cf.id] || '';
-              if (cf.type === 'textarea') cfInp = `<textarea id="${cfId}" class="inline-edit-input" rows="2">${cfVal}</textarea>`;
-              else if (cf.type === 'date') cfInp = `<input type="date" id="${cfId}" class="inline-edit-input" value="${cfVal}">`;
-              else if (cf.type === 'number') cfInp = `<input type="number" id="${cfId}" class="inline-edit-input" value="${cfVal}">`;
-              else cfInp = `<input type="text" id="${cfId}" class="inline-edit-input" value="${cfVal}">`;
-              return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${cfInp}</div></div>`;
+              return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${buildCustomFieldInput(cf, cfValues[cf.id], 'inline-edit-input')}</div></div>`;
             }
             return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${val(cfValues[cf.id])}</div></div>`;
           }).join('')}
@@ -616,22 +613,7 @@ function deleteClient(clientId) {
 // 顧客CSV出力・取り込み
 // ===========================
 function exportClientCSV() {
-  const search = (document.getElementById('client-search')?.value || '').toLowerCase();
-  const typeFilter = document.getElementById('client-type-filter')?.value || '';
-  const statusFilter = document.getElementById('client-status-filter')?.value || '';
-
-  const mainFilter = document.getElementById('client-main-filter')?.value || '';
-  const fiscalFilter = document.getElementById('client-fiscal-filter')?.value || '';
-
-  let clients = MOCK_DATA.clients.filter(c => {
-    if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
-    if (typeFilter && c.clientType !== typeFilter) return false;
-    if (statusFilter === 'active' && !c.isActive) return false;
-    if (statusFilter === 'inactive' && c.isActive) return false;
-    if (mainFilter && c.mainUserId !== mainFilter) return false;
-    if (fiscalFilter && String(c.fiscalMonth) !== fiscalFilter) return false;
-    return true;
-  });
+  let clients = getFilteredClients();
 
   const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
   const cfHeaders = customFields.map(cf => cf.name);

@@ -70,21 +70,9 @@ function renderRewardData(month, viewType) {
   const grandTotal = totalAmount + spotTotal;
 
   document.getElementById('rw-summary').innerHTML = `
-    <div class="stat-card accent-blue">
-      <div class="stat-label">報酬合計</div>
-      <div class="stat-value">${grandTotal.toLocaleString()}</div>
-      <div class="stat-sub">円${spotTotal > 0 ? `<span style="font-size:11px;color:var(--gray-400);"> (うちSPOT: ${spotTotal.toLocaleString()}円)</span>` : ''}</div>
-    </div>
-    <div class="stat-card accent-green">
-      <div class="stat-label">対象職員</div>
-      <div class="stat-value">${totalStaff}</div>
-      <div class="stat-sub">名</div>
-    </div>
-    <div class="stat-card accent-yellow">
-      <div class="stat-label">対象顧客</div>
-      <div class="stat-value">${totalClients}</div>
-      <div class="stat-sub">社</div>
-    </div>
+    ${buildStatCard('blue', '報酬合計', grandTotal.toLocaleString(), `円${spotTotal > 0 ? `<span style="font-size:11px;color:var(--gray-400);"> (うちSPOT: ${spotTotal.toLocaleString()}円)</span>` : ''}`)}
+    ${buildStatCard('green', '対象職員', totalStaff, '名')}
+    ${buildStatCard('yellow', '対象顧客', totalClients, '社')}
   `;
 
   const thead = document.getElementById('rw-thead');
@@ -150,13 +138,7 @@ function renderRewardData(month, viewType) {
     const spotTotal = spotRows.reduce((sum, r) => sum + (r.spot.amount || 0), 0);
 
     // サマリーにSPOT合計を追加
-    document.getElementById('rw-summary').innerHTML += `
-      <div class="stat-card accent-red">
-        <div class="stat-label">SPOT報酬計</div>
-        <div class="stat-value">${spotTotal.toLocaleString()}</div>
-        <div class="stat-sub">円</div>
-      </div>
-    `;
+    document.getElementById('rw-summary').innerHTML += buildStatCard('red', 'SPOT報酬計', spotTotal.toLocaleString(), '円');
 
     tbody.innerHTML = spotRows.length === 0
       ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);">該当月のSPOT報酬はありません</td></tr>'

@@ -177,6 +177,28 @@ function bindFilters(ids, handler) {
   });
 }
 
+// stat-card HTML生成
+function buildStatCard(accent, label, value, sub, opts = {}) {
+  const cls = ['stat-card', `accent-${accent}`,
+    opts.clickable ? 'clickable' : '',
+    opts.active ? 'stat-card-active' : ''
+  ].filter(Boolean).join(' ');
+  const onclick = opts.onclick ? ` onclick="${opts.onclick}"` : '';
+  const style = opts.style ? ` style="${opts.style}"` : '';
+  return `<div class="${cls}"${onclick}${style}><div class="stat-label">${label}</div><div class="stat-value"${opts.valueStyle ? ` style="${opts.valueStyle}"` : ''}>${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+
+// カスタムフィールド入力HTML生成
+function buildCustomFieldInput(cf, value, extraClass) {
+  const id = 'cf-val-' + cf.id;
+  const cls = extraClass || '';
+  const val = value || '';
+  if (cf.type === 'textarea') return `<textarea id="${id}" class="${cls}" rows="2" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;">${val}</textarea>`;
+  if (cf.type === 'date') return `<input type="date" id="${id}" class="${cls}" value="${val}">`;
+  if (cf.type === 'number') return `<input type="number" id="${id}" class="${cls}" value="${val}">`;
+  return `<input type="text" id="${id}" class="${cls}" value="${val}">`;
+}
+
 // モーダル表示・非表示
 function showModal(id) { document.getElementById(id).classList.add('show'); }
 function hideModal(id) { document.getElementById(id).classList.remove('show'); }

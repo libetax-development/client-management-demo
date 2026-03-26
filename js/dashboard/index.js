@@ -42,26 +42,10 @@ function renderDashboard(el) {
 
   el.innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card accent-red clickable" onclick="dashFilterTasks('overdue')">
-        <div class="stat-label">期限超過</div>
-        <div class="stat-value">${overdue}</div>
-        <div class="stat-sub">件のタスク</div>
-      </div>
-      <div class="stat-card accent-blue clickable" onclick="dashFilterTasks('進行中')">
-        <div class="stat-label">進行中</div>
-        <div class="stat-value">${inProgress}</div>
-        <div class="stat-sub">件のタスク</div>
-      </div>
-      <div class="stat-card accent-yellow clickable" onclick="dashFilterTasks('未着手')">
-        <div class="stat-label">未着手</div>
-        <div class="stat-value">${todo}</div>
-        <div class="stat-sub">件のタスク</div>
-      </div>
-      <div class="stat-card accent-green clickable" onclick="dashFilterTasks('差戻し')">
-        <div class="stat-label">差戻し</div>
-        <div class="stat-value">${returned}</div>
-        <div class="stat-sub">件 要対応</div>
-      </div>
+      ${buildStatCard('red', '期限超過', overdue, '件のタスク', { clickable: true, onclick: "dashFilterTasks('overdue')" })}
+      ${buildStatCard('blue', '進行中', inProgress, '件のタスク', { clickable: true, onclick: "dashFilterTasks('進行中')" })}
+      ${buildStatCard('yellow', '未着手', todo, '件のタスク', { clickable: true, onclick: "dashFilterTasks('未着手')" })}
+      ${buildStatCard('green', '差戻し', returned, '件 要対応', { clickable: true, onclick: "dashFilterTasks('差戻し')" })}
     </div>
 
     ${taxAlertHtml}

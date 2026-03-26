@@ -6,6 +6,16 @@
 const pages = {};
 let currentPage = null;
 
+const PAGE_TITLES = {
+  dashboard: 'ダッシュボード', clients: '顧客一覧', 'client-detail': '顧客詳細',
+  tasks: 'タスク一覧', 'task-detail': 'タスク詳細', progress: '進捗管理表',
+  'progress-detail': '進捗管理表 詳細', staff: '職員一覧', 'staff-detail': '職員詳細',
+  timesheet: '工数管理', reports: '報告書', 'report-detail': '報告書詳細',
+  calendar: 'カレンダー', rewards: '報酬管理', chatrooms: 'チャットマスタ',
+  integrations: '外部連携', automation: '自動化設定', ai: 'AIアシスタント',
+  links: 'リンク集', summary: '集計', settings: 'マイ設定',
+};
+
 function registerPage(name, initFn) { pages[name] = initFn; }
 
 function navigateTo(pageName, params = {}) {
@@ -21,30 +31,7 @@ function navigateTo(pageName, params = {}) {
   }
 
   // ヘッダータイトル更新
-  const titles = {
-    dashboard: 'ダッシュボード',
-    clients: '顧客一覧',
-    'client-detail': '顧客詳細',
-    tasks: 'タスク一覧',
-    'task-detail': 'タスク詳細',
-    progress: '進捗管理表',
-    'progress-detail': '進捗管理表 詳細',
-    staff: '職員一覧',
-    'staff-detail': '職員詳細',
-    timesheet: '工数管理',
-    reports: '報告書',
-    'report-detail': '報告書詳細',
-    calendar: 'カレンダー',
-    rewards: '報酬管理',
-    chatrooms: 'チャットマスタ',
-    integrations: '外部連携',
-    automation: '自動化設定',
-    ai: 'AIアシスタント',
-    links: 'リンク集',
-    summary: '集計',
-    settings: 'マイ設定',
-  };
-  header.textContent = titles[pageName] || pageName;
+  header.textContent = PAGE_TITLES[pageName] || pageName;
 
   // URL hash更新
   history.pushState(null, '', `#${pageName}${params.id ? '/' + params.id : ''}`);
@@ -78,16 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.sidebar-nav a').forEach(a => {
           a.classList.toggle('active', a.dataset.page === page);
         });
-        const titles = {
-          dashboard: 'ダッシュボード', clients: '顧客一覧', 'client-detail': '顧客詳細',
-          tasks: 'タスク一覧', 'task-detail': 'タスク詳細', progress: '進捗管理表',
-          'progress-detail': '進捗管理表 詳細', staff: '職員一覧', 'staff-detail': '職員詳細',
-          timesheet: '工数管理', reports: '報告書', 'report-detail': '報告書詳細',
-          calendar: 'カレンダー', rewards: '報酬管理', chatrooms: 'チャットマスタ',
-          integrations: '外部連携', automation: '自動化設定', ai: 'AIアシスタント',
-          links: 'リンク集', summary: '集計', settings: 'マイ設定',
-        };
-        document.getElementById('header-title').textContent = titles[page] || page;
+        document.getElementById('header-title').textContent = PAGE_TITLES[page] || page;
       }
     }
   });
