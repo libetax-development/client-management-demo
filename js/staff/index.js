@@ -128,6 +128,13 @@ function renderStaffDetail(el, params) {
         </div>
       </div>
       <div class="card">
+        <div class="card-header"><h3>プロフィール</h3></div>
+        <div class="card-body">
+          <div class="detail-row"><div class="detail-label">リベシティURL</div><div class="detail-value">${u.libeProfileUrl ? `<a href="${escapeHtml(u.libeProfileUrl)}" target="_blank">${escapeHtml(u.libeProfileUrl)}</a>` : '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">自己紹介</div><div class="detail-value" style="white-space:pre-wrap;">${u.selfIntro ? escapeHtml(u.selfIntro) : '-'}</div></div>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-header"><h3>アカウント情報</h3></div>
         <div class="card-body">
           <div class="detail-row"><div class="detail-label">ログインID</div><div class="detail-value">${u.loginId || '-'}</div></div>

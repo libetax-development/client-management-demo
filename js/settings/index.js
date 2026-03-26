@@ -107,6 +107,7 @@ function renderSettings(el) {
     { key: 'features', label: '機能設定' },
     { key: 'reportTemplates', label: '報告書テンプレート' },
     { key: 'taxAlert', label: '納付アラート' },
+    { key: 'permissions', label: '権限情報' },
   ];
 
   const logoutOpts = [5,10,15,30,60,120].map(m =>
@@ -368,6 +369,52 @@ function renderSettings(el) {
         </div>
       </div>`;
     })(),
+
+    permissions: (() => {
+      const tools = MOCK_DATA.toolPermissions || [
+        { tool: 'マネーフォワード', desc: '会計ソフト' },
+        { tool: 'e-Tax', desc: '国税電子申告' },
+        { tool: 'eLTAX', desc: '地方税電子申告' },
+        { tool: 'マイコモン', desc: 'NTTデータ税務システム' },
+        { tool: '達人シリーズ', desc: '税務申告ソフト' },
+        { tool: 'Chatwork', desc: 'ビジネスチャット' },
+        { tool: 'Dropbox', desc: 'クラウドストレージ' },
+        { tool: 'Zoom', desc: 'Web会議' },
+      ];
+      const activeUsers = MOCK_DATA.users.filter(u => u.isActive);
+      return `
+      <div class="card">
+        <div class="card-header"><h3>ツール権限付与一覧</h3></div>
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:var(--gray-50);">
+                <th style="padding:10px 12px;border-bottom:2px solid var(--gray-200);text-align:left;position:sticky;left:0;background:var(--gray-50);z-index:1;">ツール名</th>
+                ${activeUsers.map(u => `<th style="padding:10px 8px;border-bottom:2px solid var(--gray-200);text-align:center;min-width:70px;font-size:11px;">${escapeHtml(u.name)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${tools.map(t => {
+                return `<tr>
+                  <td style="padding:8px 12px;border-bottom:1px solid var(--gray-100);position:sticky;left:0;background:#fff;z-index:1;">
+                    <strong>${escapeHtml(t.tool)}</strong>
+                    <div style="font-size:11px;color:var(--gray-400);">${escapeHtml(t.desc)}</div>
+                  </td>
+                  ${activeUsers.map(u => {
+                    const perms = u.toolPermissions || {};
+                    const has = perms[t.tool];
+                    return `<td style="padding:8px;border-bottom:1px solid var(--gray-100);text-align:center;">
+                      <span style="cursor:pointer;font-size:16px;" onclick="toggleToolPermission('${u.id}','${t.tool}',this)" title="クリックで切替">${has ? '✅' : '−'}</span>
+                    </td>`;
+                  }).join('')}
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-400);margin-top:12px;">各セルをクリックして権限の有無を切り替えられます。</p>`;
+    })(),
   };
 
   const activeKey = tabs[settingsActiveTab]?.key || 'personal';
@@ -462,6 +509,14 @@ function saveTaxAlertSettings() {
   settingsActiveTab = 7;
   settingsRerender();
   setTimeout(function() { settingsFlash('tax-alert-flash', '保存しました'); }, 50);
+}
+
+function toggleToolPermission(userId, tool, el) {
+  const u = getUserById(userId);
+  if (!u) return;
+  if (!u.toolPermissions) u.toolPermissions = {};
+  u.toolPermissions[tool] = !u.toolPermissions[tool];
+  el.textContent = u.toolPermissions[tool] ? '✅' : '−';
 }
 
 registerPage('settings', renderSettings);
