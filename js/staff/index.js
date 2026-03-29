@@ -117,6 +117,7 @@ function renderStaffDetail(el, params) {
       <div class="card">
         <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openStaffModal('${u.id}')">編集</button></div>
         <div class="card-body">
+          ${u.photoUrl ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(u.photoUrl)}" alt="${escapeHtml(u.name)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--gray-200);"></div>` : ''}
           <div class="detail-row"><div class="detail-label">職員コード</div><div class="detail-value">${u.staffCode || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">氏名</div><div class="detail-value">${u.name}</div></div>
           <div class="detail-row"><div class="detail-label">フリガナ</div><div class="detail-value">${displayKana || '-'}</div></div>
@@ -142,6 +143,7 @@ function renderStaffDetail(el, params) {
         <div class="card-header"><h3>アカウント情報</h3></div>
         <div class="card-body">
           <div class="detail-row"><div class="detail-label">ログインID</div><div class="detail-value">${u.loginId || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">CWID</div><div class="detail-value">${u.cwAccountId || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">ロール</div><div class="detail-value"><span class="type-badge type-corp">${getRoleBadge(u.role)}</span></div></div>
           <div class="detail-row"><div class="detail-label">チーム</div><div class="detail-value">${u.team || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">分類</div><div class="detail-value">${u.staffFlag || '-'}</div></div>

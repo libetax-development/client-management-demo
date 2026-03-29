@@ -77,6 +77,7 @@ a:hover { text-decoration: underline; }
   display: flex; align-items: center; gap: 10px; padding: 9px 20px;
   color: var(--gray-300); font-size: 13px; transition: all .15s; text-decoration: none;
 }
+.nav-icon { display: inline-flex; width: 20px; justify-content: center; flex-shrink: 0; font-size: 15px; }
 .sidebar-nav a:hover { background: var(--gray-800); color: #fff; }
 .sidebar-nav a.active { background: var(--primary); color: #fff; }
 .sidebar-nav .nav-section { padding: 16px 20px 6px; font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; }
@@ -316,6 +317,7 @@ tbody tr.clickable { cursor: pointer; }
 .cal-event-type-badge.cal-event-meeting { background: #fef3c7; color: #92400e; }
 .cal-event-type-badge.cal-event-internal { background: #e0e7ff; color: #3730a3; }
 .cal-event-type-badge.cal-event-deadline { background: #fee2e2; color: #991b1b; }
+.cal-holiday-label { font-size: 9px; font-weight: 400; color: var(--danger); margin-left: 4px; }
 
 /* ── 通知ドロップダウン ── */
 .notif-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 380px; background: #fff; border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow-lg); z-index: 300; display: none; }

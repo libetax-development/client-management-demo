@@ -43,36 +43,36 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section">メイン</div>
-      <a href="#" data-page="dashboard">&#x1f4ca; ダッシュボード</a>
-      <a href="#" data-page="tasks">&#x2705; タスク一覧</a>
-      <a href="#" data-page="progress">&#x1f4cb; 進捗管理表</a>
+      <a href="#" data-page="dashboard"><span class="nav-icon">&#x1f4ca;</span>ダッシュボード</a>
+      <a href="#" data-page="tasks"><span class="nav-icon">&#x2705;</span>タスク一覧</a>
+      <a href="#" data-page="progress"><span class="nav-icon">&#x1f4cb;</span>進捗管理表</a>
 
       <div class="nav-section">管理</div>
-      <a href="#" data-page="clients">&#x1f465; 顧客一覧</a>
-      <a href="#" data-page="staff">&#x1f464; 職員一覧</a>
-      <a href="#" data-page="timesheet">&#x23f1; 工数管理</a>
-      <a href="#" data-page="reports">&#x1f4dd; 報告書</a>
-      <a href="#" data-page="calendar">&#x1f4c5; カレンダー</a>
+      <a href="#" data-page="clients"><span class="nav-icon">&#x1f465;</span>顧客一覧</a>
+      <a href="#" data-page="staff"><span class="nav-icon">&#x1f464;</span>職員一覧</a>
+      <a href="#" data-page="timesheet"><span class="nav-icon">&#x23f1;</span>工数管理</a>
+      <a href="#" data-page="reports"><span class="nav-icon">&#x1f4dd;</span>報告書</a>
+      <a href="#" data-page="calendar"><span class="nav-icon">&#x1f4c5;</span>カレンダー</a>
 
       <div class="nav-section">チャット</div>
-      <a href="#" data-page="chatrooms">&#x1f4ac; チャットマスタ</a>
+      <a href="#" data-page="chatrooms"><span class="nav-icon">&#x1f4ac;</span>チャットマスタ</a>
 
       <div class="nav-section">報酬</div>
-      <a href="#" data-page="rewards">&#x1f4b0; 報酬管理</a>
+      <a href="#" data-page="rewards"><span class="nav-icon">&#x1f4b0;</span>報酬管理</a>
 
       <div class="nav-section">集計</div>
-      <a href="#" data-page="summary">&#x1f4ca; 集計</a>
+      <a href="#" data-page="summary"><span class="nav-icon">&#x1f4ca;</span>集計</a>
 
       <div class="nav-section">リンク</div>
-      <a href="#" data-page="links">&#x1f4d1; リンク集</a>
+      <a href="#" data-page="links"><span class="nav-icon">&#x1f4d1;</span>リンク集</a>
 
       <div class="nav-section">AI</div>
-      <a href="#" data-page="ai">&#x1f916; AIアシスタント</a>
+      <a href="#" data-page="ai"><span class="nav-icon">&#x1f916;</span>AIアシスタント</a>
 
       <div class="nav-section">設定</div>
-      <a href="#" data-page="integrations">&#x1f517; 外部連携</a>
-      <a href="#" data-page="automation">&#x26a1; 自動化設定</a>
-      <a href="#" data-page="settings">&#x2699; マイ設定</a>
+      <a href="#" data-page="integrations"><span class="nav-icon">&#x1f517;</span>外部連携</a>
+      <a href="#" data-page="automation"><span class="nav-icon">&#x26a1;</span>自動化設定</a>
+      <a href="#" data-page="settings"><span class="nav-icon">&#x2699;</span>マイ設定</a>
     </nav>
     <div class="sidebar-user">
       <div class="avatar">H</div>
@@ -313,6 +313,14 @@
             <option value="他">他</option>
           </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label>CWID（ChatworkアカウントID）</label>
+        <input type="text" id="new-staff-cwAccountId" placeholder="例: 1234567">
+      </div>
+      <div class="form-group">
+        <label>顔写真URL</label>
+        <input type="text" id="new-staff-photoUrl" placeholder="https://example.com/photo.jpg">
       </div>
       <div class="form-group">
         <label>リベシティプロフィールURL</label>
@@ -854,6 +862,7 @@
 <script src="js/staff/index.js"></script>
 <script src="js/timesheet/index.js"></script>
 <script src="js/reports/index.js"></script>
+<script src="js/calendar/holidays.js"></script>
 <script src="js/calendar/index.js"></script>
 <script src="js/rewards/index.js"></script>
 <script src="js/chatrooms/index.js"></script>

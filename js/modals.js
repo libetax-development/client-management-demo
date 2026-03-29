@@ -176,6 +176,7 @@ function openStaffModal(staffId) {
     'new-staff-position': '', 'new-staff-employmentType': '正社員',
     'new-staff-joinDate': '', 'new-staff-role': 'member',
     'new-staff-staffFlag': '税務', 'new-staff-memo': '', 'new-staff-deptId': '',
+    'new-staff-cwAccountId': '', 'new-staff-photoUrl': '',
     'new-staff-libeProfileUrl': '', 'new-staff-selfIntro': '',
   };
 
@@ -190,6 +191,8 @@ function openStaffModal(staffId) {
         'new-staff-joinDate': u.joinDate, 'new-staff-role': u.role || 'member',
         'new-staff-staffFlag': u.staffFlag || '税務', 'new-staff-memo': u.memo,
         'new-staff-deptId': u.deptId || '',
+        'new-staff-cwAccountId': u.cwAccountId || '',
+        'new-staff-photoUrl': u.photoUrl || '',
         'new-staff-libeProfileUrl': u.libeProfileUrl || '',
         'new-staff-selfIntro': u.selfIntro || '',
       });
@@ -219,6 +222,8 @@ function submitNewStaff() {
   const role = getVal('new-staff-role');
   const staffFlag = getVal('new-staff-staffFlag');
   const memo = getValTrim('new-staff-memo');
+  const cwAccountId = getValTrim('new-staff-cwAccountId');
+  const photoUrl = getValTrim('new-staff-photoUrl');
   const libeProfileUrl = getValTrim('new-staff-libeProfileUrl');
   const selfIntro = getValTrim('new-staff-selfIntro');
 
@@ -232,7 +237,7 @@ function submitNewStaff() {
     if (u) {
       Object.assign(u, { lastName, firstName, lastNameKana, firstNameKana,
         name, email, tel, mobile, deptId, position, employmentType,
-        joinDate, role, staffFlag, memo, libeProfileUrl, selfIntro, loginId: email.split('@')[0] });
+        joinDate, role, staffFlag, memo, cwAccountId, photoUrl, libeProfileUrl, selfIntro, loginId: email.split('@')[0] });
     }
     closeStaffModal();
     navigateTo('staff-detail', { id: editingStaffId });
@@ -245,7 +250,7 @@ function submitNewStaff() {
       id: newId, staffCode: nextCode, lastName, firstName,
       lastNameKana, firstNameKana, name, email, tel, mobile,
       role, deptId, team: null, position, employmentType,
-      joinDate, memo, libeProfileUrl, selfIntro, loginId: email.split('@')[0], isActive: true,
+      joinDate, memo, cwAccountId, photoUrl, libeProfileUrl, selfIntro, loginId: email.split('@')[0], isActive: true,
       baseRatio: null, staffFlag,
     });
 
@@ -745,7 +750,9 @@ function submitEditProgress() {
   const id = getVal('edit-pg-id');
   const s = MOCK_DATA.progressSheets.find(x => x.id === id);
   if (!s) return;
-  s.name = getValTrim('edit-pg-name');
+  const name = getValTrim('edit-pg-name');
+  if (!name) { alert('管理表名を入力してください'); return; }
+  s.name = name;
   s.status = getVal('edit-pg-status');
   s.managerId = getVal('edit-pg-manager');
   closeProgressSettingsModal();

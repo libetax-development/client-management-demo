@@ -99,6 +99,9 @@ function renderProgress(el) {
                 <span>${pct}%</span>
               </div>
               <div style="margin-top:12px;font-size:12px;color:var(--gray-500);">管理者: ${mgr?.name || '-'}</div>
+              <div style="margin-top:8px;text-align:right;">
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openProgressSettingsModal('${s.id}')">設定変更</button>
+              </div>
             </div>
           </div>
         `;

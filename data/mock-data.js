@@ -277,9 +277,7 @@ const MOCK_DATA = {
 
   // カスタムフィールド定義
   customFields: [
-    { id: 'cf-001', name: 'MyKomonコード', type: 'text', order: 1 },
-    { id: 'cf-002', name: '契約開始日', type: 'date', order: 2 },
-    { id: 'cf-003', name: 'メモ（社内用）', type: 'textarea', order: 3 },
+    { id: 'cf-003', name: 'メモ（社内用）', type: 'textarea', order: 1 },
   ],
 
   automationRules: [

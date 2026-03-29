@@ -313,6 +313,7 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${editing ? inp('ed-tel', c?.tel, 'text', '例: 03-1234-5678') : val(c.tel)}</div></div>
           <div class="detail-row"><div class="detail-label">代表者</div><div class="detail-value">${editing ? inp('ed-representative', c?.representative, 'text', '例: 山本 太郎') : val(c?.representative)}</div></div>
           <div class="detail-row"><div class="detail-label">管轄税務署</div><div class="detail-value">${editing ? inp('ed-taxoffice', c?.taxOffice, 'text', '例: 千代田税務署') : val(c.taxOffice)}</div></div>
+          <div class="detail-row"><div class="detail-label">契約開始日</div><div class="detail-value">${editing ? inp('ed-contractStartDate', c?.contractStartDate, 'date') : val(c?.contractStartDate ? formatDate(c.contractStartDate) : '')}</div></div>
           <div class="detail-row"><div class="detail-label">契約終了日</div><div class="detail-value">${editing ? inp('ed-contractEndDate', c?.contractEndDate, 'date') : val(c?.contractEndDate ? formatDate(c.contractEndDate) : '')}</div></div>
           ${!editing && c?.memo ? `<div class="detail-row"><div class="detail-label">備考</div><div class="detail-value">${c.memo}</div></div>` : ''}
 
@@ -332,7 +333,9 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">日税コード</div><div class="detail-value">${editing ? inp('ed-nichizeiCode', c?.nichizeiCode, 'text', '例: NT-001234') : val(c?.nichizeiCode)}</div></div>
           <div class="detail-row"><div class="detail-label">管理表No</div><div class="detail-value">${editing ? inp('ed-managementNo', c?.managementNo, 'text', '例: M-0450') : val(c?.managementNo)}</div></div>
           <div class="detail-row"><div class="detail-label">e-Tax利用者識別番号</div><div class="detail-value">${editing ? inp('ed-etaxId', c?.etaxId, 'text', '例: 0012345678901234') : val(c?.etaxId)}</div></div>
+          <div class="detail-row"><div class="detail-label">e-Taxパスワード</div><div class="detail-value">${editing ? inp('ed-etaxPassword', c?.etaxPassword, 'text', 'パスワードを入力') : (c?.etaxPassword ? '••••••••' : '-')}</div></div>
           <div class="detail-row"><div class="detail-label">eLTAX利用者ID</div><div class="detail-value">${editing ? inp('ed-eltaxId', c?.eltaxId, 'text', '例: LT001234') : val(c?.eltaxId)}</div></div>
+          <div class="detail-row"><div class="detail-label">eLTAXパスワード</div><div class="detail-value">${editing ? inp('ed-eltaxPassword', c?.eltaxPassword, 'text', 'パスワードを入力') : (c?.eltaxPassword ? '••••••••' : '-')}</div></div>
 
           <div class="detail-section-title">納付情報</div>
           <div class="detail-row"><div class="detail-label">ダイレクト納付</div><div class="detail-value">${editing ? `<select id="ed-directDebit" class="inline-edit-input"><option value="true" ${c?.paymentInfo?.directDebit ? 'selected' : ''}>設定済み</option><option value="false" ${!c?.paymentInfo?.directDebit ? 'selected' : ''}>未設定</option></select>` : (c?.paymentInfo?.directDebit ? '<span style="color:var(--success)">設定済み</span>' : '<span style="color:var(--gray-400)">未設定</span>')}</div></div>
@@ -475,11 +478,14 @@ function saveClientInline(id) {
   const cwAccountId = getValTrim('ed-cwid');
   // 新規フィールド
   const contractStatus = getVal('ed-contractStatus', '');
+  const contractStartDate = getVal('ed-contractStartDate', '');
   const contractEndDate = getVal('ed-contractEndDate', '');
   const nichizeiCode = getValTrim('ed-nichizeiCode');
   const managementNo = getValTrim('ed-managementNo');
   const etaxId = getValTrim('ed-etaxId');
+  const etaxPassword = getValTrim('ed-etaxPassword');
   const eltaxId = getValTrim('ed-eltaxId');
+  const eltaxPassword = getValTrim('ed-eltaxPassword');
   const directDebitStatus = getValTrim('ed-directDebitStatus');
   const email = getValTrim('ed-email');
   const cityName = getValTrim('ed-cityName');
@@ -511,7 +517,7 @@ function saveClientInline(id) {
       isActive: true, mainUserId, subUserId, mgrUserId: mgrUserId || mainUserId,
       monthlySales, annualFee, spotFees: [], address, tel, industry, representative, taxOffice,
       memo: '', establishDate: '', cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
-      contractStatus, contractEndDate, nichizeiCode, managementNo, etaxId, eltaxId, directDebitStatus,
+      contractStatus, contractStartDate, contractEndDate, nichizeiCode, managementNo, etaxId, etaxPassword, eltaxId, eltaxPassword, directDebitStatus,
       email, cityName, cityUrl, dropboxPath, consumptionTaxFee, consumptionTaxFreq, paymentInfo,
     });
     clientEditMode = false;
@@ -526,9 +532,9 @@ function saveClientInline(id) {
       c.industry = industry; c.representative = representative; c.taxOffice = taxOffice;
       c.cwAccountId = cwAccountId;
       c.customFieldValues = customFieldValues;
-      c.contractStatus = contractStatus; c.contractEndDate = contractEndDate;
+      c.contractStatus = contractStatus; c.contractStartDate = contractStartDate; c.contractEndDate = contractEndDate;
       c.nichizeiCode = nichizeiCode; c.managementNo = managementNo;
-      c.etaxId = etaxId; c.eltaxId = eltaxId; c.directDebitStatus = directDebitStatus;
+      c.etaxId = etaxId; c.etaxPassword = etaxPassword; c.eltaxId = eltaxId; c.eltaxPassword = eltaxPassword; c.directDebitStatus = directDebitStatus;
       c.email = email; c.cityName = cityName; c.cityUrl = cityUrl;
       c.dropboxPath = dropboxPath; c.paymentInfo = paymentInfo;
       c.consumptionTaxFee = consumptionTaxFee; c.consumptionTaxFreq = consumptionTaxFreq;

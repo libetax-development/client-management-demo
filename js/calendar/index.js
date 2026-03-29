@@ -50,6 +50,16 @@ function renderCalendar(el) {
     return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
   }
 
+  function formatTimeRange(startTime, durationMin) {
+    if (!startTime) return '';
+    if (!durationMin) return startTime;
+    const [h, m] = startTime.split(':').map(Number);
+    const endTotal = h * 60 + m + durationMin;
+    const endH = String(Math.floor(endTotal / 60)).padStart(2, '0');
+    const endM = String(endTotal % 60).padStart(2, '0');
+    return `${startTime}〜${endH}:${endM}`;
+  }
+
   function getWeekStart(dt) {
     const d = new Date(dt);
     const day = d.getDay();
@@ -104,6 +114,7 @@ function renderCalendar(el) {
       const ds = dateStr(calYear, calMonth, d);
       const isToday = ds === today;
       const dow = (firstDay + d - 1) % 7; // 0=月, 5=土, 6=日
+      const holidayName = getHolidayName(ds);
       const dayTasks = tasks.filter(t => t.dueDate === ds);
       const dayEvents = events.filter(e => e.date === ds);
       const allItems = [];
@@ -118,8 +129,9 @@ function renderCalendar(el) {
         allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${timeStr}${e.title.slice(0, 10)}</div>` });
       });
 
-      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 6 ? 'cal-sun' : dow === 5 ? 'cal-sat' : ''}" data-date="${ds}" style="cursor:pointer;">
-        <div class="cal-date">${d}</div>
+      const isHolidayDay = !!holidayName;
+      html += `<div class="cal-day ${isToday ? 'cal-today' : ''} ${dow === 6 || isHolidayDay ? 'cal-sun' : dow === 5 ? 'cal-sat' : ''}" data-date="${ds}" style="cursor:pointer;">
+        <div class="cal-date">${d}${holidayName ? `<span class="cal-holiday-label">${holidayName}</span>` : ''}</div>
         ${allItems.slice(0, 3).map(i => i.html).join('')}
         ${allItems.length > 3 ? `<div class="cal-more">+${allItems.length - 3}件</div>` : ''}
       </div>`;
@@ -163,8 +175,10 @@ function renderCalendar(el) {
     weekDates.forEach((dt, i) => {
       const ds = dateStrFromDate(dt);
       const isToday = ds === today;
-      html += `<th style="padding:8px;border:1px solid var(--gray-200);background:${isToday ? 'var(--primary-light, #e8f0fe)' : 'var(--gray-50)'};text-align:center;${i === 5 ? 'color:var(--primary);' : i === 6 ? 'color:var(--danger);' : ''}">
-        ${weekDayHeaders[i]} ${dt.getDate()}
+      const holidayName = getHolidayName(ds);
+      const isHolidayDay = !!holidayName;
+      html += `<th style="padding:8px;border:1px solid var(--gray-200);background:${isToday ? 'var(--primary-light, #e8f0fe)' : isHolidayDay ? '#fff1f2' : 'var(--gray-50)'};text-align:center;${i === 5 ? 'color:var(--primary);' : (i === 6 || isHolidayDay) ? 'color:var(--danger);' : ''}">
+        ${weekDayHeaders[i]} ${dt.getDate()}${holidayName ? `<div style="font-size:9px;font-weight:400;">${holidayName}</div>` : ''}
       </th>`;
     });
     html += '</tr></thead><tbody>';
@@ -201,8 +215,8 @@ function renderCalendar(el) {
         });
         const items = hourEvents.map(e => {
           const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
-          const dur = e.duration ? ` (${e.duration}分)` : '';
-          return `<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;cursor:pointer;" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}${dur}">${e.time} ${e.title.slice(0, 12)}</div>`;
+          const timeRange = formatTimeRange(e.time, e.duration);
+          return `<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;cursor:pointer;" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}">${timeRange} ${e.title.slice(0, 10)}</div>`;
         });
         html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;height:36px;">${items.join('')}</td>`;
       });
@@ -220,7 +234,8 @@ function renderCalendar(el) {
   function drawDay() {
     const ds = dateStrFromDate(calCurrentDate);
     const dow = ['日', '月', '火', '水', '木', '金', '土'][calCurrentDate.getDay()];
-    document.getElementById('cal-title').textContent = `${calCurrentDate.getFullYear()}年${calCurrentDate.getMonth() + 1}月${calCurrentDate.getDate()}日（${dow}）`;
+    const dayHolidayName = getHolidayName(ds);
+    document.getElementById('cal-title').textContent = `${calCurrentDate.getFullYear()}年${calCurrentDate.getMonth() + 1}月${calCurrentDate.getDate()}日（${dow}）${dayHolidayName ? ' ' + dayHolidayName : ''}`;
 
     const { tasks, events } = getFilteredData();
     const today = getTodayStr();
@@ -262,10 +277,10 @@ function renderCalendar(el) {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
         const user = e.userId ? getUserById(e.userId) : null;
         const client = e.clientId ? getClientById(e.clientId) : null;
-        const dur = e.duration ? ` (${e.duration}分)` : '';
+        const timeRange = formatTimeRange(e.time, e.duration);
         const meta = [user?.name, client?.name, e.location].filter(Boolean).join(' / ');
         html += `<div class="cal-event ${typeClass}" style="margin:2px 0;padding:4px 8px;">
-          <div style="font-weight:500;">${e.time} ${e.title}${dur}</div>
+          <div style="font-weight:500;">${timeRange} ${e.title}</div>
           ${meta ? `<div style="font-size:11px;opacity:0.8;">${meta}</div>` : ''}
         </div>`;
       });
