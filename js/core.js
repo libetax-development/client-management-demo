@@ -17,7 +17,7 @@ const PAGE_TITLES = {
   audit: '監査ログ', 'import-export': 'インポート/エクスポート',
   chatrooms: 'チャットマスタ', integrations: '外部連携',
   ai: 'AIアシスタント', automation: '自動化設定',
-  links: 'リンク集', summary: '集計', settings: 'マイ設定',
+  views: 'ビュー管理', links: 'リンク集', summary: '集計', settings: 'マイ設定',
 };
 
 function registerPage(name, initFn) { pages[name] = initFn; }
