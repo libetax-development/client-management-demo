@@ -641,21 +641,59 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-pg-id">
-      <div class="form-group">
-        <label>管理表名</label>
-        <input type="text" id="edit-pg-name">
+
+      <!-- タブ -->
+      <div class="view-tabs" id="pg-settings-tabs" style="margin-bottom:16px;">
+        <button class="view-tab active" data-tab="basic">基本設定</button>
+        <button class="view-tab" data-tab="columns">工程設定</button>
+        <button class="view-tab" data-tab="targets">対象顧客</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <!-- タブ1: 基本設定 -->
+      <div id="pg-settings-tab-basic">
         <div class="form-group">
-          <label>ステータス</label>
-          <select id="edit-pg-status">
-            <option value="利用中">利用中</option>
-            <option value="終了">終了</option>
-          </select>
+          <label>管理表名</label>
+          <input type="text" id="edit-pg-name">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label>ステータス</label>
+            <select id="edit-pg-status">
+              <option value="利用中">利用中</option>
+              <option value="終了">終了</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>管理者</label>
+            <select id="edit-pg-manager"></select>
+          </div>
         </div>
         <div class="form-group">
-          <label>管理者</label>
-          <select id="edit-pg-manager"></select>
+          <label>カテゴリ</label>
+          <input type="text" id="edit-pg-category" disabled style="background:#f7fafc;">
+        </div>
+      </div>
+
+      <!-- タブ2: 工程設定 -->
+      <div id="pg-settings-tab-columns" style="display:none;">
+        <p style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">工程の追加・編集・並べ替え・削除ができます</p>
+        <div id="pg-settings-columns-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <input type="text" id="pg-new-col-name" placeholder="新しい工程名を入力" style="flex:1;">
+          <button class="btn btn-primary btn-sm" onclick="pgAddColumn()">追加</button>
+        </div>
+      </div>
+
+      <!-- タブ3: 対象顧客 -->
+      <div id="pg-settings-tab-targets" style="display:none;">
+        <p style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">対象顧客の追加・削除ができます</p>
+        <div id="pg-targets-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+          <select id="pg-add-target-client" style="flex:1;padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:14px;"></select>
+          <button class="btn btn-primary btn-sm" onclick="pgAddTarget()">顧客を追加</button>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="pgRemoveSelectedTargets()" style="color:var(--red-600,#dc2626);">選択した顧客を削除</button>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ function renderProgress(el) {
   el.innerHTML = `
     <div class="toolbar">
       <button class="btn btn-primary" id="pg-create-btn">+ 作成</button>
+      <button class="btn btn-secondary" onclick="navigateTo('templates')">テンプレート管理</button>
       <div class="spacer"></div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);cursor:pointer;">
         <input type="checkbox" id="pg-show-hidden"> 公開範囲外の進捗管理表を表示
@@ -141,7 +142,13 @@ function renderProgressDetail(el, params) {
   document.getElementById('header-title').textContent = `進捗管理表 - ${sheet.name}`;
 
   el.innerHTML = `
-    <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('progress')">&larr; 進捗管理表一覧に戻る</a></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <a href="#" onclick="event.preventDefault();navigateTo('progress')">&larr; 進捗管理表一覧に戻る</a>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="saveAsProgressTemplate('${sheet.id}')">テンプレートとして保存</button>
+        <button class="btn btn-secondary btn-sm" onclick="navigateTo('templates')">テンプレート管理</button>
+      </div>
+    </div>
 
     <div class="toolbar" style="flex-wrap:wrap;">
       <select class="filter-select" id="pd-assignee-filter">
