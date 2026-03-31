@@ -217,6 +217,12 @@ function renderProgressDetail(el, params) {
     `;
 
     // Table header
+    const stepColCount = sheet.columns.length + (sheet.showReportLink ? 1 : 0);
+    // 固定列: 60+140+72+72=344, 工程列: 72px each, 備考: 120px
+    const tableWidth = 344 + (stepColCount * 72) + 120;
+    const table = document.querySelector('.pg-detail-table');
+    if (table) table.style.width = tableWidth + 'px';
+
     document.getElementById('pd-thead').innerHTML = `<tr>
       <th class="pg-fixed pg-col-code">コード</th>
       <th class="pg-fixed pg-col-name">顧客名</th>
@@ -224,7 +230,7 @@ function renderProgressDetail(el, params) {
       <th class="pg-fixed pg-col-sub">副担当</th>
       ${sheet.columns.map(c => `<th class="pg-step-col">${c}</th>`).join('')}
       ${sheet.showReportLink ? '<th class="pg-step-col">報告書</th>' : ''}
-      <th style="min-width:120px;">備考</th>
+      <th style="width:120px;">備考</th>
     </tr>`;
 
     // Table body

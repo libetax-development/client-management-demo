@@ -1033,6 +1033,38 @@ var PG_FILTER_FIELDS = [
   { key: 'mainUserId', label: '主担当者', options: 'users' },
 ];
 
+// 条件テキストを生成（例: 「種別：個人」AND「ステータス：有効」）
+function pgBuildConditionText(conditions, logicName) {
+  if (!conditions || conditions.length === 0) return '';
+  var logicEl = document.querySelector('input[name="' + (logicName || 'pg-filter-logic') + '"]:checked');
+  var logic = logicEl ? logicEl.value : 'AND';
+  var parts = conditions.map(function(cond) {
+    var field = PG_FILTER_FIELDS.find(function(f) { return f.key === cond.field; });
+    var fieldLabel = field ? field.label : cond.field;
+    var opLabel = cond.op === '=' ? '' : '≠';
+    var valueLabel = cond.value;
+    if (field && field.options === 'users') {
+      var user = MOCK_DATA.users.find(function(u) { return u.id === cond.value; });
+      if (user) valueLabel = user.name;
+    }
+    return '「' + fieldLabel + (opLabel ? opLabel : '：') + valueLabel + '」';
+  });
+  return parts.join(' ' + logic + ' ');
+}
+
+// 条件テキストを表示エリアに反映
+function pgShowConditionText(conditions, logicName, elementId) {
+  var el = document.getElementById(elementId || 'pg-filter-condition-text');
+  if (!el) return;
+  if (!conditions || conditions.length === 0) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.textContent = pgBuildConditionText(conditions, logicName);
+  el.style.display = '';
+}
+
 // 設定変更モーダル用 フィルタ条件の状態
 var pgFilterConditions = [];
 var pgFilterApplied = false; // 確定済みかどうか
@@ -1050,6 +1082,12 @@ function pgRenderTargetsTab(sheetId) {
   pgFilterConditions = (s.filterConditions || []).slice();
   pgFilterApplied = (s.filterConditions && s.filterConditions.length > 0);
 
+  // AND/ORロジックを復元
+  if (s.filterLogic) {
+    var logicRadios = document.querySelectorAll('input[name="pg-filter-logic"]');
+    logicRadios.forEach(function(r) { r.checked = r.value === s.filterLogic; });
+  }
+
   pgTargetModeChanged(mode, sheetId);
 }
 
@@ -1059,13 +1097,13 @@ window.pgTargetModeChanged = function(mode, sheetId) {
   var filterPreview = document.getElementById('pg-filter-preview');
   var allPreview = document.getElementById('pg-all-preview');
   var filterBtn = document.getElementById('pg-filter-condition-btn');
-  var filterSummary = document.getElementById('pg-filter-summary');
+  var conditionText = document.getElementById('pg-filter-condition-text');
 
   manualUI.style.display = 'none';
   filterPreview.style.display = 'none';
+  if (conditionText) conditionText.style.display = 'none';
   allPreview.style.display = 'none';
   if (filterBtn) filterBtn.style.display = 'none';
-  if (filterSummary) filterSummary.style.display = 'none';
 
   if (mode === 'all') {
     allPreview.style.display = '';
@@ -1085,13 +1123,11 @@ window.pgTargetModeChanged = function(mode, sheetId) {
     filterPreview.style.display = '';
     if (pgFilterApplied && pgFilterConditions.length > 0) {
       pgRenderFilterPreview();
-      if (filterSummary) {
-        filterSummary.style.display = '';
-        filterSummary.textContent = pgFilterConditions.length + '件の条件';
-      }
+      pgShowConditionText(pgFilterConditions, 'pg-filter-logic', 'pg-filter-condition-text');
     } else {
       document.getElementById('pg-filter-match-count').textContent = '条件が設定されていません。「条件設定」ボタンで条件を設定してください。';
       document.getElementById('pg-filter-match-list').innerHTML = '';
+      pgShowConditionText([], null, 'pg-filter-condition-text');
     }
 
   } else {
@@ -1259,17 +1295,15 @@ window.applyPgFilter = function() {
   closePgFilterDialog();
   // 設定変更モーダルのフィルタプレビューを更新
   pgRenderFilterPreview();
-  var filterSummary = document.getElementById('pg-filter-summary');
-  if (filterSummary) {
-    filterSummary.style.display = '';
-    filterSummary.textContent = pgFilterConditions.length + '件の条件';
-  }
+  pgShowConditionText(pgFilterConditions, 'pg-filter-logic', 'pg-filter-condition-text');
   // シートに条件を保存（次回モーダル開時に復元するため）
   var id = document.getElementById('edit-pg-id').value;
   var s = id ? MOCK_DATA.progressSheets.find(function(x) { return x.id === id; }) : null;
   if (s) {
     s.filterConditions = pgFilterConditions.slice();
     s.targetMode = 'filter';
+    var logicEl = document.querySelector('input[name="pg-filter-logic"]:checked');
+    s.filterLogic = logicEl ? logicEl.value : 'AND';
   }
 };
 

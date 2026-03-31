@@ -284,7 +284,7 @@ tbody tr.clickable { cursor: pointer; }
 .pg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .pg-progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
 .pg-progress-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width .3s; }
-.pg-detail-table { width: 100%; border-collapse: collapse; }
+.pg-detail-table { border-collapse: collapse; table-layout: fixed; }
 /* ヘッダー: MyKomon風ダークテーマ */
 .pg-detail-table thead th {
   background: #2d3748;
@@ -312,9 +312,9 @@ tbody tr.clickable { cursor: pointer; }
 .pg-detail-table tbody tr:nth-child(even) { background: #f7fafc; }
 .pg-detail-table tbody tr:nth-child(odd) { background: #fff; }
 .pg-detail-table tbody tr:hover { background: #ebf4ff; }
-/* 工程列 */
-.pg-step-col { min-width: 64px; }
-.pg-step-cell { text-align: center; cursor: pointer; }
+/* 工程列: 固定幅 + テキスト折り返し */
+.pg-detail-table thead th.pg-step-col { width: 72px; min-width: 72px; max-width: 72px; white-space: normal; word-break: break-all; line-height: 1.3; }
+.pg-detail-table td.pg-step-cell { text-align: center; cursor: pointer; width: 72px; min-width: 72px; max-width: 72px; white-space: normal; word-break: break-all; }
 /* 左固定列 */
 .pg-detail-table th.pg-fixed,
 .pg-detail-table td.pg-fixed {
