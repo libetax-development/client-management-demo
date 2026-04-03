@@ -197,47 +197,66 @@ function renderStaffDetail(el, params) {
 function exportStaffCSV() {
   let users = getFilteredStaff();
 
-  const header = ['staffCode', 'lastName', 'firstName', 'lastNameKana', 'firstNameKana', 'email', 'tel', 'mobile', 'deptId', 'position', 'employmentType', 'joinDate', 'role', 'staffFlag', 'memo'];
-  const rows = users.map(u => [u.staffCode || '', u.lastName || '', u.firstName || '', u.lastNameKana || '', u.firstNameKana || '', u.email || '', u.tel || '', u.mobile || '', u.deptId || '', u.position || '', u.employmentType || '', u.joinDate || '', u.role || '', u.staffFlag || '', u.memo || '']);
+  const header = ['職員コード', '姓', '名', '姓カナ', '名カナ', '表示名', 'メールアドレス', '電話番号', '携帯番号', 'ロール', '役職', '雇用形態', '入社日', '基準割合', '月額固定報酬', '住所', '生年月日', '顔写真URL'];
+  const rows = users.map(u => [u.staffCode || '', u.lastName || '', u.firstName || '', u.lastNameKana || '', u.firstNameKana || '', u.name || '', u.email || '', u.tel || '', u.mobile || '', u.role || '', u.position || '', u.employmentType || '', u.joinDate || '', u.baseRatio ?? '', u.fixedReward ?? '', u.address || '', u.birthDate || '', u.photoUrl || '']);
 
   downloadCSV('職員一覧.csv', header, rows);
 }
 
 function importStaffCSV() {
-  runCSVImport((obj) => {
+  // 日本語ヘッダー→内部フィールド名マッピング
+  const keyMap = {
+    '職員コード': 'staffCode', '姓': 'lastName', '名': 'firstName',
+    '姓カナ': 'lastNameKana', '名カナ': 'firstNameKana', '表示名': 'name',
+    'メールアドレス': 'email', '電話番号': 'tel', '携帯番号': 'mobile',
+    'ロール': 'role', '役職': 'position', '雇用形態': 'employmentType',
+    '入社日': 'joinDate', '基準割合': 'baseRatio', '月額固定報酬': 'fixedReward',
+    '住所': 'address', '生年月日': 'birthDate', '顔写真URL': 'photoUrl',
+  };
+
+  runCSVImport((rawObj) => {
+    const obj = {};
+    Object.entries(rawObj).forEach(([k, v]) => { obj[keyMap[k] || k] = v; });
+
     const existing = MOCK_DATA.users.find(u => u.staffCode === obj.staffCode);
     if (existing) {
       if (obj.lastName) existing.lastName = obj.lastName;
       if (obj.firstName !== undefined) existing.firstName = obj.firstName;
       if (obj.lastNameKana) existing.lastNameKana = obj.lastNameKana;
       if (obj.firstNameKana !== undefined) existing.firstNameKana = obj.firstNameKana;
-      existing.name = (existing.lastName || '') + (existing.firstName ? ' ' + existing.firstName : '');
+      if (obj.name) existing.name = obj.name;
+      else existing.name = (existing.lastName || '') + (existing.firstName ? ' ' + existing.firstName : '');
       if (obj.email) existing.email = obj.email;
       if (obj.tel !== undefined) existing.tel = obj.tel;
       if (obj.mobile !== undefined) existing.mobile = obj.mobile;
-      if (obj.deptId) existing.deptId = parseInt(obj.deptId) || existing.deptId;
       if (obj.position !== undefined) existing.position = obj.position;
       if (obj.employmentType) existing.employmentType = obj.employmentType;
       if (obj.joinDate) existing.joinDate = obj.joinDate;
       if (obj.role) existing.role = obj.role;
-      if (obj.staffFlag) existing.staffFlag = obj.staffFlag;
-      if (obj.memo !== undefined) existing.memo = obj.memo;
+      if (obj.baseRatio !== undefined) existing.baseRatio = obj.baseRatio ? parseFloat(obj.baseRatio) : existing.baseRatio;
+      if (obj.fixedReward !== undefined) existing.fixedReward = obj.fixedReward ? parseInt(obj.fixedReward) : existing.fixedReward;
+      if (obj.address !== undefined) existing.address = obj.address;
+      if (obj.birthDate !== undefined) existing.birthDate = obj.birthDate;
+      if (obj.photoUrl !== undefined) existing.photoUrl = obj.photoUrl;
       return 'updated';
     } else {
       const newId = generateId('u-', MOCK_DATA.users);
       const code = obj.staffCode || 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
       const lastName = obj.lastName || '名称未設定';
       const firstName = obj.firstName || '';
-      const name = firstName ? lastName + ' ' + firstName : lastName;
+      const name = obj.name || (firstName ? lastName + ' ' + firstName : lastName);
       MOCK_DATA.users.push({
         id: newId, staffCode: code, lastName, firstName,
         lastNameKana: obj.lastNameKana || '', firstNameKana: obj.firstNameKana || '',
         name, email: obj.email || '', tel: obj.tel || '', mobile: obj.mobile || '',
-        role: obj.role || 'member', deptId: obj.deptId ? parseInt(obj.deptId) : null,
+        role: obj.role || 'member', deptId: null,
         team: null, position: obj.position || '', employmentType: obj.employmentType || '正社員',
-        joinDate: obj.joinDate || '', memo: obj.memo || '',
+        joinDate: obj.joinDate || '', memo: '',
         loginId: (obj.email || '').split('@')[0] || '', isActive: true,
-        baseRatio: null, staffFlag: obj.staffFlag || '税務',
+        baseRatio: obj.baseRatio ? parseFloat(obj.baseRatio) : null,
+        fixedReward: obj.fixedReward ? parseInt(obj.fixedReward) : null,
+        address: obj.address || '', birthDate: obj.birthDate || '',
+        photoUrl: obj.photoUrl || '', staffFlag: '税務',
       });
       return 'imported';
     }

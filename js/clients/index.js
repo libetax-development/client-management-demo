@@ -716,11 +716,12 @@ function exportClientCSV() {
   const cfHeaders = customFields.map(cf => cf.name);
   const cfIds = customFields.map(cf => cf.id);
 
-  const header = ['clientCode', 'name', 'clientType', 'fiscalMonth', 'postalCode', 'address', 'tel', 'representative', 'industry', 'taxOffice', 'consumptionTaxCategory', 'invoiceRegistered', 'monthlySales', 'monthlyBookkeepingFee', 'annualFee', 'spotFees', 'cwAccountId', 'contractStartDate', 'contractEndDate', 'bookkeepingStartDate', 'bookkeepingEndDate', 'mfBusinessNo', 'delegationStatus', 'nichizeiRegistration', ...cfHeaders];
+  const header = ['管理コード', '顧客名', '種別', '決算月', '郵便番号', '住所', '電話番号', 'メールアドレス', '代表者名', '業種', '管轄税務署', '月額報酬', '年1申告報酬', '契約ステータス', '消費税申告区分', 'インボイス登録', '月額記帳代行報酬', '記帳代行契約開始日', '記帳代行契約終了日', 'MF事業者番号', '委任登録', '日税登録', '引落口座カナ', '主担当コード', '副担当コード', 'CWアカウントID', ...cfHeaders];
   const rows = clients.map(c => {
     const cfv = c.customFieldValues || {};
-    const spotFeesJson = (c.spotFees && c.spotFees.length > 0) ? JSON.stringify(c.spotFees) : '';
-    return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.postalCode || '', c.address || '', c.tel || '', c.representative || '', c.industry || '', c.taxOffice || '', c.consumptionTaxCategory || '', c.invoiceRegistered || '', c.monthlySales || 0, c.monthlyBookkeepingFee || 0, c.annualFee || 0, spotFeesJson, c.cwAccountId || '', c.contractStartDate || '', c.contractEndDate || '', c.bookkeepingStartDate || '', c.bookkeepingEndDate || '', c.mfBusinessNo || '', c.delegationStatus || '', c.nichizeiRegistration || '', ...cfIds.map(id => cfv[id] || '')];
+    const mainUser = getUserById(c.mainUserId);
+    const subUser = getUserById(c.subUserId);
+    return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.postalCode || '', c.address || '', c.tel || '', c.email || '', c.representative || '', c.industry || '', c.taxOffice || '', c.monthlySales || 0, c.annualFee || 0, c.contractStatus || '', c.consumptionTaxCategory || '', c.invoiceRegistered || '', c.monthlyBookkeepingFee || 0, c.bookkeepingStartDate || '', c.bookkeepingEndDate || '', c.mfBusinessNo || '', c.delegationStatus || '', c.nichizeiRegistration || '', c.debitAccountKana || '', mainUser?.staffCode || '', subUser?.staffCode || '', c.cwAccountId || '', ...cfIds.map(id => cfv[id] || '')];
   });
 
   downloadCSV('顧客一覧.csv', header, rows);
@@ -762,7 +763,29 @@ function exportTatsujinCSV() {
 function importClientCSV() {
   const customFields = (MOCK_DATA.customFields || []).slice().sort((a, b) => a.order - b.order);
 
-  runCSVImport((obj) => {
+  // 日本語ヘッダー→内部フィールド名マッピング
+  const keyMap = {
+    '管理コード': 'clientCode', '顧客名': 'name', '種別': 'clientType', '決算月': 'fiscalMonth',
+    '郵便番号': 'postalCode', '住所': 'address', '電話番号': 'tel', 'メールアドレス': 'email',
+    '代表者名': 'representative', '業種': 'industry', '管轄税務署': 'taxOffice',
+    '月額報酬': 'monthlySales', '年1申告報酬': 'annualFee', '契約ステータス': 'contractStatus',
+    '消費税申告区分': 'consumptionTaxCategory', 'インボイス登録': 'invoiceRegistered',
+    '月額記帳代行報酬': 'monthlyBookkeepingFee', '記帳代行契約開始日': 'bookkeepingStartDate',
+    '記帳代行契約終了日': 'bookkeepingEndDate', 'MF事業者番号': 'mfBusinessNo',
+    '委任登録': 'delegationStatus', '日税登録': 'nichizeiRegistration', '引落口座カナ': 'debitAccountKana',
+    '主担当コード': 'mainStaffCode', '副担当コード': 'subStaffCode', 'CWアカウントID': 'cwAccountId',
+  };
+
+  runCSVImport((rawObj) => {
+    // 日本語ヘッダーを内部名に変換（英語ヘッダーも後方互換で対応）
+    const obj = {};
+    Object.entries(rawObj).forEach(([k, v]) => { obj[keyMap[k] || k] = v; });
+
+    // 担当コード→UserID変換
+    const findUserByCode = (code) => code ? MOCK_DATA.users.find(u => u.staffCode === code) : null;
+    const mainUser = findUserByCode(obj.mainStaffCode);
+    const subUser = findUserByCode(obj.subStaffCode);
+
     const existing = MOCK_DATA.clients.find(c => c.clientCode === obj.clientCode);
     if (existing) {
       if (obj.name) existing.name = obj.name;
@@ -770,12 +793,13 @@ function importClientCSV() {
       if (obj.fiscalMonth) existing.fiscalMonth = parseInt(obj.fiscalMonth) || existing.fiscalMonth;
       if (obj.address !== undefined) existing.address = obj.address;
       if (obj.tel !== undefined) existing.tel = obj.tel;
+      if (obj.email !== undefined) existing.email = obj.email;
       if (obj.representative !== undefined) existing.representative = obj.representative;
       if (obj.industry !== undefined) existing.industry = obj.industry;
       if (obj.taxOffice !== undefined) existing.taxOffice = obj.taxOffice;
       if (obj.monthlySales) existing.monthlySales = parseInt(obj.monthlySales) || existing.monthlySales;
       if (obj.annualFee) existing.annualFee = parseInt(obj.annualFee) || existing.annualFee;
-      if (obj.spotFees) { try { existing.spotFees = JSON.parse(obj.spotFees); } catch(e) {} }
+      if (obj.contractStatus) existing.contractStatus = obj.contractStatus;
       if (obj.cwAccountId !== undefined) existing.cwAccountId = obj.cwAccountId;
       if (obj.postalCode !== undefined) existing.postalCode = obj.postalCode;
       if (obj.consumptionTaxCategory !== undefined) existing.consumptionTaxCategory = obj.consumptionTaxCategory;
@@ -786,8 +810,9 @@ function importClientCSV() {
       if (obj.mfBusinessNo !== undefined) existing.mfBusinessNo = obj.mfBusinessNo;
       if (obj.delegationStatus !== undefined) existing.delegationStatus = obj.delegationStatus;
       if (obj.nichizeiRegistration !== undefined) existing.nichizeiRegistration = obj.nichizeiRegistration;
-      if (obj.contractStartDate !== undefined) existing.contractStartDate = obj.contractStartDate;
-      if (obj.contractEndDate !== undefined) existing.contractEndDate = obj.contractEndDate;
+      if (obj.debitAccountKana !== undefined) existing.debitAccountKana = obj.debitAccountKana;
+      if (mainUser) existing.mainUserId = mainUser.id;
+      if (subUser) existing.subUserId = subUser.id;
       if (!existing.customFieldValues) existing.customFieldValues = {};
       customFields.forEach(cf => {
         if (obj[cf.name] !== undefined && obj[cf.name] !== '') existing.customFieldValues[cf.id] = obj[cf.name];
@@ -801,13 +826,20 @@ function importClientCSV() {
       MOCK_DATA.clients.push({
         id: newId, clientCode: code, name: obj.name || '名称未設定',
         clientType: obj.clientType || '法人', fiscalMonth: parseInt(obj.fiscalMonth) || 3,
-        isActive: true, mainUserId: MOCK_DATA.users[1]?.id || 'u-002', subUserId: null,
-        mgrUserId: MOCK_DATA.users[1]?.id || 'u-002',
+        isActive: true, mainUserId: mainUser?.id || MOCK_DATA.users[1]?.id || 'u-002',
+        subUserId: subUser?.id || null,
+        mgrUserId: mainUser?.id || MOCK_DATA.users[1]?.id || 'u-002',
         monthlySales: parseInt(obj.monthlySales) || 0, annualFee: parseInt(obj.annualFee) || 0,
-        spotFees: obj.spotFees ? (function(){ try { return JSON.parse(obj.spotFees); } catch(e) { return []; } })() : [],
-        address: obj.address || '', tel: obj.tel || '', representative: obj.representative || '',
+        spotFees: [], contractStatus: obj.contractStatus || '契約完了',
+        address: obj.address || '', tel: obj.tel || '', email: obj.email || '',
+        representative: obj.representative || '', debitAccountKana: obj.debitAccountKana || '',
         industry: obj.industry || '', taxOffice: obj.taxOffice || '', memo: '', establishDate: '',
         cwAccountId: obj.cwAccountId || '', cwRoomUrls: [], relatedClientIds: [], customFieldValues: cfv,
+        postalCode: obj.postalCode || '', consumptionTaxCategory: obj.consumptionTaxCategory || '',
+        invoiceRegistered: obj.invoiceRegistered || '', monthlyBookkeepingFee: parseInt(obj.monthlyBookkeepingFee) || 0,
+        bookkeepingStartDate: obj.bookkeepingStartDate || '', bookkeepingEndDate: obj.bookkeepingEndDate || '',
+        mfBusinessNo: obj.mfBusinessNo || '', delegationStatus: obj.delegationStatus || '',
+        nichizeiRegistration: obj.nichizeiRegistration || '',
       });
       return 'imported';
     }
