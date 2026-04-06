@@ -2,9 +2,9 @@
 // 契約推移ページ
 // ===========================
 
-function renderContractTrends(el) {
-  document.getElementById('header-title').textContent = '契約推移';
+var trendChartInstance = null;
 
+function renderContractTrends(el) {
   // 過去18ヶ月分のデータを算出
   var data = calcContractTrends(18);
 
@@ -47,8 +47,9 @@ function renderContractTrends(el) {
 
   // Chart.js グラフ描画
   if (typeof Chart !== 'undefined') {
+    if (trendChartInstance) trendChartInstance.destroy();
     var ctx = document.getElementById('contract-trends-chart').getContext('2d');
-    new Chart(ctx, {
+    trendChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels: data.map(function(d) { return d.month.replace(/^\d{4}-/, '').replace(/^0/, '') + '月'; }),

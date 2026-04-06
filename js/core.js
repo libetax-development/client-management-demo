@@ -14,6 +14,7 @@ const PAGE_TITLES = {
   calendar: 'カレンダー', rewards: '報酬管理',
   templates: 'タスクテンプレート', 'template-detail': 'テンプレート詳細',
   archive: 'アーカイブ', teams: 'チーム管理',
+  'contract-trends': '契約推移',
   audit: '監査ログ', 'import-export': 'インポート/エクスポート',
   chatrooms: 'チャットマスタ', integrations: '外部連携',
   ai: 'AIアシスタント', automation: '自動化設定',

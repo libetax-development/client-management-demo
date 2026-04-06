@@ -347,11 +347,11 @@ function renderClientDetail(el, params) {
     const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
     setVal('ed-type', c?.clientType || '法人');
     setVal('ed-fiscal', c?.fiscalMonth === 'personal' ? 'personal' : (c?.fiscalMonth || 3));
-    setVal('ed-mgr', c?.mgrUserId || '');
-    setVal('ed-main', c?.mainUserId || '');
-    setVal('ed-sub', c?.subUserId || '');
-    setVal('ed-bookkeeper', c?.bookkeeperId || '');
-    setVal('ed-bookkeepingSub', c?.bookkeepingSubId || '');
+    setVal('ed-mgr', getAssigneeUserId(c?.id, 'reviewer') || '');
+    setVal('ed-main', getAssigneeUserId(c?.id, 'main') || '');
+    setVal('ed-sub', getAssigneeUserId(c?.id, 'sub') || '');
+    setVal('ed-bookkeeper', getAssigneeUserId(c?.id, 'bookkeeping_main') || '');
+    setVal('ed-bookkeepingSub', getAssigneeUserId(c?.id, 'bookkeeping_sub') || '');
   }
 }
 
@@ -440,11 +440,11 @@ function saveClientInline(id) {
       displayCode, capitalAmount, corporateNumber, filingType, yearEndAdjustment, interimFiling,
     });
     // アサインメント登録（多対多）
-    upsertAssignment(newId, 'main', mainUserId);
-    upsertAssignment(newId, 'sub', subUserId);
-    upsertAssignment(newId, 'reviewer', mgrUserId || mainUserId);
-    upsertAssignment(newId, 'bookkeeping_main', bookkeeperId);
-    upsertAssignment(newId, 'bookkeeping_sub', bookkeepingSubId);
+    if (mainUserId) upsertAssignment(newId, 'main', mainUserId);
+    if (subUserId) upsertAssignment(newId, 'sub', subUserId);
+    if (mgrUserId || mainUserId) upsertAssignment(newId, 'reviewer', mgrUserId || mainUserId);
+    if (bookkeeperId) upsertAssignment(newId, 'bookkeeping_main', bookkeeperId);
+    if (bookkeepingSubId) upsertAssignment(newId, 'bookkeeping_sub', bookkeepingSubId);
     clientEditMode = false;
     navigateTo('client-detail', { id: newId });
   } else {
@@ -551,6 +551,7 @@ function deleteClient(clientId) {
   if (!c) return;
   if (!confirm(`顧客「${c.name}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.clients = MOCK_DATA.clients.filter(x => x.id !== clientId);
+  MOCK_DATA.clientAssignments = MOCK_DATA.clientAssignments.filter(a => a.clientId !== clientId);
   navigateTo('clients');
 }
 

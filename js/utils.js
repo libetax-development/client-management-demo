@@ -54,13 +54,17 @@ function getClientAssignments(clientId) {
 
 // 担当者を変更（旧担当クローズ→新担当追加）
 function upsertAssignment(clientId, role, newUserId) {
+  // 現在のアクティブアサインメントを確認
+  var current = MOCK_DATA.clientAssignments.find(function(a) {
+    return a.clientId === clientId && a.role === role && !a.endDate;
+  });
+  // 同一担当者ならスキップ（履歴を無駄に増やさない）
+  if (current && current.userId === newUserId) return;
   var today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   // 旧担当をクローズ
-  MOCK_DATA.clientAssignments.forEach(function(a) {
-    if (a.clientId === clientId && a.role === role && !a.endDate) {
-      a.endDate = today;
-    }
-  });
+  if (current) {
+    current.endDate = today;
+  }
   // 新担当を追加
   if (newUserId) {
     var maxId = MOCK_DATA.clientAssignments.reduce(function(m, a) {
