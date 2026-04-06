@@ -221,6 +221,8 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">e-Taxパスワード</div><div class="detail-value">${editing ? '<div style="display:flex;align-items:center;gap:4px;"><input type="password" id="ed-etaxPassword" class="inline-edit-input" value="' + escapeHtml(c?.etaxPassword || '') + '" placeholder="パスワードを入力" style="flex:1;"><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordField(\'ed-etaxPassword\', this)" title="表示切替">👁</button></div>' : (c?.etaxPassword ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="pw-mask" data-pw="' + escapeHtml(c.etaxPassword) + '">••••••••</span><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordMask(this)" title="表示切替">👁</button></span>' : '-')}</div></div>
           <div class="detail-row"><div class="detail-label">eLTAX利用者ID</div><div class="detail-value">${editing ? inp('ed-eltaxId', c?.eltaxId, 'text', '例: LT001234') : val(c?.eltaxId)}</div></div>
           <div class="detail-row"><div class="detail-label">eLTAXパスワード</div><div class="detail-value">${editing ? '<div style="display:flex;align-items:center;gap:4px;"><input type="password" id="ed-eltaxPassword" class="inline-edit-input" value="' + escapeHtml(c?.eltaxPassword || '') + '" placeholder="パスワードを入力" style="flex:1;"><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordField(\'ed-eltaxPassword\', this)" title="表示切替">👁</button></div>' : (c?.eltaxPassword ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="pw-mask" data-pw="' + escapeHtml(c.eltaxPassword) + '">••••••••</span><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordMask(this)" title="表示切替">👁</button></span>' : '-')}</div></div>
+          <div class="detail-row"><div class="detail-label">日税パスワード</div><div class="detail-value">${editing ? '<div style="display:flex;align-items:center;gap:4px;"><input type="password" id="ed-nichizeiPassword" class="inline-edit-input" value="' + escapeHtml(c?.nichizeiPassword || '') + '" placeholder="パスワードを入力" style="flex:1;"><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordField(\'ed-nichizeiPassword\', this)" title="表示切替">👁</button></div>' : (c?.nichizeiPassword ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="pw-mask" data-pw="' + escapeHtml(c.nichizeiPassword) + '">••••••••</span><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordMask(this)" title="表示切替">👁</button></span>' : '-')}</div></div>
+          <div class="detail-row"><div class="detail-label">日税アクセスコード</div><div class="detail-value">${editing ? '<div style="display:flex;align-items:center;gap:4px;"><input type="password" id="ed-nichizeiAccessCode" class="inline-edit-input" value="' + escapeHtml(c?.nichizeiAccessCode || '') + '" placeholder="アクセスコードを入力" style="flex:1;"><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordField(\'ed-nichizeiAccessCode\', this)" title="表示切替">👁</button></div>' : (c?.nichizeiAccessCode ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="pw-mask" data-pw="' + escapeHtml(c.nichizeiAccessCode) + '">••••••••</span><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordMask(this)" title="表示切替">👁</button></span>' : '-')}</div></div>
           <div class="detail-row"><div class="detail-label">委任登録</div><div class="detail-value">${editing ? `<select id="ed-delegationStatus" class="inline-edit-input"><option value="登録済み" ${c?.delegationStatus === '登録済み' ? 'selected' : ''}>登録済み</option><option value="未登録" ${c?.delegationStatus === '未登録' || !c?.delegationStatus ? 'selected' : ''}>未登録</option></select>` : val(c?.delegationStatus)}</div></div>
           <div class="detail-row"><div class="detail-label">日税登録</div><div class="detail-value">${editing ? `<select id="ed-nichizeiRegistration" class="inline-edit-input"><option value="登録確認済" ${c?.nichizeiRegistration === '登録確認済' ? 'selected' : ''}>登録確認済</option><option value="要登録" ${c?.nichizeiRegistration === '要登録' || !c?.nichizeiRegistration ? 'selected' : ''}>要登録</option></select>` : val(c?.nichizeiRegistration)}</div></div>
 
@@ -402,6 +404,8 @@ function saveClientInline(id) {
   const mfBusinessNo = getValTrim('ed-mfBusinessNo');
   const delegationStatus = getVal('ed-delegationStatus', '');
   const nichizeiRegistration = getVal('ed-nichizeiRegistration', '');
+  const nichizeiPassword = getVal('ed-nichizeiPassword', '');
+  const nichizeiAccessCode = getVal('ed-nichizeiAccessCode', '');
   const displayCode = getValTrim('ed-displayCode');
   const capitalAmount = getValInt('ed-capitalAmount', 0) || null;
   const corporateNumber = getValTrim('ed-corporateNumber');
@@ -432,7 +436,7 @@ function saveClientInline(id) {
       isActive: true, mainUserId, subUserId, mgrUserId: mgrUserId || mainUserId,
       monthlySales, annualFee, spotFees: [], address, tel, industry, representative, taxOffice,
       memo: '', establishDate: '', cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
-      contractStatus, contractStartDate, contractEndDate, nichizeiCode, managementNo, etaxId, etaxPassword, eltaxId, eltaxPassword, directDebitStatus,
+      contractStatus, contractStartDate, contractEndDate, nichizeiCode, managementNo, etaxId, etaxPassword, eltaxId, eltaxPassword, nichizeiPassword, nichizeiAccessCode, directDebitStatus,
       email, cityName, cityUrl, dropboxPath, consumptionTaxFee, consumptionTaxFreq, paymentInfo,
       postalCode, consumptionTaxCategory, invoiceRegistered, monthlyBookkeepingFee,
       bookkeepingStartDate, bookkeepingEndDate, bookkeeperId, bookkeepingSubId,
@@ -466,7 +470,7 @@ function saveClientInline(id) {
       c.customFieldValues = customFieldValues;
       c.contractStatus = contractStatus; c.contractStartDate = contractStartDate; c.contractEndDate = contractEndDate;
       c.nichizeiCode = nichizeiCode; c.managementNo = managementNo;
-      c.etaxId = etaxId; c.etaxPassword = etaxPassword; c.eltaxId = eltaxId; c.eltaxPassword = eltaxPassword; c.directDebitStatus = directDebitStatus;
+      c.etaxId = etaxId; c.etaxPassword = etaxPassword; c.eltaxId = eltaxId; c.eltaxPassword = eltaxPassword; c.nichizeiPassword = nichizeiPassword; c.nichizeiAccessCode = nichizeiAccessCode; c.directDebitStatus = directDebitStatus;
       c.email = email; c.cityName = cityName; c.cityUrl = cityUrl;
       c.dropboxPath = dropboxPath; c.paymentInfo = paymentInfo;
       c.consumptionTaxFee = consumptionTaxFee; c.consumptionTaxFreq = consumptionTaxFreq;
