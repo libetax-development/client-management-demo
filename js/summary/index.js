@@ -12,13 +12,15 @@ function renderSummary(el) {
     staffClientCount[u.id] = { name: u.name, main: 0, sub: 0, total: 0 };
   });
   activeClients.forEach(c => {
-    if (c.mainUserId && staffClientCount[c.mainUserId]) {
-      staffClientCount[c.mainUserId].main++;
-      staffClientCount[c.mainUserId].total++;
+    const mainId = getAssigneeUserId(c.id, 'main');
+    const subId = getAssigneeUserId(c.id, 'sub');
+    if (mainId && staffClientCount[mainId]) {
+      staffClientCount[mainId].main++;
+      staffClientCount[mainId].total++;
     }
-    if (c.subUserId && staffClientCount[c.subUserId]) {
-      staffClientCount[c.subUserId].sub++;
-      staffClientCount[c.subUserId].total++;
+    if (subId && staffClientCount[subId]) {
+      staffClientCount[subId].sub++;
+      staffClientCount[subId].total++;
     }
   });
 

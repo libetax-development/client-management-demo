@@ -59,7 +59,7 @@ function renderProgress(el) {
                   const incomplete = s.targets.filter(t => Object.values(t.steps).some(v => v !== '完了')).length;
                   const myTargets = s.targets.filter(t => {
                     const c = getClientById(t.clientId);
-                    return c && c.mainUserId === MOCK_DATA.currentUser.id;
+                    return c && getAssigneeUserId(c.id, 'main') === MOCK_DATA.currentUser.id;
                   });
                   const myIncomplete = myTargets.filter(t => Object.values(t.steps).some(v => v !== '完了')).length;
                   return `<tr class="clickable" onclick="navigateTo('progress-detail',{id:'${s.id}'})">
@@ -193,8 +193,8 @@ function renderProgressDetail(el, params) {
     let targets = sheet.targets.filter(t => {
       const client = getClientById(t.clientId);
       if (!client) return false;
-      if (assigneeFilter && client.mainUserId !== assigneeFilter && client.subUserId !== assigneeFilter) return false;
-      if (mainOnly && client.mainUserId !== MOCK_DATA.currentUser.id) return false;
+      if (assigneeFilter && getAssigneeUserId(client.id, 'main') !== assigneeFilter && getAssigneeUserId(client.id, 'sub') !== assigneeFilter) return false;
+      if (mainOnly && getAssigneeUserId(client.id, 'main') !== MOCK_DATA.currentUser.id) return false;
       if (search && !client.name.toLowerCase().includes(search) && !client.clientCode.includes(search)) return false;
       if (incompleteOnly && Object.values(t.steps).every(v => v === '完了')) return false;
       if (pdStatusFilter === 'complete' && Object.values(t.steps).some(v => v !== '完了')) return false;
@@ -239,8 +239,8 @@ function renderProgressDetail(el, params) {
       ? renderEmptyRow(colCount)
       : targets.map(t => {
         const client = getClientById(t.clientId);
-        const main = getUserById(client?.mainUserId);
-        const sub = getUserById(client?.subUserId);
+        const main = client ? getAssigneeUser(client.id, 'main') : null;
+        const sub = client ? getAssigneeUser(client.id, 'sub') : null;
         // 報告書件数
         let reportCell = '';
         if (sheet.showReportLink) {

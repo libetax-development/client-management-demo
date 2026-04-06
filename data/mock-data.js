@@ -57,6 +57,11 @@ const MOCK_DATA = {
     { id: 'c-010', clientCode: '030459', name: 'NPO法人サポートネット', clientType: '法人', fiscalMonth: 3, isActive: true, mainUserId: 'u-006', subUserId: null, mgrUserId: 'u-009', monthlySales: 18000, annualFee: 0, spotFees: [], address: '兵庫県神戸市中央区三宮10-10-10', tel: '078-1234-5010', representative: '佐々木 みどり', establishDate: '2012-06-30', industry: 'NPO・福祉', taxOffice: '神戸税務署', memo: '', cwAccountId: '1234010', cwRoomUrls: [{url:'https://www.chatwork.com/#!rid300000008', name:'【リベ税】NPOサポートネット'}], relatedClientIds: [], postalCode: '650-0021', consumptionTaxCategory: '免税', invoiceRegistered: 'なし', monthlyBookkeepingFee: 8000, bookkeepingStartDate: '2025-01-01', bookkeepingEndDate: '', bookkeeperId: 'u-008', bookkeepingSubId: null, mfBusinessNo: 'MF-010234', delegationStatus: '登録済み', nichizeiRegistration: '要登録', displayCode: '010', capitalAmount: null, corporateNumber: '8901234567890', yearEndAdjustment: false, interimFiling: 'なし', filingType: '青色' },
   ],
 
+  // 担当者アサインメント（多対多・履歴管理）
+  // role: 'main' | 'sub' | 'reviewer' | 'bookkeeping_main' | 'bookkeeping_sub'
+  // endDate: null = 現在担当中
+  clientAssignments: [],
+
   tasks: [
     { id: 'tk-001', clientId: 'c-001', assigneeUserId: 'u-003', title: '法人税確定申告書作成', description: '株式会社サンプル商事の3月決算に伴う法人税確定申告書の作成', status: '進行中', dueDate: '2026-03-31', createdAt: '2026-02-15', completedAt: null, templateRunId: null, checklist: [
       { id: 'cl-001', text: '必要書類の確認', checked: true },

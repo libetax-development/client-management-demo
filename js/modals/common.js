@@ -7,7 +7,7 @@ var PG_FILTER_FIELDS = [
   { key: 'clientType', label: '種別', options: ['法人', '個人'] },
   { key: 'fiscalMonth', label: '決算月', options: Array.from({length: 12}, function(_, i) { return (i + 1) + '月'; }) },
   { key: 'isActive', label: 'ステータス', options: ['有効', '無効'] },
-  { key: 'mainUserId', label: '主担当者', options: 'users' },
+  { key: 'mainAssignee', label: '主担当者', options: 'users' },
 ];
 
 // 条件テキストを生成（例: 「種別：個人」AND「ステータス：有効」）
@@ -53,8 +53,8 @@ function pgMatchCondition(client, cond) {
     actual = client.fiscalMonth + '月';
   } else if (field === 'isActive') {
     actual = client.isActive ? '有効' : '無効';
-  } else if (field === 'mainUserId') {
-    actual = client.mainUserId;
+  } else if (field === 'mainAssignee') {
+    actual = getAssigneeUserId(client.id, 'main');
   } else {
     actual = client[field];
   }

@@ -123,7 +123,7 @@ function renderStaffDetail(el, params) {
   if (!u) { el.innerHTML = renderEmptyState('職員が見つかりません'); return; }
   document.getElementById('header-title').textContent = `職員詳細 - ${u.name}`;
   const displayKana = (u.lastNameKana || '') + (u.firstNameKana ? ' ' + u.firstNameKana : '');
-  const clients = MOCK_DATA.clients.filter(c => c.mainUserId === u.id || c.subUserId === u.id);
+  const clients = MOCK_DATA.clients.filter(c => getAssigneeUserId(c.id, 'main') === u.id || getAssigneeUserId(c.id, 'sub') === u.id);
 
   el.innerHTML = `
     <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('staff')">&larr; 職員一覧に戻る</a></div>
@@ -173,7 +173,7 @@ function renderStaffDetail(el, params) {
             <thead><tr><th>コード</th><th>顧客名</th><th>種別</th><th>決算月</th><th>担当区分</th><th>月額報酬</th></tr></thead>
             <tbody>
               ${clients.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400)">担当顧客なし</td></tr>' : clients.map(c => {
-                const role = c.mainUserId === u.id ? '主担当' : '副担当';
+                const role = getAssigneeUserId(c.id, 'main') === u.id ? '主担当' : '副担当';
                 return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">
                   <td>${c.clientCode}</td>
                   <td><strong>${c.name}</strong></td>

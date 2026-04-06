@@ -131,7 +131,7 @@ function getFilteredClients() {
         if (cs !== statusFilter) return false;
       }
     }
-    if (mainFilter && c.mainUserId !== mainFilter) return false;
+    if (mainFilter && getAssigneeUserId(c.id, 'main') !== mainFilter) return false;
     return true;
   });
 }
@@ -149,10 +149,10 @@ function renderClientTable() {
     name: c => `<td><strong>${c.name}</strong></td>`,
     type: c => `<td>${renderTypeBadge(c.clientType)}</td>`,
     fiscal: c => `<td>${c.fiscalMonth ? c.fiscalMonth + '月' : '-'}</td>`,
-    main: c => { const m = getUserById(c.mainUserId); return `<td>${m?.name || '-'}</td>`; },
-    sub: c => { const s = getUserById(c.subUserId); return `<td>${s?.name || '-'}</td>`; },
-    mgr: c => { const m = getUserById(c.mgrUserId); return `<td>${m?.name || '-'}</td>`; },
-    bookkeeper: c => { const b = getUserById(c.bookkeeperId); return `<td>${b?.name || '-'}</td>`; },
+    main: c => { const m = getAssigneeUser(c.id, 'main'); return `<td>${m?.name || '-'}</td>`; },
+    sub: c => { const m = getAssigneeUser(c.id, 'sub'); return `<td>${m?.name || '-'}</td>`; },
+    mgr: c => { const m = getAssigneeUser(c.id, 'reviewer'); return `<td>${m?.name || '-'}</td>`; },
+    bookkeeper: c => { const m = getAssigneeUser(c.id, 'bookkeeping_main'); return `<td>${m?.name || '-'}</td>`; },
     status: c => { const cs = c.contractStatus || '契約中'; return `<td>${renderContractStatusBadge(cs)}</td>`; },
   };
 

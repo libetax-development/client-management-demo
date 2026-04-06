@@ -52,6 +52,7 @@ function navigateTo(pageName, params = {}) {
 
 // ── 初期化 ──
 document.addEventListener('DOMContentLoaded', () => {
+  initClientAssignments();
   initSidebar();
   initNotificationBell();
 

@@ -143,7 +143,7 @@ function renderRewardData(month, viewType) {
     tbody.innerHTML = spotRows.length === 0
       ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);">該当月のSPOT報酬はありません</td></tr>'
       : spotRows.map(r => {
-        const main = getUserById(r.client.mainUserId);
+        const main = getAssigneeUser(r.client.id, 'main');
         return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${r.client.id}'})">
           <td><strong>${escapeHtml(r.client.name)}</strong></td>
           <td>${renderTypeBadge(r.client.clientType)}</td>
@@ -181,7 +181,7 @@ function exportRewardCSV() {
   MOCK_DATA.clients.filter(c => c.isActive).forEach(c => {
     (c.spotFees || []).forEach(sf => {
       if (sf.timing === month || sf.timing?.startsWith(month)) {
-        const main = getUserById(c.mainUserId);
+        const main = getAssigneeUser(c.id, 'main');
         rows.push([month, main?.name || '-', c.name, sf.description || 'SPOT', sf.amount || 0, 'SPOT']);
       }
     });

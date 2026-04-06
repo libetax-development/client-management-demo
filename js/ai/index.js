@@ -225,7 +225,7 @@ function generateAIDraft() {
 
 function generateMockDraft(client, template, notes) {
   const mention = client.cwAccountId ? `[To:${client.cwAccountId}]${client.name}様\n\n` : '';
-  const mainUser = getUserById(client.mainUserId);
+  const mainUser = getAssigneeUser(client.id, 'main');
   const senderName = mainUser ? mainUser.name : 'ひろ';
   const today = new Date();
   const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
@@ -461,7 +461,7 @@ function createSuggestedTask(sgId) {
   const newTask = {
     id: generateId('tk-', MOCK_DATA.tasks),
     clientId: sg.clientId,
-    assigneeUserId: client.mainUserId || 'u-003',
+    assigneeUserId: getAssigneeUserId(client.id, 'main') || 'u-003',
     title: sg.taskTitle,
     status: '未着手',
     dueDate: dueDateStr,

@@ -13,6 +13,8 @@ function openClientModal(clientId) {
   const staffOptions = buildUserOptions('staff');
   document.getElementById('new-client-main').innerHTML = staffOptions;
   document.getElementById('new-client-sub').innerHTML = '<option value="">なし</option>' + staffOptions;
+  document.getElementById('new-client-bookkeeper').innerHTML = '<option value="">なし</option>' + staffOptions;
+  document.getElementById('new-client-bookkeeping-sub').innerHTML = '<option value="">なし</option>' + staffOptions;
   document.getElementById('new-client-fiscal').innerHTML = Array.from({length: 12}, (_, i) =>
     `<option value="${i + 1}" ${i + 1 === 3 ? 'selected' : ''}>${i + 1}月</option>`
   ).join('');
@@ -45,7 +47,10 @@ function openClientModal(clientId) {
         'new-client-sales': c.monthlySales, 'new-client-address': c.address,
         'new-client-tel': c.tel, 'new-client-industry': c.industry,
         'new-client-representative': c.representative, 'new-client-taxoffice': c.taxOffice,
-        'new-client-main': c.mainUserId, 'new-client-sub': c.subUserId,
+        'new-client-main': getAssigneeUserId(c.id, 'main') || c.mainUserId,
+        'new-client-sub': getAssigneeUserId(c.id, 'sub') || c.subUserId,
+        'new-client-bookkeeper': getAssigneeUserId(c.id, 'bookkeeping_main') || c.bookkeeperId || '',
+        'new-client-bookkeeping-sub': getAssigneeUserId(c.id, 'bookkeeping_sub') || c.bookkeepingSubId || '',
         'new-client-fiscal': c.fiscalMonth || 3, 'new-client-cw-id': c.cwAccountId,
         'new-client-annual-fee': c.annualFee,
       });
@@ -75,6 +80,8 @@ function submitNewClient() {
   const fiscalMonth = getValInt('new-client-fiscal');
   const mainUserId = getVal('new-client-main');
   const subUserId = getVal('new-client-sub') || null;
+  const bookkeeperId = getVal('new-client-bookkeeper') || null;
+  const bookkeepingSubId = getVal('new-client-bookkeeping-sub') || null;
   const monthlySales = getValInt('new-client-sales');
   const address = getValTrim('new-client-address');
   const tel = getValTrim('new-client-tel');
@@ -97,8 +104,15 @@ function submitNewClient() {
     const c = getClientById(editingClientId);
     if (c) {
       Object.assign(c, { name, clientType, fiscalMonth, mainUserId, subUserId,
-        mgrUserId: mainUserId, monthlySales, annualFee, address, tel,
+        mgrUserId: mainUserId, bookkeeperId, bookkeepingSubId,
+        monthlySales, annualFee, address, tel,
         industry, representative, taxOffice, cwAccountId, customFieldValues });
+      // clientAssignments を同期
+      upsertAssignment(editingClientId, 'main', mainUserId);
+      upsertAssignment(editingClientId, 'sub', subUserId);
+      upsertAssignment(editingClientId, 'reviewer', mainUserId);
+      upsertAssignment(editingClientId, 'bookkeeping_main', bookkeeperId);
+      upsertAssignment(editingClientId, 'bookkeeping_sub', bookkeepingSubId);
     }
     closeClientModal();
     navigateTo('client-detail', { id: editingClientId });
@@ -110,10 +124,18 @@ function submitNewClient() {
     MOCK_DATA.clients.push({
       id: newId, clientCode: nextCode, name, clientType, fiscalMonth,
       isActive: true, mainUserId, subUserId, mgrUserId: mainUserId,
+      bookkeeperId, bookkeepingSubId,
       monthlySales, annualFee, spotFees: [], address, tel, industry,
       representative, taxOffice, memo: '', establishDate: '',
       cwAccountId, cwRoomUrls: [], relatedClientIds: [], customFieldValues,
     });
+
+    // clientAssignments に追加
+    upsertAssignment(newId, 'main', mainUserId);
+    if (subUserId) upsertAssignment(newId, 'sub', subUserId);
+    upsertAssignment(newId, 'reviewer', mainUserId);
+    if (bookkeeperId) upsertAssignment(newId, 'bookkeeping_main', bookkeeperId);
+    if (bookkeepingSubId) upsertAssignment(newId, 'bookkeeping_sub', bookkeepingSubId);
 
     closeClientModal();
     if (currentPage === 'clients') navigateTo('clients');

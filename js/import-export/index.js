@@ -162,7 +162,7 @@ function ieRunExport() {
     if (filter === 'active') data = data.filter(c => c.isActive);
     const header = ['コード', '顧客名', '種別', '決算月', '主担当', '月額報酬', '住所', '電話番号'];
     const rows = data.map(c => {
-      const main = getUserById(c.mainUserId);
+      const main = getAssigneeUser(c.id, 'main');
       return [c.clientCode, c.name, c.clientType, c.fiscalMonth + '月', main?.name || '', c.monthlySales, c.address, c.tel];
     });
     downloadCSV('clients_export.csv', header, rows);

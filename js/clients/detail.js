@@ -38,10 +38,10 @@ function renderClientDetail(el, params) {
 
   const tasks = c ? getTasksByClient(c.id) : [];
 
-  // 担当者情報（閲覧モード用）
-  const main = c ? getUserById(c.mainUserId) : null;
-  const sub = c ? getUserById(c.subUserId) : null;
-  const mgr = c ? getUserById(c.mgrUserId) : null;
+  // 担当者情報（閲覧モード用）— clientAssignments経由
+  const main = c ? getAssigneeUser(c.id, 'main') : null;
+  const sub = c ? getAssigneeUser(c.id, 'sub') : null;
+  const mgr = c ? getAssigneeUser(c.id, 'reviewer') : null;
 
   // SPOT報酬
   const spotFees = c ? (c.spotFees || []) : [];
@@ -208,8 +208,8 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">税理士</div><div class="detail-value">${editing ? inp('ed-mgr', '', 'select-staff') : val(mgr?.name)}</div></div>
           <div class="detail-row"><div class="detail-label">主担当</div><div class="detail-value">${editing ? inp('ed-main', '', 'select-staff') : val(main?.name)}</div></div>
           <div class="detail-row"><div class="detail-label">副担当</div><div class="detail-value">${editing ? inp('ed-sub', '', 'select-staff') : val(sub?.name)}</div></div>
-          <div class="detail-row"><div class="detail-label">記帳担当者</div><div class="detail-value">${editing ? inp('ed-bookkeeper', '', 'select-staff') : val(c ? getUserById(c.bookkeeperId)?.name : null)}</div></div>
-          <div class="detail-row"><div class="detail-label">記帳責任者補佐</div><div class="detail-value">${editing ? inp('ed-bookkeepingSub', '', 'select-staff') : val(c ? getUserById(c.bookkeepingSubId)?.name : null)}</div></div>
+          <div class="detail-row"><div class="detail-label">記帳担当者</div><div class="detail-value">${editing ? inp('ed-bookkeeper', '', 'select-staff') : val(c ? getAssigneeUser(c.id, 'bookkeeping_main')?.name : null)}</div></div>
+          <div class="detail-row"><div class="detail-label">記帳責任者補佐</div><div class="detail-value">${editing ? inp('ed-bookkeepingSub', '', 'select-staff') : val(c ? getAssigneeUser(c.id, 'bookkeeping_sub')?.name : null)}</div></div>
         </div>
 
         <div id="ctab-tax" style="display:none;">
@@ -439,6 +439,12 @@ function saveClientInline(id) {
       mfBusinessNo, delegationStatus, nichizeiRegistration,
       displayCode, capitalAmount, corporateNumber, filingType, yearEndAdjustment, interimFiling,
     });
+    // アサインメント登録（多対多）
+    upsertAssignment(newId, 'main', mainUserId);
+    upsertAssignment(newId, 'sub', subUserId);
+    upsertAssignment(newId, 'reviewer', mgrUserId || mainUserId);
+    upsertAssignment(newId, 'bookkeeping_main', bookkeeperId);
+    upsertAssignment(newId, 'bookkeeping_sub', bookkeepingSubId);
     clientEditMode = false;
     navigateTo('client-detail', { id: newId });
   } else {
@@ -447,6 +453,12 @@ function saveClientInline(id) {
       if (clientCode) c.clientCode = clientCode;
       c.name = name; c.clientType = clientType; c.fiscalMonth = fiscalMonth;
       c.mgrUserId = mgrUserId || mainUserId; c.mainUserId = mainUserId; c.subUserId = subUserId;
+      // アサインメント更新（多対多）
+      upsertAssignment(c.id, 'main', mainUserId);
+      upsertAssignment(c.id, 'sub', subUserId);
+      upsertAssignment(c.id, 'reviewer', mgrUserId || mainUserId);
+      upsertAssignment(c.id, 'bookkeeping_main', bookkeeperId);
+      upsertAssignment(c.id, 'bookkeeping_sub', bookkeepingSubId);
       c.monthlySales = monthlySales; c.annualFee = annualFee;
       c.address = address; c.tel = tel;
       c.industry = industry; c.representative = representative; c.taxOffice = taxOffice;

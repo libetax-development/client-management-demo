@@ -2,6 +2,88 @@
 // ユーティリティ関数
 // ===========================
 
+// --- 担当者アサインメント（多対多）ヘルパー ---
+// フラットフィールド → clientAssignments配列を初期化
+function initClientAssignments() {
+  if (MOCK_DATA.clientAssignments.length > 0) return;
+  var idx = 0;
+  var roleMap = [
+    { flat: 'mainUserId', role: 'main' },
+    { flat: 'subUserId', role: 'sub' },
+    { flat: 'mgrUserId', role: 'reviewer' },
+    { flat: 'bookkeeperId', role: 'bookkeeping_main' },
+    { flat: 'bookkeepingSubId', role: 'bookkeeping_sub' },
+  ];
+  MOCK_DATA.clients.forEach(function(c) {
+    roleMap.forEach(function(rm) {
+      if (c[rm.flat]) {
+        idx++;
+        MOCK_DATA.clientAssignments.push({
+          id: 'ca-' + String(idx).padStart(3, '0'),
+          clientId: c.id,
+          userId: c[rm.flat],
+          role: rm.role,
+          startDate: c.contractStartDate || '2024-04-01',
+          endDate: null,
+        });
+      }
+    });
+  });
+}
+
+// 指定クライアント・ロールの現在の担当者ユーザーIDを取得
+function getAssigneeUserId(clientId, role) {
+  var a = MOCK_DATA.clientAssignments.find(function(x) {
+    return x.clientId === clientId && x.role === role && !x.endDate;
+  });
+  return a ? a.userId : null;
+}
+
+// 指定クライアント・ロールの現在の担当者ユーザーオブジェクトを取得
+function getAssigneeUser(clientId, role) {
+  var uid = getAssigneeUserId(clientId, role);
+  return uid ? getUserById(uid) : null;
+}
+
+// 指定クライアントの全現在担当者を取得
+function getClientAssignments(clientId) {
+  return MOCK_DATA.clientAssignments.filter(function(x) {
+    return x.clientId === clientId && !x.endDate;
+  });
+}
+
+// 担当者を変更（旧担当クローズ→新担当追加）
+function upsertAssignment(clientId, role, newUserId) {
+  var today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  // 旧担当をクローズ
+  MOCK_DATA.clientAssignments.forEach(function(a) {
+    if (a.clientId === clientId && a.role === role && !a.endDate) {
+      a.endDate = today;
+    }
+  });
+  // 新担当を追加
+  if (newUserId) {
+    var maxId = MOCK_DATA.clientAssignments.reduce(function(m, a) {
+      var n = parseInt(a.id.replace('ca-', ''));
+      return n > m ? n : m;
+    }, 0);
+    MOCK_DATA.clientAssignments.push({
+      id: 'ca-' + String(maxId + 1).padStart(3, '0'),
+      clientId: clientId,
+      userId: newUserId,
+      role: role,
+      startDate: today,
+      endDate: null,
+    });
+  }
+  // フラットフィールドも同期（後方互換）
+  var c = getClientById(clientId);
+  if (c) {
+    var flatMap = { main: 'mainUserId', sub: 'subUserId', reviewer: 'mgrUserId', bookkeeping_main: 'bookkeeperId', bookkeeping_sub: 'bookkeepingSubId' };
+    if (flatMap[role]) c[flatMap[role]] = newUserId || null;
+  }
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;

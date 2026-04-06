@@ -237,7 +237,7 @@ function pgFilterClients() {
     if (activeOnly && !c.isActive) return false;
     if (fiscal && c.fiscalMonth !== parseInt(fiscal)) return false;
     if (cType && c.clientType !== cType) return false;
-    if (mainUser && c.mainUserId !== mainUser) return false;
+    if (mainUser && getAssigneeUserId(c.id, 'main') !== mainUser) return false;
     return true;
   });
 
@@ -246,7 +246,7 @@ function pgFilterClients() {
     container.innerHTML = '<div style="font-size:12px;color:var(--gray-400);padding:8px;">該当する顧客がありません</div>';
   } else {
     container.innerHTML = clients.map(function(c) {
-      var main = getUserById(c.mainUserId);
+      var main = getAssigneeUser(c.id, 'main');
       return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">' +
         '<input type="checkbox" class="pg-client-cb" value="' + c.id + '">' +
         '<span>' + escapeHtml(c.name) + '</span>' +
@@ -365,7 +365,7 @@ window.pgCreateTargetModeChanged = function(mode) {
     var activeClients = MOCK_DATA.clients.filter(function(c) { return c.isActive; });
     document.getElementById('pg-create-auto-count').textContent = 'アクティブな全顧客: ' + activeClients.length + '件が対象になります';
     document.getElementById('pg-create-auto-list').innerHTML = activeClients.map(function(c) {
-      var main = getUserById(c.mainUserId);
+      var main = getAssigneeUser(c.id, 'main');
       return '<div style="padding:3px 6px;font-size:12px;display:flex;align-items:center;gap:8px;">' +
         '<span style="color:var(--gray-500);font-size:11px;min-width:60px;">' + escapeHtml(c.clientCode) + '</span>' +
         '<span>' + escapeHtml(c.name) + '</span>' +
@@ -401,7 +401,7 @@ function pgRenderCreateFilterPreview() {
   document.getElementById('pg-create-auto-list').innerHTML = matched.length === 0
     ? '<div style="font-size:12px;color:var(--gray-400);padding:4px;">該当する顧客がありません</div>'
     : matched.map(function(c) {
-        var main = getUserById(c.mainUserId);
+        var main = getAssigneeUser(c.id, 'main');
         return '<div style="padding:3px 6px;font-size:12px;display:flex;align-items:center;gap:8px;">' +
           '<span style="color:var(--gray-500);font-size:11px;min-width:60px;">' + escapeHtml(c.clientCode) + '</span>' +
           '<span>' + escapeHtml(c.name) + '</span>' +

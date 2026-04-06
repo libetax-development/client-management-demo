@@ -11,8 +11,8 @@ function exportClientCSV() {
   const header = ['管理コード', '顧客名', '種別', '決算月', '郵便番号', '住所', '電話番号', 'メールアドレス', '代表者名', '業種', '管轄税務署', '月額報酬', '年1申告報酬', '契約ステータス', '消費税申告区分', 'インボイス登録', '月額記帳代行報酬', '記帳代行契約開始日', '記帳代行契約終了日', 'MF事業者番号', '委任登録', '日税登録', '引落口座カナ', '主担当コード', '副担当コード', 'CWアカウントID', ...cfHeaders];
   const rows = clients.map(c => {
     const cfv = c.customFieldValues || {};
-    const mainUser = getUserById(c.mainUserId);
-    const subUser = getUserById(c.subUserId);
+    const mainUser = getAssigneeUser(c.id, 'main');
+    const subUser = getAssigneeUser(c.id, 'sub');
     return [c.clientCode, c.name, c.clientType, c.fiscalMonth, c.postalCode || '', c.address || '', c.tel || '', c.email || '', c.representative || '', c.industry || '', c.taxOffice || '', c.monthlySales || 0, c.annualFee || 0, c.contractStatus || '', c.consumptionTaxCategory || '', c.invoiceRegistered || '', c.monthlyBookkeepingFee || 0, c.bookkeepingStartDate || '', c.bookkeepingEndDate || '', c.mfBusinessNo || '', c.delegationStatus || '', c.nichizeiRegistration || '', c.debitAccountKana || '', mainUser?.staffCode || '', subUser?.staffCode || '', c.cwAccountId || '', ...cfIds.map(id => cfv[id] || '')];
   });
 
@@ -103,8 +103,8 @@ function importClientCSV() {
       if (obj.delegationStatus !== undefined) existing.delegationStatus = obj.delegationStatus;
       if (obj.nichizeiRegistration !== undefined) existing.nichizeiRegistration = obj.nichizeiRegistration;
       if (obj.debitAccountKana !== undefined) existing.debitAccountKana = obj.debitAccountKana;
-      if (mainUser) existing.mainUserId = mainUser.id;
-      if (subUser) existing.subUserId = subUser.id;
+      if (mainUser) { existing.mainUserId = mainUser.id; upsertAssignment(existing.id, 'main', mainUser.id); }
+      if (subUser) { existing.subUserId = subUser.id; upsertAssignment(existing.id, 'sub', subUser.id); }
       if (!existing.customFieldValues) existing.customFieldValues = {};
       customFields.forEach(cf => {
         if (obj[cf.name] !== undefined && obj[cf.name] !== '') existing.customFieldValues[cf.id] = obj[cf.name];
@@ -133,6 +133,11 @@ function importClientCSV() {
         mfBusinessNo: obj.mfBusinessNo || '', delegationStatus: obj.delegationStatus || '',
         nichizeiRegistration: obj.nichizeiRegistration || '',
       });
+      // clientAssignmentsにも追加
+      const _mainId = mainUser?.id || MOCK_DATA.users[1]?.id || 'u-002';
+      upsertAssignment(newId, 'main', _mainId);
+      if (subUser?.id) upsertAssignment(newId, 'sub', subUser.id);
+      upsertAssignment(newId, 'reviewer', _mainId);
       return 'imported';
     }
   }, () => { if (currentPage === 'clients') navigateTo('clients'); });

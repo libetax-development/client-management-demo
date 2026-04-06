@@ -47,7 +47,7 @@ window.pgTargetModeChanged = function(mode, sheetId) {
     var activeClients = MOCK_DATA.clients.filter(function(c) { return c.isActive; });
     document.getElementById('pg-all-count').textContent = 'アクティブな全顧客: ' + activeClients.length + '件';
     document.getElementById('pg-all-list').innerHTML = activeClients.map(function(c) {
-      var main = getUserById(c.mainUserId);
+      var main = getAssigneeUser(c.id, 'main');
       return '<div style="padding:4px 6px;font-size:13px;display:flex;align-items:center;gap:8px;">' +
         '<span style="color:var(--gray-500);font-size:11px;min-width:60px;">' + escapeHtml(c.clientCode) + '</span>' +
         '<span>' + escapeHtml(c.name) + '</span>' +
@@ -81,7 +81,7 @@ function pgRenderFilterPreview() {
   document.getElementById('pg-filter-match-list').innerHTML = matched.length === 0
     ? '<div style="font-size:12px;color:var(--gray-400);padding:4px;">該当する顧客がありません</div>'
     : matched.map(function(c) {
-        var main = getUserById(c.mainUserId);
+        var main = getAssigneeUser(c.id, 'main');
         return '<div style="padding:4px 6px;font-size:13px;display:flex;align-items:center;gap:8px;">' +
           '<span style="color:var(--gray-500);font-size:11px;min-width:60px;">' + escapeHtml(c.clientCode) + '</span>' +
           '<span>' + escapeHtml(c.name) + '</span>' +

@@ -192,7 +192,7 @@ function submitTemplateRun() {
 
     MOCK_DATA.tasks.push({
       id: generateId('tk-', MOCK_DATA.tasks),
-      clientId, assigneeUserId: client?.mainUserId || MOCK_DATA.currentUser.id,
+      clientId, assigneeUserId: (client ? getAssigneeUserId(client.id, 'main') : null) || MOCK_DATA.currentUser.id,
       title: d.title, description: '', status: '未着手', dueDate: dueDateStr,
       createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }),
       completedAt: null, templateRunId: tmplId,
