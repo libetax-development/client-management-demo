@@ -4,7 +4,6 @@
 
 let editingClientId = null;
 
-function openClientEditModal(clientId) { openClientModal(clientId); }
 
 function openClientModal(clientId) {
   editingClientId = clientId || null;

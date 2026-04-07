@@ -470,7 +470,7 @@ const MOCK_DATA = {
 function getUserById(id) { return MOCK_DATA.users.find(u => u.id === id); }
 function getClientById(id) { return MOCK_DATA.clients.find(c => c.id === id); }
 function getTasksByClient(clientId) { return MOCK_DATA.tasks.filter(t => t.clientId === clientId); }
-function getTasksByAssignee(userId) { return MOCK_DATA.tasks.filter(t => t.assigneeUserId === userId); }
+
 function getActiveClients() { return MOCK_DATA.clients.filter(c => c.isActive); }
 function getActiveUsers() { return MOCK_DATA.users.filter(u => u.isActive); }
 
