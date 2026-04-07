@@ -257,9 +257,9 @@ function renderProgressDetail(el, params) {
         }
         return `<tr>
           <td class="pg-fixed pg-col-code" style="font-size:11px;color:var(--gray-500);">${client?.clientCode || '-'}</td>
-          <td class="pg-fixed pg-col-name"><strong style="font-size:12px;">${client?.name || '-'}</strong></td>
-          <td class="pg-fixed pg-col-main" style="font-size:12px;">${main?.name || '-'}</td>
-          <td class="pg-fixed pg-col-sub" style="font-size:12px;">${sub?.name || '-'}</td>
+          <td class="pg-fixed pg-col-name"><strong style="font-size:12px;">${escapeHtml(client?.name || '-')}</strong></td>
+          <td class="pg-fixed pg-col-main" style="font-size:12px;">${escapeHtml(main?.name || '-')}</td>
+          <td class="pg-fixed pg-col-sub" style="font-size:12px;">${escapeHtml(sub?.name || '-')}</td>
           ${sheet.columns.map(c => {
             const val = t.steps[c] || '未着手';
             const doneDate = t.completedDates && t.completedDates[c] ? t.completedDates[c] : '';

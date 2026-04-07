@@ -246,12 +246,12 @@ function buildUserOptions(filter) {
   let users = getActiveUsers();
   if (filter === 'staff') users = users.filter(u => u.role !== 'admin');
   if (filter === 'leaders') users = users.filter(u => u.role === 'admin' || u.role === 'team_leader');
-  return users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+  return users.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('');
 }
 
 function buildClientOptions(activeOnly) {
   const clients = activeOnly ? getActiveClients() : MOCK_DATA.clients;
-  return clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  return clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
 }
 
 // フォーム値取得ヘルパー

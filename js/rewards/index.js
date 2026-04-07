@@ -92,8 +92,8 @@ function renderRewardData(month, viewType) {
     tbody.innerHTML = Object.entries(grouped).map(([uid, data]) => {
       const user = getUserById(uid);
       return `<tr>
-        <td><strong>${user?.name || '-'}</strong></td>
-        <td>${user?.staffFlag || '-'}</td>
+        <td><strong>${escapeHtml(user?.name || '-')}</strong></td>
+        <td>${escapeHtml(user?.staffFlag || '-')}</td>
         <td>${user?.baseRatio != null ? user.baseRatio + '%' : '-'}</td>
         <td>${data.clients.size}社</td>
         <td><strong>${data.total.toLocaleString()}円</strong></td>
@@ -114,8 +114,8 @@ function renderRewardData(month, viewType) {
       rws.forEach((r, i) => {
         const user = getUserById(r.userId);
         rows += `<tr>
-          ${i === 0 ? `<td rowspan="${rws.length}"><strong>${client?.name || '-'}</strong></td><td rowspan="${rws.length}"><span class="type-badge ${client?.clientType === '法人' ? 'type-corp' : 'type-individual'}">${client?.clientType}</span></td><td rowspan="${rws.length}">${client?.monthlySales?.toLocaleString() || '-'}円</td>` : ''}
-          <td>${user?.name || '-'}</td>
+          ${i === 0 ? `<td rowspan="${rws.length}"><strong>${escapeHtml(client?.name || '-')}</strong></td><td rowspan="${rws.length}"><span class="type-badge ${client?.clientType === '法人' ? 'type-corp' : 'type-individual'}">${escapeHtml(client?.clientType || '-')}</span></td><td rowspan="${rws.length}">${client?.monthlySales?.toLocaleString() || '-'}円</td>` : ''}
+          <td>${escapeHtml(user?.name || '-')}</td>
           <td>${r.amount.toLocaleString()}円</td>
         </tr>`;
       });

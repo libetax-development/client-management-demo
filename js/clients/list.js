@@ -111,8 +111,8 @@ function renderClients(el) {
 // 契約ステータスのグループ定義
 const CONTRACT_STATUS_GROUPS = {
   '契約中': ['契約中', '契約完了', '契約書手続中', 'スポット依頼'],
-  '検討中': ['見込み', '相談中', '見積提出済'],
-  '終了・休止': ['解約済み', '休止', '契約終了'],
+  '検討中': ['見込み', '顧問契約検討中', 'チャット作成済', 'Zoom', '初回メール送信済', 'コンタクト送信済'],
+  '終了・休止': ['契約解除', '休止中', '失注'],
 };
 
 function getFilteredClients() {
@@ -148,13 +148,13 @@ function renderClientTable() {
 
   const colMap = {
     code: c => `<td style="font-family:monospace;font-size:12px;">${c.clientCode}</td>`,
-    name: c => `<td><strong>${c.name}</strong></td>`,
+    name: c => `<td><strong>${escapeHtml(c.name)}</strong></td>`,
     type: c => `<td>${renderTypeBadge(c.clientType)}</td>`,
     fiscal: c => `<td>${c.fiscalMonth ? c.fiscalMonth + '月' : '-'}</td>`,
-    main: c => { const m = getAssigneeUser(c.id, 'main'); return `<td>${m?.name || '-'}</td>`; },
-    sub: c => { const m = getAssigneeUser(c.id, 'sub'); return `<td>${m?.name || '-'}</td>`; },
-    mgr: c => { const m = getAssigneeUser(c.id, 'reviewer'); return `<td>${m?.name || '-'}</td>`; },
-    bookkeeper: c => { const m = getAssigneeUser(c.id, 'bookkeeping_main'); return `<td>${m?.name || '-'}</td>`; },
+    main: c => { const m = getAssigneeUser(c.id, 'main'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
+    sub: c => { const m = getAssigneeUser(c.id, 'sub'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
+    mgr: c => { const m = getAssigneeUser(c.id, 'reviewer'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
+    bookkeeper: c => { const m = getAssigneeUser(c.id, 'bookkeeping_main'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
     status: c => { const cs = c.contractStatus || '契約中'; return `<td>${renderContractStatusBadge(cs)}</td>`; },
   };
 

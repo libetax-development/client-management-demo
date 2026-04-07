@@ -79,7 +79,7 @@ function renderStaffTable() {
     return `
     <tr class="clickable" onclick="navigateTo('staff-detail',{id:'${u.id}'})">
       <td style="font-family:monospace;font-size:12px;">${u.staffCode || '-'}</td>
-      <td><strong>${displayName || u.name}</strong></td>
+      <td><strong>${escapeHtml(displayName || u.name)}</strong></td>
       <td>${u.email || '-'}</td>
       <td>${u.cwAccountId || '-'}</td>
       <td>${u.position || '-'}</td>
@@ -133,7 +133,7 @@ function renderStaffDetail(el, params) {
         <div class="card-body">
           ${u.photoUrl ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(u.photoUrl)}" alt="${escapeHtml(u.name)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--gray-200);"></div>` : ''}
           <div class="detail-row"><div class="detail-label">職員コード</div><div class="detail-value">${u.staffCode || '-'}</div></div>
-          <div class="detail-row"><div class="detail-label">氏名</div><div class="detail-value">${u.name}</div></div>
+          <div class="detail-row"><div class="detail-label">氏名</div><div class="detail-value">${escapeHtml(u.name)}</div></div>
           <div class="detail-row"><div class="detail-label">フリガナ</div><div class="detail-value">${displayKana || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">メール</div><div class="detail-value">${u.email || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">電話番号</div><div class="detail-value">${u.tel || '-'}</div></div>

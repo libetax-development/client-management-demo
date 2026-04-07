@@ -23,8 +23,8 @@ function renderClientDetail(el, params) {
     document.getElementById('header-title').textContent = editing ? `顧客編集 - ${c.name}` : `顧客詳細 - ${c.name}`;
   }
 
-  // ヘルパー: 閲覧モードの値表示
-  const val = (v, fallback) => v || `<span style="color:var(--gray-400)">${fallback || '-'}</span>`;
+  // ヘルパー: 閲覧モードの値表示（XSSエスケープ付き）
+  const val = (v, fallback) => v ? escapeHtml(String(v)) : `<span style="color:var(--gray-400)">${escapeHtml(fallback || '-')}</span>`;
   // ヘルパー: インライン入力
   const inp = (id, v, type, placeholder) => {
     if (type === 'select-staff') return `<select id="${id}" class="inline-edit-input">${'<option value="">なし</option>' + staffOptions}</select>`;
@@ -57,7 +57,7 @@ function renderClientDetail(el, params) {
   const spotFeesViewHtml = spotFees.length === 0
     ? '<span style="color:var(--gray-400)">なし</span>'
     : `<table class="spot-fee-table"><thead><tr><th>タイミング</th><th>金額</th><th>内容</th></tr></thead><tbody>${spotFees.map(sf =>
-        `<tr><td>${sf.timing}</td><td>${(sf.amount || 0).toLocaleString()}円</td><td>${sf.description || ''}</td></tr>`
+        `<tr><td>${escapeHtml(sf.timing || '')}</td><td>${(sf.amount || 0).toLocaleString()}円</td><td>${escapeHtml(sf.description || '')}</td></tr>`
       ).join('')}</tbody></table>`;
 
   // SPOT報酬編集HTML
@@ -65,7 +65,7 @@ function renderClientDetail(el, params) {
     <div id="spot-fees-edit-area">
       ${spotFees.map((sf, i) =>
         `<div class="spot-fee-edit-item" data-index="${i}" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;">
-          <span>${sf.timing}</span> <span>${(sf.amount || 0).toLocaleString()}円</span> <span>${sf.description || ''}</span>
+          <span>${escapeHtml(sf.timing || '')}</span> <span>${(sf.amount || 0).toLocaleString()}円</span> <span>${escapeHtml(sf.description || '')}</span>
           <button class="spot-fee-del" onclick="removeSpotFee(${i},'${c?.id || ''}')">&times;</button>
         </div>`
       ).join('')}
@@ -80,16 +80,17 @@ function renderClientDetail(el, params) {
   // CWルームURL ビューHTML
   const cwRoomUrlsViewHtml = cwRoomUrls.length === 0
     ? '<span style="color:var(--gray-400)">なし</span>'
-    : `<div class="cw-room-list">${cwRoomUrls.map(r =>
-        `<div class="cw-room-item"><a href="${r.url}" target="_blank">${r.name || r.url}</a></div>`
-      ).join('')}</div>`;
+    : `<div class="cw-room-list">${cwRoomUrls.map(r => {
+        const safeUrl = r.url && /^https?:\/\//.test(r.url) ? escapeHtml(r.url) : '#';
+        return `<div class="cw-room-item"><a href="${safeUrl}" target="_blank">${escapeHtml(r.name || r.url || '')}</a></div>`;
+      }).join('')}</div>`;
 
   // CWルームURL 編集HTML
   const cwRoomUrlsEditHtml = `
     <div id="cw-room-urls-edit-area">
       ${cwRoomUrls.map((r, i) =>
         `<div class="cw-room-item" data-index="${i}">
-          <span style="font-size:12px;">${r.name || r.url}</span>
+          <span style="font-size:12px;">${escapeHtml(r.name || r.url || '')}</span>
           <button class="cw-room-del" onclick="removeCwRoomUrl(${i},'${c?.id || ''}')">&times;</button>
         </div>`
       ).join('')}
@@ -106,7 +107,7 @@ function renderClientDetail(el, params) {
     : relatedClientIds.map(rid => {
         const rc = getClientById(rid);
         if (!rc) return '';
-        return `<div class="related-client-item"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${rc.id}'})">${rc.name}</a> ${renderTypeBadge(rc.clientType)}</div>`;
+        return `<div class="related-client-item"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${rc.id}'})">${escapeHtml(rc.name)}</a> ${renderTypeBadge(rc.clientType)}</div>`;
       }).join('');
 
   // 関連顧客編集HTML
@@ -116,7 +117,7 @@ function renderClientDetail(el, params) {
         const rc = getClientById(rid);
         if (!rc) return '';
         return `<div class="related-client-item">
-          <span style="font-size:12px;">${rc.name} (${rc.clientType})</span>
+          <span style="font-size:12px;">${escapeHtml(rc.name)} (${escapeHtml(rc.clientType)})</span>
           <button class="related-client-del" onclick="removeRelatedClient('${c?.id || ''}','${rid}')">&times;</button>
         </div>`;
       }).join('')}
@@ -124,7 +125,7 @@ function renderClientDetail(el, params) {
         <div class="related-client-add-row">
           <select id="add-related-client-select">
             <option value="">顧客を選択...</option>
-            ${otherClients.map(oc => `<option value="${oc.id}">${oc.name} (${oc.clientType})</option>`).join('')}
+            ${otherClients.map(oc => `<option value="${oc.id}">${escapeHtml(oc.name)} (${escapeHtml(oc.clientType)})</option>`).join('')}
           </select>
           <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="addRelatedClient('${c?.id || ''}')">追加</button>
         </div>
@@ -250,7 +251,7 @@ function renderClientDetail(el, params) {
           <div class="detail-section-title">Chatwork連携</div>
           <div class="detail-row"><div class="detail-label">CWURL</div><div class="detail-value">${editing ? inp('ed-cwid', c?.cwAccountId, 'text', '例: https://www.chatwork.com/#!rid123456') : val(c?.cwAccountId, '未設定')}</div></div>
         ${!editing ? `
-          <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + c.cwAccountId + ']' + c.name + 'さん</code>' : val('', '-')}</div></div>
+          <div class="detail-row"><div class="detail-label">メンション</div><div class="detail-value">${c.cwAccountId ? '<code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;font-size:12px;">[To:' + escapeHtml(c.cwAccountId) + ']' + escapeHtml(c.name) + 'さん</code>' : val('', '-')}</div></div>
         ` : ''}
         <div class="detail-row"><div class="detail-label">CWルームURL</div><div class="detail-value">${editing ? cwRoomUrlsEditHtml : cwRoomUrlsViewHtml}</div></div>
 
