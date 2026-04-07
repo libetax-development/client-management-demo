@@ -387,14 +387,16 @@ function bulkStatusUpdate(sheetId) {
   const map = { '1': '未着手', '2': '進行中', '3': '完了' };
   const target = map[status];
   if (!target) return;
-  const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const now = new Date();
+  const parts = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).split('-');
+  const todayMD = `${parseInt(parts[1])}/${parseInt(parts[2])}`;
   sheet.targets.forEach(t => {
     if (!t.completedDates) t.completedDates = {};
     sheet.columns.forEach(c => {
       if (t.steps[c] !== '完了') {
         t.steps[c] = target;
         if (target === '完了') {
-          t.completedDates[c] = todayStr;
+          t.completedDates[c] = todayMD;
         } else {
           delete t.completedDates[c];
         }
