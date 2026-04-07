@@ -491,6 +491,6 @@ function getRoleBadge(role) {
 
 function formatDate(iso) {
   if (!iso) return '-';
-  const d = new Date(iso);
-  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  const d = new Date(iso + 'T00:00:00+09:00');
+  return `${d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(/-/g, '/')}`;
 }

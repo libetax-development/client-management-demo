@@ -292,7 +292,7 @@ function runAISuggestions() {
 function generateAISuggestions() {
   const suggestions = [];
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = today.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 
   getActiveClients().forEach(client => {
     const fiscalMonth = client.fiscalMonth;
@@ -396,7 +396,7 @@ function renderAISuggestionResults() {
   if (!summaryDiv || !listDiv) return;
 
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = today.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   const overdueTasks = MOCK_DATA.tasks.filter(t => t.status !== '完了' && t.dueDate < todayStr).length;
   const currentMonth = today.getMonth() + 1;
   const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
@@ -456,7 +456,7 @@ function createSuggestedTask(sgId) {
 
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 14);
-  const dueDateStr = dueDate.toISOString().slice(0, 10);
+  const dueDateStr = dueDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 
   const newTask = {
     id: generateId('tk-', MOCK_DATA.tasks),
@@ -465,7 +465,7 @@ function createSuggestedTask(sgId) {
     title: sg.taskTitle,
     status: '未着手',
     dueDate: dueDateStr,
-    createdAt: new Date().toISOString().slice(0, 10),
+    createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }),
   };
 
   MOCK_DATA.tasks.push(newTask);

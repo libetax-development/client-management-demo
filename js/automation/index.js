@@ -114,7 +114,7 @@ function renderAutomation(el) {
   const rules = MOCK_DATA.automationRules;
   const logs = MOCK_DATA.automationLog;
   const enabledCount = rules.filter(r => r.enabled).length;
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonth = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).slice(0, 7);
   const monthlyRuns = logs.filter(l => l.timestamp && l.timestamp.slice(0, 7) === thisMonth).length;
   const lastRun = logs.length > 0 ? formatDateTime(logs[0].timestamp) : '-';
 

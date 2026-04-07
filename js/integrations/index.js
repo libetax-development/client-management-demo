@@ -49,7 +49,7 @@ function toggleIntegration(key) {
     delete st.date;
     st.lastSync = null;
   } else {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
     st.connected = true;
     st.lastSync = new Date().toISOString();
     if (key === 'chatwork') { st.account = 'リベ大税理士法人'; st.webhookUrl = ''; st.roomId = ''; }
