@@ -91,7 +91,7 @@ function upsertAssignment(clientId, role, newUserId) {
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function formatAIText(text) {
