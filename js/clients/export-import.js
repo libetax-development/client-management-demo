@@ -109,7 +109,7 @@ function importClientCSV() {
       if (obj.capitalAmount !== undefined) existing.capitalAmount = obj.capitalAmount ? parseInt(obj.capitalAmount) : null;
       if (obj.corporateNumber !== undefined) existing.corporateNumber = obj.corporateNumber;
       if (obj.yearEndAdjustment !== undefined) existing.yearEndAdjustment = obj.yearEndAdjustment === 'あり' || obj.yearEndAdjustment === 'true';
-      if (obj.interimFiling !== undefined) existing.interimFiling = obj.interimFiling === 'あり' || obj.interimFiling === 'true';
+      if (obj.interimFiling !== undefined) existing.interimFiling = obj.interimFiling || 'なし';
       if (obj.filingType !== undefined) existing.filingType = obj.filingType;
       if (mainUser) { existing.mainUserId = mainUser.id; upsertAssignment(existing.id, 'main', mainUser.id); }
       if (subUser) { existing.subUserId = subUser.id; upsertAssignment(existing.id, 'sub', subUser.id); }
@@ -143,7 +143,7 @@ function importClientCSV() {
         displayCode: obj.displayCode || '', capitalAmount: obj.capitalAmount ? parseInt(obj.capitalAmount) : null,
         corporateNumber: obj.corporateNumber || '',
         yearEndAdjustment: obj.yearEndAdjustment === 'あり' || obj.yearEndAdjustment === 'true',
-        interimFiling: obj.interimFiling === 'あり' || obj.interimFiling === 'true',
+        interimFiling: obj.interimFiling || 'なし',
         filingType: obj.filingType || '',
       });
       // clientAssignmentsにも追加

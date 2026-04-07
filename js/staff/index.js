@@ -241,7 +241,14 @@ function importStaffCSV() {
       return 'updated';
     } else {
       const newId = generateId('u-', MOCK_DATA.users);
-      const code = obj.staffCode || 'A' + String(MOCK_DATA.users.length + 1).padStart(3, '0');
+      let maxStaffNum = 0;
+      MOCK_DATA.users.forEach(function(u) {
+        if (u.staffCode && u.staffCode.startsWith('A')) {
+          var n = parseInt(u.staffCode.slice(1), 10);
+          if (n > maxStaffNum) maxStaffNum = n;
+        }
+      });
+      const code = obj.staffCode || 'A' + String(maxStaffNum + 1).padStart(3, '0');
       const lastName = obj.lastName || '名称未設定';
       const firstName = obj.firstName || '';
       const name = obj.name || (firstName ? lastName + ' ' + firstName : lastName);
