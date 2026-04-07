@@ -492,6 +492,7 @@ function getRoleBadge(role) {
 
 function formatDate(iso) {
   if (!iso) return '-';
-  const d = new Date(iso + 'T00:00:00+09:00');
-  return `${d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(/-/g, '/')}`;
+  const d = /T/.test(iso) ? new Date(iso) : new Date(iso + 'T00:00:00+09:00');
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(/-/g, '/');
 }
