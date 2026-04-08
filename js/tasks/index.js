@@ -77,8 +77,8 @@ function renderTaskTable() {
     const assignee = getUserById(t.assigneeUserId);
     return `<tr class="clickable" onclick="navigateTo('task-detail',{id:'${t.id}'})">
       <td><strong>${escapeHtml(t.title)}</strong></td>
-      <td>${client?.name || '-'}</td>
-      <td>${assignee?.name || '-'}</td>
+      <td>${escapeHtml(client?.name || '-')}</td>
+      <td>${escapeHtml(assignee?.name || '-')}</td>
       <td onclick="event.stopPropagation()">${renderTaskStatusSelect(t)}</td>
       <td>${formatDate(t.dueDate)}</td>
     </tr>`;
@@ -156,8 +156,8 @@ function renderTaskDetail(el, params) {
         <div class="card-body">
           <div class="detail-row"><div class="detail-label">タスク名</div><div class="detail-value">${escapeHtml(t.title)}</div></div>
           ${t.description ? `<div class="detail-row"><div class="detail-label">説明</div><div class="detail-value">${escapeHtml(t.description)}</div></div>` : ''}
-          <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${t.clientId}'})">${client?.name || '-'}</a></div></div>
-          <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${assignee?.name || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${t.clientId}'})">${escapeHtml(client?.name || '-')}</a></div></div>
+          <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${escapeHtml(assignee?.name || '-')}</div></div>
           <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${renderStatusBadge(t.status)}</div></div>
           <div class="detail-row"><div class="detail-label">期限</div><div class="detail-value">${formatDate(t.dueDate)}</div></div>
           <div class="detail-row"><div class="detail-label">作成日</div><div class="detail-value">${formatDate(t.createdAt)}</div></div>
@@ -253,7 +253,7 @@ function renderTaskComments(taskId) {
   container.innerHTML = comments.map(c => {
     const author = getUserById(c.authorId);
     return `<div class="info-box" style="margin-bottom:8px;">
-      <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px;">${author?.name || '-'} - ${formatDate(c.createdAt)}</div>
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:4px;">${escapeHtml(author?.name || '-')} - ${formatDate(c.createdAt)}</div>
       <div style="font-size:13px;">${escapeHtml(c.body)}</div>
     </div>`;
   }).join('');
@@ -375,7 +375,7 @@ function renderTaskFiles(taskId) {
     const uploader = getUserById(f.uploadedBy);
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
       <a href="${escapeHtml(f.fileUrl)}" target="_blank" style="flex:1;font-size:13px;">${escapeHtml(f.fileName)}</a>
-      <span style="font-size:11px;color:var(--gray-400);">${uploader?.name || '-'} ${formatDate(f.createdAt)}</span>
+      <span style="font-size:11px;color:var(--gray-400);">${escapeHtml(uploader?.name || '-')} ${formatDate(f.createdAt)}</span>
       <button class="btn-icon" onclick="removeTaskFile('${f.id}','${taskId}')" title="削除" style="font-size:14px;color:var(--gray-400);">&times;</button>
     </div>`;
   }).join('');

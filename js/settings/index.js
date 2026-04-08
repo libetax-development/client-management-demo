@@ -175,10 +175,10 @@ function renderSettings(el) {
         <div class="card-header"><h3>オフィス情報</h3></div>
         <div class="card-body">
           <div id="office-flash"></div>
-          <div class="form-group"><label>事務所名</label><input type="text" id="set-ao-name" value="${office.aoName}" style="${inputStyle}width:100%;"></div>
-          <div class="form-group"><label>住所</label><input type="text" id="set-ao-address" value="${office.address}" style="${inputStyle}width:100%;"></div>
-          <div class="form-group"><label>電話番号</label><input type="text" id="set-ao-tel" value="${office.tel}" style="${inputStyle}width:100%;"></div>
-          <div class="form-group"><label>メール</label><input type="email" id="set-ao-email" value="${office.email}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>事務所名</label><input type="text" id="set-ao-name" value="${escapeHtml(office.aoName)}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>住所</label><input type="text" id="set-ao-address" value="${escapeHtml(office.address)}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>電話番号</label><input type="text" id="set-ao-tel" value="${escapeHtml(office.tel)}" style="${inputStyle}width:100%;"></div>
+          <div class="form-group"><label>メール</label><input type="email" id="set-ao-email" value="${escapeHtml(office.email)}" style="${inputStyle}width:100%;"></div>
           <button class="btn btn-primary" onclick="saveOfficeInfo()">保存</button>
         </div>
       </div>
@@ -193,7 +193,7 @@ function renderSettings(el) {
               <thead><tr><th>部署コード</th><th>部署名</th><th>表示順</th><th>状態</th><th>操作</th></tr></thead>
               <tbody>
                 ${depts.map(d => `<tr>
-                  <td>${d.deptCode}</td><td>${d.deptName}</td><td>${d.sortOrder}</td>
+                  <td>${escapeHtml(d.deptCode)}</td><td>${escapeHtml(d.deptName)}</td><td>${d.sortOrder}</td>
                   <td><span class="status-badge ${d.status === 1 ? 'status-done' : 'status-todo'}">${d.status === 1 ? '有効' : '無効'}</span></td>
                   <td>
                     <button class="btn btn-secondary btn-sm" onclick="editDepartment(${d.deptId})">編集</button>
@@ -213,7 +213,7 @@ function renderSettings(el) {
           <div id="security-flash"></div>
           <div class="form-group">
             <label>IPアドレス制限</label>
-            <textarea id="set-sec-ip" rows="3" placeholder="許可するIPアドレス（改行区切り、空欄＝制限なし）" style="${inputStyle}width:100%;height:auto;">${sec.allowedIpList}</textarea>
+            <textarea id="set-sec-ip" rows="3" placeholder="許可するIPアドレス（改行区切り、空欄＝制限なし）" style="${inputStyle}width:100%;height:auto;">${escapeHtml(sec.allowedIpList)}</textarea>
           </div>
           <div class="form-group">
             <label>ログイン試行上限（回）</label>

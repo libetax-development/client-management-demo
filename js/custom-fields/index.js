@@ -27,7 +27,7 @@ function renderCustomFieldList() {
     : fields.map(cf => `
       <div class="cf-row" draggable="true" data-cf-id="${cf.id}">
         <span class="cf-handle">&#9776;</span>
-        <span class="cf-name" id="cf-name-display-${cf.id}">${cf.name}</span>
+        <span class="cf-name" id="cf-name-display-${cf.id}">${escapeHtml(cf.name)}</span>
         <span class="cf-type">${typeLabels[cf.type] || cf.type}</span>
         <div class="cf-actions">
           <button class="btn btn-secondary btn-sm" onclick="editCustomFieldName('${cf.id}')">編集</button>

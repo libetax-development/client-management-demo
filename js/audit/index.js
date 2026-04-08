@@ -66,7 +66,7 @@ function renderAuditTable() {
     const user = getUserById(l.userId);
     return `<tr>
       <td>${formatDateTime(l.createdAt)}</td>
-      <td>${user?.name || '-'}</td>
+      <td>${escapeHtml(user?.name || '-')}</td>
       <td>${getAuditEventLabel(l.eventType)}</td>
       <td>${l.tableName || '-'}</td>
       <td style="font-family:monospace;font-size:12px;">${l.recordId || '-'}</td>

@@ -70,7 +70,7 @@ function renderDashboard(el) {
                     ${todayTasks.map(t => {
                       const client = getClientById(t.clientId);
                       return `<tr class="clickable" onclick="navigateTo('task-detail',{id:'${t.id}'})">
-                        <td>${client?.name || '-'}</td>
+                        <td>${escapeHtml(client?.name || '-')}</td>
                         <td><strong>${escapeHtml(t.title)}</strong></td>
                         <td>${renderStatusBadge(t.status)}</td>
                       </tr>`;

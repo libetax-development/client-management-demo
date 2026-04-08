@@ -304,9 +304,9 @@ function filterByField(items, fieldName, value) {
 // debounceヘルパー
 function debounce(fn, delay) {
   let timer;
-  return function() {
+  return function(...args) {
     clearTimeout(timer);
-    timer = setTimeout(fn, delay);
+    timer = setTimeout(() => fn.apply(this, args), delay);
   };
 }
 

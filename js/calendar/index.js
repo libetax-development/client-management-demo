@@ -121,12 +121,12 @@ function renderCalendar(el) {
 
       dayTasks.forEach(t => {
         const client = getClientById(t.clientId);
-        allItems.push({ html: `<div class="cal-event ${getStatusClass(t.status)}" title="${client?.name}: ${t.title}" onclick="event.stopPropagation();navigateTo('task-detail',{id:'${t.id}'})" style="cursor:pointer;">${client?.name?.slice(0, 6) || ''} ${t.title.slice(0, 8)}</div>` });
+        allItems.push({ html: `<div class="cal-event ${getStatusClass(t.status)}" title="${escapeHtml((client?.name || '') + ': ' + t.title)}" onclick="event.stopPropagation();navigateTo('task-detail',{id:'${t.id}'})" style="cursor:pointer;">${escapeHtml(client?.name?.slice(0, 6) || '')} ${escapeHtml(t.title.slice(0, 8))}</div>` });
       });
       dayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
         const timeStr = e.time ? e.time + ' ' : '';
-        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${timeStr}${e.title.slice(0, 10)}</div>` });
+        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${escapeHtml(e.title + (e.location ? ' (' + e.location + ')' : ''))}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${escapeHtml(timeStr + e.title.slice(0, 10))}</div>` });
       });
 
       const isHolidayDay = !!holidayName;
@@ -192,11 +192,11 @@ function renderCalendar(el) {
       const items = [];
       dayTasks.forEach(t => {
         const client = getClientById(t.clientId);
-        items.push(`<div class="cal-event ${getStatusClass(t.status)}" style="font-size:10px;margin:1px 0;" title="${client?.name}: ${t.title}">${t.title.slice(0, 10)}</div>`);
+        items.push(`<div class="cal-event ${getStatusClass(t.status)}" style="font-size:10px;margin:1px 0;" title="${escapeHtml((client?.name || '') + ': ' + t.title)}">${escapeHtml(t.title.slice(0, 10))}</div>`);
       });
       alldayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
-        items.push(`<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;" title="${e.title}">${e.title.slice(0, 10)}</div>`);
+        items.push(`<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;" title="${escapeHtml(e.title)}">${escapeHtml(e.title.slice(0, 10))}</div>`);
       });
       html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;min-width:100px;">${items.join('')}</td>`;
     });
@@ -216,7 +216,7 @@ function renderCalendar(el) {
         const items = hourEvents.map(e => {
           const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
           const timeRange = formatTimeRange(e.time, e.duration);
-          return `<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;cursor:pointer;" title="${e.title}${e.location ? ' (' + e.location + ')' : ''}">${timeRange} ${e.title.slice(0, 10)}</div>`;
+          return `<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;cursor:pointer;" title="${escapeHtml(e.title + (e.location ? ' (' + e.location + ')' : ''))}">${escapeHtml(timeRange + ' ' + e.title.slice(0, 10))}</div>`;
         });
         html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;height:36px;">${items.join('')}</td>`;
       });
@@ -253,11 +253,11 @@ function renderCalendar(el) {
       html += '<tr><td style="padding:8px;border:1px solid var(--gray-200);background:var(--gray-50);width:80px;font-weight:500;text-align:center;">終日</td><td style="padding:8px;border:1px solid var(--gray-200);vertical-align:top;">';
       dayTasks.forEach(t => {
         const client = getClientById(t.clientId);
-        html += `<div class="cal-event ${getStatusClass(t.status)}" style="margin:2px 0;" title="${client?.name}: ${t.title}">${t.title}</div>`;
+        html += `<div class="cal-event ${getStatusClass(t.status)}" style="margin:2px 0;" title="${escapeHtml((client?.name || '') + ': ' + t.title)}">${escapeHtml(t.title)}</div>`;
       });
       alldayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
-        html += `<div class="cal-event ${typeClass}" style="margin:2px 0;" title="${e.title}">${e.title}</div>`;
+        html += `<div class="cal-event ${typeClass}" style="margin:2px 0;" title="${escapeHtml(e.title)}">${escapeHtml(e.title)}</div>`;
       });
       html += '</td></tr>';
     }
@@ -278,9 +278,9 @@ function renderCalendar(el) {
         const user = e.userId ? getUserById(e.userId) : null;
         const client = e.clientId ? getClientById(e.clientId) : null;
         const timeRange = formatTimeRange(e.time, e.duration);
-        const meta = [user?.name, client?.name, e.location].filter(Boolean).join(' / ');
+        const meta = [user?.name, client?.name, e.location].filter(Boolean).map(s => escapeHtml(s)).join(' / ');
         html += `<div class="cal-event ${typeClass}" style="margin:2px 0;padding:4px 8px;">
-          <div style="font-weight:500;">${timeRange} ${e.title}</div>
+          <div style="font-weight:500;">${escapeHtml(timeRange + ' ' + e.title)}</div>
           ${meta ? `<div style="font-size:11px;opacity:0.8;">${meta}</div>` : ''}
         </div>`;
       });
@@ -328,8 +328,8 @@ function renderCalendar(el) {
         return `<div class="list-item-row">
           <span class="cal-event-type-badge cal-event-${e.type}" style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">${typeLabel}</span>
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;">${e.time ? e.time + ' ' : ''}${e.title}</div>
-            <div style="font-size:11px;color:var(--gray-400);">${[user?.name, client?.name, e.location].filter(Boolean).join(' / ')}</div>
+            <div style="font-size:13px;font-weight:500;">${escapeHtml((e.time ? e.time + ' ' : '') + e.title)}</div>
+            <div style="font-size:11px;color:var(--gray-400);">${[user?.name, client?.name, e.location].filter(Boolean).map(s => escapeHtml(s)).join(' / ')}</div>
           </div>
         </div>`;
       }).join('');
@@ -344,8 +344,8 @@ function renderCalendar(el) {
         return `<div class="list-item-row" style="cursor:pointer;" onclick="navigateTo('task-detail',{id:'${t.id}'})">
           ${renderStatusBadge(t.status)}
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;">${t.title}</div>
-            <div style="font-size:11px;color:var(--gray-400);">${client?.name || '-'} / ${assignee?.name || '-'}</div>
+            <div style="font-size:13px;font-weight:500;">${escapeHtml(t.title)}</div>
+            <div style="font-size:11px;color:var(--gray-400);">${escapeHtml(client?.name || '-')} / ${escapeHtml(assignee?.name || '-')}</div>
           </div>
         </div>`;
       }).join('');
@@ -457,7 +457,7 @@ function showCalEventDetail(eventId) {
       <div class="detail-row"><div class="detail-label">日付</div><div class="detail-value">${formatDate(e.date)}</div></div>
       <div class="detail-row"><div class="detail-label">時間</div><div class="detail-value">${e.time || '終日'}</div></div>
       <div class="detail-row"><div class="detail-label">所要時間</div><div class="detail-value">${dur}</div></div>
-      <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${user?.name || '-'}</div></div>
+      <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${escapeHtml(user?.name || '-')}</div></div>
       ${client ? `<div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${client.id}'})">${escapeHtml(client.name)}</a></div></div>` : ''}
       <div class="detail-row"><div class="detail-label">場所</div><div class="detail-value">${e.location ? escapeHtml(e.location) : '-'}</div></div>
     </div>

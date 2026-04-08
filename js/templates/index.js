@@ -43,7 +43,7 @@ function renderTemplateTable() {
       <td><strong>${escapeHtml(t.name)}</strong></td>
       <td>${escapeHtml(t.category)}</td>
       <td>${defs.length}件</td>
-      <td>${creator?.name || '-'}</td>
+      <td>${escapeHtml(creator?.name || '-')}</td>
       <td>${t.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</td>
     </tr>`;
   }, 5);
@@ -76,7 +76,7 @@ function renderTemplateDetail(el, params) {
           <div class="detail-row"><div class="detail-label">名前</div><div class="detail-value">${escapeHtml(tmpl.name)}</div></div>
           <div class="detail-row"><div class="detail-label">説明</div><div class="detail-value">${escapeHtml(tmpl.description || '-')}</div></div>
           <div class="detail-row"><div class="detail-label">カテゴリ</div><div class="detail-value">${escapeHtml(tmpl.category)}</div></div>
-          <div class="detail-row"><div class="detail-label">作成者</div><div class="detail-value">${creator?.name || '-'}</div></div>
+          <div class="detail-row"><div class="detail-label">作成者</div><div class="detail-value">${escapeHtml(creator?.name || '-')}</div></div>
           <div class="detail-row"><div class="detail-label">状態</div><div class="detail-value">${tmpl.isActive ? '<span style="color:var(--success)">有効</span>' : '<span style="color:var(--gray-400)">無効</span>'}</div></div>
           <div class="detail-row"><div class="detail-label">作成日</div><div class="detail-value">${formatDate(tmpl.createdAt)}</div></div>
         </div>
@@ -104,7 +104,7 @@ function renderTemplateDetail(el, params) {
               `<table style="width:100%;"><thead><tr><th>実行日</th><th>対象顧客</th><th>生成タスク数</th></tr></thead><tbody>
               ${runs.map(r => {
                 const client = getClientById(r.clientId);
-                return `<tr><td>${formatDate(r.runAt)}</td><td>${client?.name || '-'}</td><td>${r.createdTaskCount || 0}件</td></tr>`;
+                return `<tr><td>${formatDate(r.runAt)}</td><td>${escapeHtml(client?.name || '-')}</td><td>${r.createdTaskCount || 0}件</td></tr>`;
               }).join('')}
               </tbody></table>`
             }

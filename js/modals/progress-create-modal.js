@@ -235,7 +235,7 @@ function pgFilterClients() {
 
   var clients = MOCK_DATA.clients.filter(function(c) {
     if (activeOnly && !c.isActive) return false;
-    if (fiscal && c.fiscalMonth !== parseInt(fiscal)) return false;
+    if (fiscal && String(c.fiscalMonth) !== fiscal) return false;
     if (cType && c.clientType !== cType) return false;
     if (mainUser && getAssigneeUserId(c.id, 'main') !== mainUser) return false;
     return true;
@@ -250,7 +250,7 @@ function pgFilterClients() {
       return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">' +
         '<input type="checkbox" class="pg-client-cb" value="' + c.id + '">' +
         '<span>' + escapeHtml(c.name) + '</span>' +
-        '<span style="font-size:11px;color:var(--gray-400);margin-left:auto;">' + escapeHtml(c.clientType) + ' / ' + c.fiscalMonth + '月決算' + (main ? ' / ' + escapeHtml(main.name) : '') + '</span>' +
+        '<span style="font-size:11px;color:var(--gray-400);margin-left:auto;">' + escapeHtml(c.clientType) + ' / ' + (c.fiscalMonth === 'personal' ? '個人' : c.fiscalMonth + '月決算') + (main ? ' / ' + escapeHtml(main.name) : '') + '</span>' +
         '</label>';
     }).join('');
   }

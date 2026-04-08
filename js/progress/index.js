@@ -291,10 +291,7 @@ function renderProgressDetail(el, params) {
     draw();
   };
 
-  document.getElementById('pd-assignee-filter').addEventListener('change', draw);
-  document.getElementById('pd-main-only').addEventListener('change', draw);
-  document.getElementById('pd-search').addEventListener('input', draw);
-  document.getElementById('pd-incomplete-only').addEventListener('change', draw);
+  bindFilters(['pd-assignee-filter', 'pd-main-only', 'pd-search', 'pd-incomplete-only'], draw);
   draw();
 }
 

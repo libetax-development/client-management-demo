@@ -113,6 +113,8 @@ window.pgRemoveSheetColumn = function(sheetId, idx) {
     if (t.completedDates) delete t.completedDates[colName];
   });
   pgRenderColumnsList(sheetId);
+  pgSettingsRenderCandidates();
+  pgSettingsRenderDisplay(s.columns);
 };
 
 // 工程の追加（設定変更モーダル 直接入力）

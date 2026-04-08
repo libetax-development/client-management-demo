@@ -130,9 +130,9 @@ function renderTimesheet(el) {
       const client = getClientById(e.clientId);
       return `<tr>
         <td>${formatDate(e.date)}</td>
-        <td>${user?.name || '-'}</td>
-        <td>${client?.name || '-'}</td>
-        <td>${e.description}</td>
+        <td>${escapeHtml(user?.name || '-')}</td>
+        <td>${escapeHtml(client?.name || '-')}</td>
+        <td>${escapeHtml(e.description)}</td>
         <td><strong>${e.hours.toFixed(1)}h</strong></td>
         <td>
           <button class="btn btn-secondary btn-sm" onclick="editTimeEntry('${e.id}')" style="font-size:11px;">編集</button>
