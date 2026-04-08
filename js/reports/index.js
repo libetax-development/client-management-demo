@@ -4,6 +4,10 @@
 let rpPage = 1;
 const rpPerPage = 20;
 let rpInitialClient = '';
+let rpReadFilter = 'all';
+let rpTypeFilter = 'all';
+let rpExpandedSet = new Set();
+let rpSearchState = { category: '', author: '', period: '1年以内', dateFrom: '', dateTo: '', ranks: [], attachOnly: false, draftOnly: false, keyword: '', client: '' };
 
 function navigateToReportsWithClient(clientName) {
   rpInitialClient = clientName;

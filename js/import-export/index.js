@@ -108,7 +108,7 @@ function renderImportExport(el) {
 // ドライラン
 // ===========================
 function ieRunDryRun() {
-  const target = document.getElementById('ie-export-target')?.value || 'clients';
+  const target = document.getElementById('ie-import-target')?.value || 'clients';
   const fileInput = document.getElementById('ie-import-file');
   const resultDiv = document.getElementById('ie-import-result');
 
@@ -121,7 +121,7 @@ function ieRunDryRun() {
     <div class="alert alert-info">
       <strong>ドライラン結果（モック）</strong><br>
       対象: ${document.getElementById('ie-import-target')?.value || 'clients'}<br>
-      ファイル: ${fileInput.files[0].name}<br>
+      ファイル: ${escapeHtml(fileInput.files[0].name)}<br>
       行数: 推定10行<br>
       新規: 8件 / 更新: 2件 / エラー: 0件<br>
       <span style="font-size:12px;color:var(--gray-500);">※ モックのため実際の解析は行いません</span>
@@ -198,7 +198,7 @@ function ieRunExport() {
 // ===========================
 function ieDownloadTemplate(type) {
   if (type === 'clients') {
-    downloadCSV('template_clients.csv', ['顧客名', '種別', '決算月', '主担当ID', '住所', '電話番号', '月額報酬'], [['株式会社サンプル', '法人', '3', 'u-003', '東京都千代田区1-1-1', '03-0000-0000', '50000']]);
+    downloadCSV('template_clients.csv', ['顧客名', '種別', '決算月', '主担当コード', '住所', '電話番号', '月額報酬'], [['株式会社サンプル', '法人', '3', 'A003', '東京都千代田区1-1-1', '03-0000-0000', '50000']]);
   } else if (type === 'tasks') {
     downloadCSV('template_tasks.csv', ['顧客ID', 'タスク名', '担当者ID', '期限', 'ステータス'], [['c-001', '月次記帳チェック', 'u-003', '2026-04-15', '未着手']]);
   } else if (type === 'users') {

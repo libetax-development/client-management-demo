@@ -175,7 +175,7 @@ function renderStaffDetail(el, params) {
               ${clients.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400)">担当顧客なし</td></tr>' : clients.map(c => {
                 const role = getAssigneeUserId(c.id, 'main') === u.id ? '主担当' : '副担当';
                 return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${c.id}'})">
-                  <td>${c.clientCode}</td>
+                  <td>${escapeHtml(c.clientCode)}</td>
                   <td><strong>${escapeHtml(c.name)}</strong></td>
                   <td>${renderTypeBadge(c.clientType)}</td>
                   <td>${c.fiscalMonth}月</td>

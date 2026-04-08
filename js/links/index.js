@@ -62,7 +62,7 @@ function renderLinkGroups(links) {
             <thead><tr><th>タイトル</th><th>説明</th><th>操作</th></tr></thead>
             <tbody>
               ${items.map(l => `<tr>
-                <td><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.title)}</a></td>
+                <td><a href="${escapeHtml(sanitizeUrl(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.title)}</a></td>
                 <td style="font-size:12px;color:var(--gray-500);">${escapeHtml(l.description || '')}</td>
                 <td><button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="removeExternalLink('${l.id}')">削除</button></td>
               </tr>`).join('')}

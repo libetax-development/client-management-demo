@@ -46,7 +46,7 @@ function renderArchiveList() {
           <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100);">
             <div style="flex:1;">
               <div style="font-size:14px;font-weight:500;margin-bottom:4px;">
-                <a href="${escapeHtml(a.url)}" target="_blank">${escapeHtml(a.title)}</a>
+                <a href="${escapeHtml(sanitizeUrl(a.url))}" target="_blank">${escapeHtml(a.title)}</a>
               </div>
               ${a.description ? `<div style="font-size:12px;color:var(--gray-500);">${escapeHtml(a.description)}</div>` : ''}
               <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">${formatDate(a.createdAt)}</div>

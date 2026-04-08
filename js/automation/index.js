@@ -26,10 +26,10 @@ function runAutomationRule(ruleId) {
   const rule = MOCK_DATA.automationRules.find(r => r.id === ruleId);
   if (!rule) return;
   const targetCount = Math.floor(Math.random() * 8) + 1;
-  rule.lastRun = new Date().toISOString();
+  rule.lastRun = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' });
   // Add to log
   const newLog = {
-    id: 'al-' + String(MOCK_DATA.automationLog.length + 1).padStart(3, '0'),
+    id: generateId('al-', MOCK_DATA.automationLog),
     timestamp: rule.lastRun,
     ruleId: rule.id,
     ruleName: rule.name,
@@ -165,11 +165,11 @@ function renderAutomation(el) {
                     <span class="toggle-slider"></span>
                   </label>
                 </td>
-                <td style="font-weight:500;">${r.name}</td>
+                <td style="font-weight:500;">${escapeHtml(r.name)}</td>
                 <td>${getAutoTypeBadge(r.type)}</td>
-                <td style="font-size:12px;color:var(--gray-600);">${r.trigger}</td>
-                <td style="font-size:12px;color:var(--gray-600);">${r.action}</td>
-                <td style="font-size:12px;color:var(--gray-600);">${r.target}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${escapeHtml(r.trigger)}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${escapeHtml(r.action)}</td>
+                <td style="font-size:12px;color:var(--gray-600);">${escapeHtml(r.target)}</td>
                 <td style="font-size:12px;color:var(--gray-400);">${r.lastRun ? formatDateTime(r.lastRun) : '-'}</td>
                 <td>
                   <button class="btn btn-secondary btn-sm" onclick="editAutomationRule('${r.id}')" style="font-size:11px;">編集</button>
@@ -202,7 +202,7 @@ function renderAutomation(el) {
             ${logs.slice(0, 10).map(l => `
               <tr>
                 <td style="font-size:12px;">${formatDateTime(l.timestamp)}</td>
-                <td style="font-weight:500;">${l.ruleName}</td>
+                <td style="font-weight:500;">${escapeHtml(l.ruleName)}</td>
                 <td><span class="status-badge status-done">${l.result}</span></td>
                 <td style="font-size:13px;">${l.targetCount}件</td>
               </tr>

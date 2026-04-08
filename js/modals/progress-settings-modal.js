@@ -153,7 +153,7 @@ function pgRenderTargetsList(sheetId) {
           if (!c) return '';
           return `<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;font-size:13px;">
             <input type="checkbox" class="pg-target-chk" value="${t.clientId}">
-            <span style="color:var(--gray-500);min-width:60px;font-size:12px;">${c.clientCode}</span>
+            <span style="color:var(--gray-500);min-width:60px;font-size:12px;">${escapeHtml(c.clientCode)}</span>
             <span>${escapeHtml(c.name)}</span>
           </label>`;
         }).join('')}
@@ -169,7 +169,7 @@ function pgRenderTargetsList(sheetId) {
     sel.innerHTML = '<option value="">-- 追加できる顧客がありません --</option>';
   } else {
     sel.innerHTML = '<option value="">-- 顧客を選択 --</option>' +
-      available.map(c => `<option value="${c.id}">[${c.clientCode}] ${escapeHtml(c.name)}</option>`).join('');
+      available.map(c => `<option value="${c.id}">[${escapeHtml(c.clientCode)}] ${escapeHtml(c.name)}</option>`).join('');
   }
 }
 

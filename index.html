@@ -1139,6 +1139,119 @@
   </div>
 </div>
 
+<!-- チャットルーム作成/編集モーダル -->
+<div class="modal-overlay" id="chatroom-create-modal">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header">
+      <h3 id="chatroom-modal-title">チャットルーム登録</h3>
+      <button class="btn-icon" onclick="closeChatRoomModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-chatroom-id">
+      <div class="form-group">
+        <label>ルーム名 *</label>
+        <input type="text" id="new-cr-name" placeholder="例: 【顧問】〇〇株式会社">
+      </div>
+      <div class="form-group">
+        <label>ルームID *</label>
+        <input type="text" id="new-cr-roomid" placeholder="例: 123456789">
+      </div>
+      <div class="form-group">
+        <label>URL</label>
+        <input type="text" id="new-cr-url" placeholder="例: https://www.chatwork.com/#!rid123456789">
+      </div>
+      <div class="form-group">
+        <label>メモ</label>
+        <textarea id="new-cr-memo" rows="2" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;resize:vertical;" placeholder="備考・メモ"></textarea>
+      </div>
+      <div class="form-group">
+        <label>顧客紐づけ</label>
+        <div id="cr-client-checkboxes" style="max-height:200px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="cr-delete-btn" style="margin-right:auto;display:none;" onclick="deleteChatRoom()">削除</button>
+      <button class="btn btn-secondary" onclick="closeChatRoomModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitChatRoom()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 自動化ルール作成/編集モーダル -->
+<div class="modal-overlay" id="automation-create-modal">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header">
+      <h3>自動化ルール追加</h3>
+      <button class="btn-icon" onclick="closeAutomationModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>ルール名 *</label>
+        <input type="text" id="new-auto-name" placeholder="例: 月次タスクリマインド">
+      </div>
+      <div class="form-group">
+        <label>種別</label>
+        <select id="new-auto-type">
+          <option value="reminder">リマインド</option>
+          <option value="auto_create">自動生成</option>
+          <option value="cleanup">クリーンアップ</option>
+          <option value="escalation">エスカレーション</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>トリガー *</label>
+        <input type="text" id="new-auto-trigger" placeholder="例: 毎月1日 9:00">
+      </div>
+      <div class="form-group">
+        <label>アクション *</label>
+        <input type="text" id="new-auto-action" placeholder="例: CW通知を送信">
+      </div>
+      <div class="form-group">
+        <label>対象</label>
+        <input type="text" id="new-auto-target" placeholder="例: 全顧問先">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAutomationModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitNewAutomationRule()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ビュー作成/編集モーダル -->
+<div class="modal-overlay" id="view-create-modal">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header">
+      <h3 id="view-modal-title">ビューを作成</h3>
+      <button class="btn-icon" onclick="hideModal('view-create-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="view-edit-id">
+      <div class="form-group">
+        <label>ビュー名 *</label>
+        <input type="text" id="view-name" placeholder="例: 3月決算 法人のみ">
+      </div>
+      <div class="form-group">
+        <label>説明</label>
+        <input type="text" id="view-desc" placeholder="このビューの用途（任意）">
+      </div>
+      <div class="form-group">
+        <label>公開範囲 *</label>
+        <select id="view-visibility">
+          <option value="private">非公開（自分のみ）</option>
+          <option value="team">チーム共有</option>
+          <option value="public">全体公開</option>
+        </select>
+      </div>
+      <p style="font-size:12px;color:var(--gray-400);margin-top:8px;">フィルタ・カラム・ソートの詳細設定は本番環境で利用できます</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('view-create-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitView()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- CSV取り込み用の非表示input -->
 <input type="file" id="csv-import-input" accept=".csv" style="display:none">
 

@@ -265,9 +265,9 @@ function renderClientDetail(el, params) {
           </div>
           ${customFields.map(cf => {
             if (editing) {
-              return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${buildCustomFieldInput(cf, cfValues[cf.id], 'inline-edit-input')}</div></div>`;
+              return `<div class="detail-row"><div class="detail-label">${escapeHtml(cf.name)}</div><div class="detail-value">${buildCustomFieldInput(cf, cfValues[cf.id], 'inline-edit-input')}</div></div>`;
             }
-            return `<div class="detail-row"><div class="detail-label">${cf.name}</div><div class="detail-value">${val(cfValues[cf.id])}</div></div>`;
+            return `<div class="detail-row"><div class="detail-label">${escapeHtml(cf.name)}</div><div class="detail-value">${val(cfValues[cf.id])}</div></div>`;
           }).join('')}
         ` : ''}
         </div>

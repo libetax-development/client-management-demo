@@ -133,7 +133,7 @@ function changeTaskStatus(taskId, newStatus) {
   const task = MOCK_DATA.tasks.find(t => t.id === taskId);
   if (task) {
     task.status = newStatus;
-    if (newStatus === '完了') task.completedAt = new Date().toISOString();
+    if (newStatus === '完了') task.completedAt = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' });
     renderTaskTable();
   }
 }
@@ -353,7 +353,7 @@ function submitTaskComment(taskId) {
     taskId: taskId,
     authorId: MOCK_DATA.currentUser.id,
     body: body,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' }),
   });
 
   input.value = '';
@@ -374,7 +374,7 @@ function renderTaskFiles(taskId) {
   container.innerHTML = files.map(f => {
     const uploader = getUserById(f.uploadedBy);
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-      <a href="${escapeHtml(f.fileUrl)}" target="_blank" style="flex:1;font-size:13px;">${escapeHtml(f.fileName)}</a>
+      <a href="${escapeHtml(sanitizeUrl(f.fileUrl))}" target="_blank" style="flex:1;font-size:13px;">${escapeHtml(f.fileName)}</a>
       <span style="font-size:11px;color:var(--gray-400);">${escapeHtml(uploader?.name || '-')} ${formatDate(f.createdAt)}</span>
       <button class="btn-icon" onclick="removeTaskFile('${f.id}','${taskId}')" title="削除" style="font-size:14px;color:var(--gray-400);">&times;</button>
     </div>`;
@@ -389,7 +389,7 @@ function addTaskFile(taskId) {
   MOCK_DATA.taskFiles.push({
     id: generateId('tf-', MOCK_DATA.taskFiles),
     taskId, fileName, fileUrl, uploadedBy: MOCK_DATA.currentUser.id,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' }),
   });
   resetForm(['task-file-name', 'task-file-url']);
   renderTaskFiles(taskId);

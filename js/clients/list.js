@@ -147,7 +147,7 @@ function renderClientTable() {
   if (thead) thead.innerHTML = visibleCols.map(c => `<th>${c.label}</th>`).join('');
 
   const colMap = {
-    code: c => `<td style="font-family:monospace;font-size:12px;">${c.clientCode}</td>`,
+    code: c => `<td style="font-family:monospace;font-size:12px;">${escapeHtml(c.clientCode)}</td>`,
     name: c => `<td><strong>${escapeHtml(c.name)}</strong></td>`,
     type: c => `<td>${renderTypeBadge(c.clientType)}</td>`,
     fiscal: c => `<td>${c.fiscalMonth ? c.fiscalMonth + '月' : '-'}</td>`,

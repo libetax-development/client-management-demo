@@ -256,7 +256,7 @@ function renderProgressDetail(el, params) {
           }
         }
         return `<tr>
-          <td class="pg-fixed pg-col-code" style="font-size:11px;color:var(--gray-500);">${client?.clientCode || '-'}</td>
+          <td class="pg-fixed pg-col-code" style="font-size:11px;color:var(--gray-500);">${escapeHtml(client?.clientCode || '-')}</td>
           <td class="pg-fixed pg-col-name"><strong style="font-size:12px;">${escapeHtml(client?.name || '-')}</strong></td>
           <td class="pg-fixed pg-col-main" style="font-size:12px;">${escapeHtml(main?.name || '-')}</td>
           <td class="pg-fixed pg-col-sub" style="font-size:12px;">${escapeHtml(sub?.name || '-')}</td>

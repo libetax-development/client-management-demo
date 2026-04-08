@@ -117,55 +117,53 @@ function renderViewCard(v) {
   `;
 }
 
+let editingViewId = null;
+
 function showViewFormModal(editView) {
-  const isEdit = !!editView;
-  const title = isEdit ? 'ビューを編集' : 'ビューを作成';
+  editingViewId = editView ? editView.id : null;
+  const title = document.getElementById('view-modal-title');
 
-  const visibilities = [
-    { value: 'private', label: '非公開（自分のみ）' },
-    { value: 'team', label: 'チーム共有' },
-    { value: 'public', label: '全体公開' },
-  ];
+  if (editView) {
+    title.textContent = 'ビューを編集';
+    document.getElementById('view-edit-id').value = editView.id;
+    document.getElementById('view-name').value = editView.name;
+    document.getElementById('view-desc').value = editView.description || '';
+    document.getElementById('view-visibility').value = editView.visibility;
+  } else {
+    title.textContent = 'ビューを作成';
+    document.getElementById('view-edit-id').value = '';
+    document.getElementById('view-name').value = '';
+    document.getElementById('view-desc').value = '';
+    document.getElementById('view-visibility').value = 'private';
+  }
 
-  showModal(title, `
-    <div class="detail-row"><div class="detail-label">ビュー名 *</div><div class="detail-value">
-      <input type="text" id="view-name" class="inline-edit-input" placeholder="例: 3月決算 法人のみ" value="${isEdit ? escapeHtml(editView.name) : ''}">
-    </div></div>
-    <div class="detail-row"><div class="detail-label">説明</div><div class="detail-value">
-      <input type="text" id="view-desc" class="inline-edit-input" placeholder="このビューの用途（任意）" value="${isEdit ? escapeHtml(editView.description || '') : ''}">
-    </div></div>
-    <div class="detail-row"><div class="detail-label">公開範囲 *</div><div class="detail-value">
-      <select id="view-visibility" class="inline-edit-input">
-        ${visibilities.map(v => `<option value="${v.value}" ${isEdit && editView.visibility === v.value ? 'selected' : ''}>${v.label}</option>`).join('')}
-      </select>
-    </div></div>
-    <div style="margin-top:16px;">
-      <p style="font-size:12px;color:var(--gray-400);">フィルタ・カラム・ソートの詳細設定は本番環境で利用できます</p>
-    </div>
-  `, () => {
-    const name = getValTrim('view-name');
-    if (!name) { alert('ビュー名を入力してください'); return; }
-    const visibility = getVal('view-visibility', 'private');
-    const desc = getValTrim('view-desc');
+  showModal('view-create-modal');
+}
 
-    if (isEdit) {
-      const idx = MOCK_VIEWS.findIndex(v => v.id === editView.id);
-      if (idx >= 0) {
-        MOCK_VIEWS[idx].name = name;
-        MOCK_VIEWS[idx].description = desc;
-        MOCK_VIEWS[idx].visibility = visibility;
-      }
-    } else {
-      MOCK_VIEWS.push({
-        id: 'v-' + Date.now(), name, description: desc,
-        visibility, owner: 'ひろ', teamName: null,
-        filters: {}, columns: ['顧客名', '種別', '決算月', '主担当', 'ステータス'],
-        sorts: [],
-      });
+function submitView() {
+  const name = getValTrim('view-name');
+  if (!name) { alert('ビュー名を入力してください'); return; }
+  const visibility = getVal('view-visibility', 'private');
+  const desc = getValTrim('view-desc');
+
+  if (editingViewId) {
+    const idx = MOCK_VIEWS.findIndex(v => v.id === editingViewId);
+    if (idx >= 0) {
+      MOCK_VIEWS[idx].name = name;
+      MOCK_VIEWS[idx].description = desc;
+      MOCK_VIEWS[idx].visibility = visibility;
     }
-    closeModal();
-    navigateTo('views');
-  });
+  } else {
+    MOCK_VIEWS.push({
+      id: 'v-' + Date.now(), name, description: desc,
+      visibility, owner: 'ひろ', teamName: null,
+      filters: {}, columns: ['顧客名', '種別', '決算月', '主担当', 'ステータス'],
+      sorts: [],
+    });
+  }
+  hideModal('view-create-modal');
+  editingViewId = null;
+  navigateTo('views');
 }
 
 function editMockView(id) {
