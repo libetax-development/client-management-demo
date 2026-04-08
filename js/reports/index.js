@@ -188,7 +188,7 @@ function renderReportDetail(el, params) {
           <div class="card-body">
             <div id="rp-links-list">${(r.links || []).map((lnk, i) => `
               <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-                <a href="${escapeHtml(lnk.url)}" target="_blank" rel="noopener" style="flex:1;font-size:13px;word-break:break-all;">${escapeHtml(lnk.label || lnk.url)}</a>
+                <a href="${escapeHtml(sanitizeUrl(lnk.url))}" target="_blank" rel="noopener" style="flex:1;font-size:13px;word-break:break-all;">${escapeHtml(lnk.label || lnk.url)}</a>
                 <button class="btn-icon" title="削除" style="font-size:14px;color:var(--gray-400);" onclick="rpRemoveLink('${r.id}',${i})">×</button>
               </div>
             `).join('') || '<div style="padding:4px 0;font-size:13px;color:var(--gray-400);">リンクはまだありません</div>'}</div>

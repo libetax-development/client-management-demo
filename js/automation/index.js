@@ -49,7 +49,7 @@ let editingAutomationId = null;
 function openAutomationModal(ruleId) {
   editingAutomationId = ruleId || null;
   const modal = document.getElementById('automation-create-modal');
-  const title = modal.querySelector('.modal-header h3');
+  const title = document.getElementById('automation-modal-title');
 
   if (editingAutomationId) {
     const rule = MOCK_DATA.automationRules.find(r => r.id === editingAutomationId);

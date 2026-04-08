@@ -131,7 +131,7 @@ function renderStaffDetail(el, params) {
       <div class="card">
         <div class="card-header"><h3>基本情報</h3><button class="btn btn-primary btn-sm" onclick="openStaffModal('${u.id}')">編集</button></div>
         <div class="card-body">
-          ${u.photoUrl ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(u.photoUrl)}" alt="${escapeHtml(u.name)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--gray-200);"></div>` : ''}
+          ${u.photoUrl ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(sanitizeUrl(u.photoUrl))}" alt="${escapeHtml(u.name)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--gray-200);"></div>` : ''}
           <div class="detail-row"><div class="detail-label">職員コード</div><div class="detail-value">${u.staffCode || '-'}</div></div>
           <div class="detail-row"><div class="detail-label">氏名</div><div class="detail-value">${escapeHtml(u.name)}</div></div>
           <div class="detail-row"><div class="detail-label">フリガナ</div><div class="detail-value">${displayKana || '-'}</div></div>

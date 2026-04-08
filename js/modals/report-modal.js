@@ -130,7 +130,7 @@ function submitNewReport() {
 
   MOCK_DATA.reports.push({
     id: generateId('rp-', MOCK_DATA.reports),
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' }),
     authorId: MOCK_DATA.currentUser.id, type, category,
     clientName, title, rank, readStatus: '一時保存中', hasAttachment, body,
   });

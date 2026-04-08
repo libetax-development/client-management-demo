@@ -51,7 +51,7 @@ function toggleIntegration(key) {
   } else {
     const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
     st.connected = true;
-    st.lastSync = new Date().toISOString();
+    st.lastSync = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' });
     if (key === 'chatwork') { st.account = 'リベ大税理士法人'; st.webhookUrl = ''; st.roomId = ''; }
     else if (key === 'google') { st.account = 'hiro@libetax.jp'; st.calendars = [{ name: '業務カレンダー', checked: true }, { name: '面談カレンダー', checked: false }, { name: '期限カレンダー', checked: false }]; st.syncDirection = 'bidirectional'; }
     else if (key === 'dropbox') { st.account = 'libetax@dropbox.com'; st.rootPath = ''; st.usedStorage = '45.2 GB'; st.totalStorage = '2 TB'; st.autoCreateFolder = false; st.namingRule = '{顧客コード}_{顧客名}'; }
