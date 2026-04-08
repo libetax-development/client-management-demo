@@ -140,6 +140,11 @@ function showViewFormModal(editView) {
   showModal('view-create-modal');
 }
 
+function closeViewModal() {
+  hideModal('view-create-modal');
+  editingViewId = null;
+}
+
 function submitView() {
   const name = getValTrim('view-name');
   if (!name) { alert('ビュー名を入力してください'); return; }
@@ -161,8 +166,7 @@ function submitView() {
       sorts: [],
     });
   }
-  hideModal('view-create-modal');
-  editingViewId = null;
+  closeViewModal();
   navigateTo('views');
 }
 

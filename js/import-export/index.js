@@ -198,7 +198,7 @@ function ieRunExport() {
 // ===========================
 function ieDownloadTemplate(type) {
   if (type === 'clients') {
-    downloadCSV('template_clients.csv', ['顧客名', '種別', '決算月', '主担当コード', '住所', '電話番号', '月額報酬'], [['株式会社サンプル', '法人', '3', 'A003', '東京都千代田区1-1-1', '03-0000-0000', '50000']]);
+    downloadCSV('template_clients.csv', ['顧客名', '種別', '決算月', '主担当コード', '住所', '電話番号', '月額報酬', '契約ステータス'], [['株式会社サンプル', '法人', '3', 'A003', '東京都千代田区1-1-1', '03-0000-0000', '50000', '契約中']]);
   } else if (type === 'tasks') {
     downloadCSV('template_tasks.csv', ['顧客ID', 'タスク名', '担当者ID', '期限', 'ステータス'], [['c-001', '月次記帳チェック', 'u-003', '2026-04-15', '未着手']]);
   } else if (type === 'users') {

@@ -93,7 +93,7 @@ function submitNewAutomationRule() {
     editingAutomationId = null;
   } else {
     const newRule = {
-      id: 'ar-' + String(MOCK_DATA.automationRules.length + 1).padStart(3, '0'),
+      id: generateId('ar-', MOCK_DATA.automationRules),
       name, type, enabled: true, trigger, action, target, lastRun: null,
     };
     MOCK_DATA.automationRules.push(newRule);
