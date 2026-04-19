@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>顧客フォーム — かんたん登録ダイアログ（単体確認用）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+        background: #f8fafc;
+      }
+      /* フォーカス */
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        border-color: #2563eb;
+      }
+      /* ダイアログアニメ */
+      .dialog {
+        animation: fadeScale 0.18s ease;
+      }
+      @keyframes fadeScale {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      /* ステップインジケーター */
+      .step-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #bfdbfe;
+      }
+      .step-dot.active {
+        background: #1e40af;
+        width: 18px;
+        border-radius: 3px;
+      }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body class="min-h-screen flex flex-col">
+
+    <!-- 背景: 顧客一覧のぼかし表現 -->
+    <div class="fixed inset-0 bg-slate-50 opacity-80"></div>
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-10"></div>
+
+    <!-- ダイアログ本体 -->
+    <div class="fixed inset-0 flex items-center justify-center z-20 px-4">
+      <div class="dialog bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+
+        <!-- ダイアログヘッダー（ブランド青） -->
+        <div class="bg-brand-800 px-6 pt-5 pb-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="text-white font-semibold text-base">かんたん登録</span>
+              </div>
+              <p class="text-brand-200 text-xs">必須項目のみ入力して素早く登録できます。</p>
+              <p class="text-brand-300 text-xs mt-0.5">残りの詳細情報は登録後にいつでも追記できます。</p>
+            </div>
+            <button
+              class="text-brand-200 hover:text-white mt-0.5 p-1 rounded hover:bg-brand-700 transition-colors"
+              aria-label="閉じる"
+              onclick="document.getElementById('successMsg').style.display='none'; /* demo用 */"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- フォーム本体 -->
+        <div class="px-6 py-5 space-y-4">
+
+          <!-- お知らせ -->
+          <div class="flex items-start gap-2 bg-brand-50 border border-brand-100 rounded-md px-3 py-2.5 text-xs text-brand-700">
+            <svg class="w-4 h-4 text-brand-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>登録後、詳細フォームから住所・税務情報・外部連携などを追記できます。</span>
+          </div>
+
+          <!-- 必須凡例 -->
+          <p class="text-xs text-slate-500"><span class="text-red-500">*</span> は必須項目です</p>
+
+          <!-- 顧客コード -->
+          <div class="space-y-1.5">
+            <label for="sc_code" class="block text-sm font-medium text-slate-700">
+              顧客コード <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="sc_code"
+              type="text"
+              placeholder="例: A001"
+              class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+              aria-required="true"
+            />
+            <p class="text-xs text-slate-400">半角英数字。後から変更可能です。</p>
+          </div>
+
+          <!-- 顧客名 -->
+          <div class="space-y-1.5">
+            <label for="sc_name" class="block text-sm font-medium text-slate-700">
+              顧客名 <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="sc_name"
+              type="text"
+              placeholder="例: 株式会社サンプル商事 / 山本 太郎"
+              class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+              aria-required="true"
+            />
+          </div>
+
+          <!-- 種別 + 契約ステータス（2列） -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <label for="sc_type" class="block text-sm font-medium text-slate-700">種別</label>
+              <select id="sc_type" class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm">
+                <option value="corporation">法人</option>
+                <option value="individual">個人</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="sc_status" class="block text-sm font-medium text-slate-700">
+                契約ステータス <span class="text-red-500">*</span>
+              </label>
+              <select id="sc_status" class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" aria-required="true">
+                <option value="">選択...</option>
+                <optgroup label="契約中">
+                  <option value="契約完了">契約完了</option>
+                  <option value="契約書手続中">契約書手続中</option>
+                  <option value="スポット依頼">スポット依頼</option>
+                </optgroup>
+                <optgroup label="検討中">
+                  <option value="見込み">見込み</option>
+                  <option value="顧問契約検討中">顧問契約検討中</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <!-- 主担当（必須） -->
+          <div class="space-y-1.5">
+            <label for="sc_assignee" class="block text-sm font-medium text-slate-700">
+              主担当 <span class="text-red-500">*</span>
+            </label>
+            <select id="sc_assignee" class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" aria-required="true">
+              <option value="">担当者を選択</option>
+              <option>山田 太郎</option>
+              <option>鈴木 花子</option>
+              <option>高橋 一郎</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- フッター -->
+        <div class="border-t border-slate-100 px-6 py-4 bg-slate-50 flex items-center justify-between">
+          <!-- 詳細フォームへの切り替え（追加情報がある場合の逃げ道） -->
+          <button
+            class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            title="詳細フォームに切り替えます"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            詳細フォームで登録する
+          </button>
+          <div class="flex items-center gap-2.5">
+            <button class="px-4 py-2 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-white transition-colors">
+              キャンセル
+            </button>
+            <!-- 改善: 動詞化 + ローディング状態考慮 -->
+            <button
+              class="px-5 py-2 bg-brand-800 hover:bg-brand-900 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+              onclick="document.getElementById('successMsg').style.display='flex';"
+            >
+              顧客を登録する
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 登録成功トースト（デモ用） -->
+    <div
+      id="successMsg"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 items-center gap-3 bg-slate-900 text-white text-sm px-5 py-3 rounded-full shadow-xl"
+      style="display:none;"
+    >
+      <svg class="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      顧客を登録しました。詳細から追記できます。
+    </div>
+
+    <!-- ダイアログ設計説明（モック用ノート） -->
+    <div class="fixed bottom-4 right-4 bg-brand-50 border border-brand-200 rounded-lg p-4 max-w-xs text-xs text-brand-800 shadow-lg z-30">
+      <p class="font-semibold mb-2">かんたん登録ダイアログの設計ポイント</p>
+      <ul class="space-y-1.5 list-disc list-inside">
+        <li>必須5フィールドのみ（コード・顧客名・種別・ステータス・主担当）</li>
+        <li>「詳細フォームで登録する」で逃げ道を確保</li>
+        <li>登録後は詳細画面に遷移して続きを入力できる</li>
+        <li>ブランド青のヘッダーで「かんたん登録」を識別</li>
+        <li>登録後に「追記できます」と伝える成功トースト</li>
+      </ul>
+    </div>
+
+  </body>
+</html>

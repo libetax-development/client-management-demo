@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=375px, initial-scale=1.0" />
+    <title>進捗管理マトリクス Before — モバイル版（崩れた状態）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+        background: #f9fafb;
+        max-width: 375px;
+        margin: 0 auto;
+      }
+      .status-todo {
+        color: #9ca3af;
+      }
+      .status-in-progress {
+        color: #2563eb;
+        font-weight: 500;
+      }
+      .status-done {
+        color: #16a34a;
+        font-weight: 500;
+      }
+      .status-returned {
+        color: #dc2626;
+        font-weight: 500;
+      }
+      .cell-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 36px;
+        font-size: 12px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+      }
+      /* 崩れを演出 */
+      .overflow-demo {
+        overflow-x: auto;
+        border: 2px dashed #dc2626;
+        position: relative;
+      }
+      .overflow-label {
+        background: #dc2626;
+        color: white;
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 0 0 4px 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+      }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body>
+    <!-- 診断ラベル -->
+    <div
+      style="
+        background: #dc2626;
+        color: #fff;
+        font-size: 11px;
+        text-align: center;
+        padding: 5px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      "
+    >
+      BEFORE — モバイル版（375px）現状の崩れた状態を再現
+    </div>
+
+    <!-- ヘッダー -->
+    <header
+      style="
+        height: 56px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 8px;
+      "
+    >
+      <button
+        style="
+          font-size: 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 4px;
+          padding: 4px 8px;
+          background: #fff;
+        "
+      >
+        ← 戻る
+      </button>
+      <div style="min-width: 0">
+        <div
+          style="
+            font-size: 16px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          "
+        >
+          2025年 年末調整
+        </div>
+        <div style="font-size: 10px; color: #6b7280">年末調整 ・管理者: 田中 太郎</div>
+      </div>
+    </header>
+
+    <!-- ページコンテンツ（padding付き） -->
+    <div style="padding: 12px">
+      <!-- ボタン群の崩れ（モバイルでの問題1） -->
+      <div
+        style="
+          border: 2px dashed #dc2626;
+          border-radius: 6px;
+          padding: 8px;
+          margin-bottom: 12px;
+          position: relative;
+        "
+      >
+        <div
+          style="
+            position: absolute;
+            top: -10px;
+            left: 8px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 9999px;
+          "
+        >
+          問題1: ボタンが折り返して縦に積み重なる
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px">
+          <button
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              background: #fff;
+              white-space: nowrap;
+            "
+          >
+            👤+ 顧客追加
+          </button>
+          <button
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              background: #fff;
+              white-space: nowrap;
+            "
+          >
+            ⚙ 設定
+          </button>
+          <button
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              background: #fff;
+              white-space: nowrap;
+            "
+          >
+            💾 テンプレ保存
+          </button>
+          <button
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              background: #fff;
+              white-space: nowrap;
+            "
+          >
+            テンプレート管理
+          </button>
+          <button
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              background: #fff;
+              white-space: nowrap;
+            "
+          >
+            ↓ CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- フィルタ行の崩れ（モバイルでの問題2） -->
+      <div
+        style="
+          border: 2px dashed #f97316;
+          border-radius: 6px;
+          padding: 8px;
+          margin-bottom: 12px;
+          position: relative;
+        "
+      >
+        <div
+          style="
+            position: absolute;
+            top: -10px;
+            left: 8px;
+            background: #f97316;
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 9999px;
+          "
+        >
+          問題2: フィルタが折り返し・タップ領域が狭い
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+          <select
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 6px;
+              width: 100px;
+              height: 32px;
+            "
+          >
+            <option>全担当者</option>
+          </select>
+          <label
+            style="display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer"
+          >
+            <input type="checkbox" /> 主担当先のみ
+          </label>
+          <input
+            type="text"
+            placeholder="キーワード検索..."
+            style="
+              font-size: 11px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              padding: 5px 8px;
+              width: 160px;
+              height: 32px;
+            "
+          />
+          <label
+            style="display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer"
+          >
+            <input type="checkbox" /> 未完了のみ
+          </label>
+        </div>
+        <div style="font-size: 10px; color: #ea580c; margin-top: 6px">
+          ↑ チェックボックスのタップ領域が約20px — WCAG 44px未満
+        </div>
+      </div>
+
+      <!-- サマリーカード（2列になる） -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px">
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; padding: 10px">
+          <div style="font-size: 11px; color: #6b7280">対象件数</div>
+          <div style="font-size: 22px; font-weight: 700; color: #111827">5</div>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; padding: 10px">
+          <div style="font-size: 11px; color: #6b7280">完了</div>
+          <div style="font-size: 22px; font-weight: 700; color: #16a34a">1</div>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; padding: 10px">
+          <div style="font-size: 11px; color: #6b7280">未完了</div>
+          <div style="font-size: 22px; font-weight: 700; color: #ca8a04">4</div>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; padding: 10px">
+          <div style="font-size: 11px; color: #6b7280">差戻し</div>
+          <div style="font-size: 22px; font-weight: 700; color: #dc2626">1</div>
+        </div>
+      </div>
+
+      <!-- テーブルの崩れ（最大の問題） -->
+      <div
+        style="border: 2px dashed #dc2626; border-radius: 6px; position: relative; background: #fff"
+      >
+        <div
+          style="
+            background: #dc2626;
+            color: #fff;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px 4px 0 0;
+          "
+        >
+          問題3（P0 致命的）: テーブル最低幅816px →
+          375px画面で441px以上がはみ出す。ステータスセルをタップ不可能
+        </div>
+        <div style="overflow-x: auto">
+          <table style="border-collapse: collapse; font-size: 11px; width: 816px">
+            <thead>
+              <tr style="background: #f3f4f6">
+                <th
+                  style="
+                    width: 44px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    position: sticky;
+                    left: 0;
+                    background: #f3f4f6;
+                  "
+                >
+                  <input type="checkbox" />
+                </th>
+                <th
+                  style="
+                    width: 160px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 8px;
+                    text-align: left;
+                    position: sticky;
+                    left: 44px;
+                    background: #f3f4f6;
+                  "
+                >
+                  顧客名
+                </th>
+                <th
+                  style="
+                    width: 40px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    position: sticky;
+                    left: 204px;
+                    background: #f3f4f6;
+                  "
+                >
+                  CD
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  書類収集
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  内容確認
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  計算入力
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  照合確認
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  申告提出
+                </th>
+                <th
+                  style="
+                    width: 72px;
+                    border-bottom: 1px solid #e5e7eb;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 6px 4px;
+                    text-align: center;
+                  "
+                >
+                  完了確認
+                </th>
+                <th
+                  style="
+                    width: 140px;
+                    border-bottom: 1px solid #e5e7eb;
+                    padding: 6px 8px;
+                    text-align: left;
+                  "
+                >
+                  備考
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid #f3f4f6">
+                <td
+                  style="
+                    width: 44px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    text-align: center;
+                    position: sticky;
+                    left: 0;
+                    background: #fff;
+                  "
+                >
+                  <input type="checkbox" />
+                </td>
+                <td
+                  style="
+                    width: 160px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 8px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    position: sticky;
+                    left: 44px;
+                    background: #fff;
+                  "
+                >
+                  株式会社アルファ商事
+                </td>
+                <td
+                  style="
+                    width: 40px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    color: #6b7280;
+                    position: sticky;
+                    left: 204px;
+                    background: #fff;
+                  "
+                >
+                  A001
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/01</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/05</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/10</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/12</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/15</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">04/16</button>
+                </td>
+                <td style="width: 140px; padding: 4px 8px; font-size: 11px; color: #9ca3af">-</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6">
+                <td
+                  style="
+                    width: 44px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    text-align: center;
+                    position: sticky;
+                    left: 0;
+                    background: #fff;
+                  "
+                >
+                  <input type="checkbox" />
+                </td>
+                <td
+                  style="
+                    width: 160px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 8px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    position: sticky;
+                    left: 44px;
+                    background: #fff;
+                  "
+                >
+                  有限会社ベータ工業
+                </td>
+                <td
+                  style="
+                    width: 40px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    color: #6b7280;
+                    position: sticky;
+                    left: 204px;
+                    background: #fff;
+                  "
+                >
+                  B002
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">✓</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-in-progress" style="min-height: 36px">
+                    対応中
+                  </button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 140px; padding: 4px 8px; font-size: 11px; color: #6b7280">
+                  追加書類待ち
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6">
+                <td
+                  style="
+                    width: 44px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    text-align: center;
+                    position: sticky;
+                    left: 0;
+                    background: #fff;
+                  "
+                >
+                  <input type="checkbox" />
+                </td>
+                <td
+                  style="
+                    width: 160px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 8px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    position: sticky;
+                    left: 44px;
+                    background: #fff;
+                  "
+                >
+                  ガンマ株式会社
+                </td>
+                <td
+                  style="
+                    width: 40px;
+                    border-right: 1px solid #e5e7eb;
+                    padding: 2px 4px;
+                    color: #6b7280;
+                    position: sticky;
+                    left: 204px;
+                    background: #fff;
+                  "
+                >
+                  C003
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">✓</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-done" style="min-height: 36px">✓</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-returned" style="min-height: 36px">差戻</button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 72px; border-right: 1px solid #e5e7eb; padding: 0">
+                  <button class="cell-btn status-todo" style="min-height: 36px"></button>
+                </td>
+                <td style="width: 140px; padding: 4px 8px; font-size: 11px; color: #dc2626">
+                  計算ミス・要修正
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- スクロール位置の説明 -->
+        <div
+          style="
+            padding: 8px 10px;
+            background: #fef3c7;
+            border-top: 1px dashed #f59e0b;
+            font-size: 11px;
+            color: #92400e;
+          "
+        >
+          ←
+          横スクロールが必要。顧客名列とチェックは見えるが「書類収集」以降のステータスセルをタップするには右スクロール必要。
+          スクロール中は横方向タップ精度が大幅に低下し、誤タップ多発。「内容確認」「計算入力」などは実質的に操作不可能。
+        </div>
+      </div>
+
+      <!-- 問題リスト -->
+      <div
+        style="
+          margin-top: 16px;
+          border: 1px solid #fca5a5;
+          border-radius: 8px;
+          padding: 12px;
+          background: #fff7f7;
+        "
+      >
+        <div style="font-size: 12px; font-weight: bold; color: #dc2626; margin-bottom: 8px">
+          スマホ版の致命的問題（P0）
+        </div>
+        <ol
+          style="
+            font-size: 11px;
+            color: #7f1d1d;
+            list-style: decimal;
+            padding-left: 16px;
+            line-height: 2;
+          "
+        >
+          <li>テーブル幅816px → 375px画面で441pxはみ出す。ステータスセルをタップ不可能</li>
+          <li>ボタン5個が折り返し → 縦に積み重なってコンテンツを圧迫</li>
+          <li>フィルタのチェックボックスがタップ領域約20px → WCAG 44px未満</li>
+          <li>水平スクロール中は精密なタップが困難 → ステータス更新が事実上不可能</li>
+          <li>ステータスが色のみで判別 → 色覚多様性ユーザーには意味が伝わらない</li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

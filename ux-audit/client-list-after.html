@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>顧客一覧 — After（改善案・PC）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      }
+      .nav-active {
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+        color: #fff;
+      }
+      /* テーブルヘッダー: uppercase + letter-spacing で視覚階層を確立 */
+      .table-header {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+      }
+      /* StatusBadge: ブランドカラー統合 */
+      .badge-active { background-color: #dcfce7; color: #166534; }
+      .badge-process { background-color: #dbeafe; color: #1e40af; }
+      .badge-prospect { background-color: #fef9c3; color: #854d0e; }
+      .badge-ended { background-color: #f1f5f9; color: #64748b; }
+      /* ソートボタン */
+      .sort-btn { transition: color 0.1s; }
+      .sort-btn:hover { color: #1e40af; }
+      .sort-active { color: #1e40af; }
+      /* 行ホバー */
+      .table-row:hover { background-color: #f8faff; }
+      /* アニメ */
+      .filter-chip { transition: background-color 0.1s, color 0.1s; }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- サイドバー（改善: アイコン色を親から継承 → 視覚ノイズ削減） -->
+      <aside class="w-56 bg-slate-900 flex flex-col shrink-0">
+        <div class="px-4 py-4 border-b border-slate-700 flex items-center gap-2">
+          <div class="w-1.5 h-6 rounded-full bg-blue-500"></div>
+          <span class="text-white font-bold text-sm">リベ大税理士法人</span>
+        </div>
+        <nav class="flex-1 px-2 py-3 space-y-0.5" aria-label="メインナビゲーション">
+          <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            ダッシュボード
+          </a>
+          <!-- 改善: アクティブ状態がブランド青グラデーション + 左ボーダー -->
+          <a href="#" class="nav-active flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium border-l-2 border-blue-400" aria-current="page">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            顧客管理
+          </a>
+          <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            タスク
+          </a>
+          <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 0v10"/></svg>
+            進捗マトリクス
+          </a>
+        </nav>
+      </aside>
+
+      <!-- メインコンテンツ -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- ヘッダー（改善: パンくず追加） -->
+        <header class="h-14 border-b bg-white px-6 flex items-center justify-between sticky top-0 z-10">
+          <!-- パンくず（改善: 現在地を明確化） -->
+          <nav aria-label="パンくず">
+            <ol class="flex items-center gap-1 text-sm">
+              <li class="text-gray-400">ホーム</li>
+              <li class="text-gray-300 mx-1">/</li>
+              <li class="text-brand-800 font-medium">顧客管理</li>
+            </ol>
+          </nav>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-800 text-xs font-semibold">田</div>
+            <span class="text-sm text-gray-700">田中 ひろあき</span>
+          </div>
+        </header>
+
+        <!-- メイン -->
+        <main class="flex-1 p-6 space-y-5">
+          <!-- ページヘッダー -->
+          <div class="flex items-start justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900">顧客一覧</h1>
+              <!-- 改善: フィルタ適用中は条件を表示 -->
+              <p class="mt-1 text-sm text-slate-500">
+                42件
+                <span class="ml-2 inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">
+                  ステータス: 契約完了
+                </span>
+              </p>
+            </div>
+            <!-- 改善: 動詞化「顧客を追加する」 -->
+            <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-brand-800 hover:bg-brand-900 text-white text-sm font-medium rounded-md transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              顧客を追加する
+            </a>
+          </div>
+
+          <!-- フィルタバー（改善: PC は横並び整理・ラベルを除去してPlaceholderで伝える） -->
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- 検索 -->
+              <div class="relative min-w-[220px] flex-1">
+                <svg class="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                <input type="text" placeholder="顧客名・コードで検索" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600" />
+              </div>
+              <!-- 改善: セレクトにPlaceholderでラベルを内包 -->
+              <select class="px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600 w-[130px]">
+                <option value="all">種別: 全て</option>
+                <option>法人のみ</option>
+                <option>個人のみ</option>
+              </select>
+              <select class="px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600 w-[150px]">
+                <option>ステータス: 契約完了</option>
+                <option>全ステータス</option>
+                <option>見込み</option>
+              </select>
+              <!-- 改善: 担当者フィルタをグループに統合、「絞り込み」ラベル廃止 -->
+              <select class="px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-600 w-[150px]">
+                <option>担当者: 全員</option>
+                <option>山田 太郎</option>
+                <option>鈴木 花子</option>
+              </select>
+              <!-- フィルタリセットボタン（改善: aria-label付き・ブランドカラー） -->
+              <button
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-brand-700 hover:bg-brand-50 rounded-md transition-colors"
+                aria-label="フィルタをリセットする"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                リセット
+              </button>
+              <!-- 列表示切替 -->
+              <button class="ml-auto inline-flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                列を選択
+              </button>
+            </div>
+          </div>
+
+          <!-- テーブル（改善: ヘッダー視覚階層化・StatusBadge統一） -->
+          <div class="bg-white rounded-lg border border-slate-200 overflow-x-auto shadow-sm">
+            <table class="w-full text-sm">
+              <!-- 改善: theadに bg-slate-50 + uppercase スタイル適用 -->
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3 text-left table-header">
+                    <button class="sort-btn sort-active inline-flex items-center gap-1">
+                      コード
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
+                    </button>
+                  </th>
+                  <th class="px-4 py-3 text-left table-header">
+                    <button class="sort-btn inline-flex items-center gap-1">顧客名</button>
+                  </th>
+                  <th class="px-4 py-3 text-left table-header">種別</th>
+                  <th class="px-4 py-3 text-left table-header">
+                    <button class="sort-btn inline-flex items-center gap-1">決算月</button>
+                  </th>
+                  <th class="px-4 py-3 text-left table-header">主担当</th>
+                  <th class="px-4 py-3 text-left table-header">副担当</th>
+                  <th class="px-4 py-3 text-left table-header">税理士</th>
+                  <th class="px-4 py-3 text-left table-header">記帳担当</th>
+                  <th class="px-4 py-3 text-left table-header">ステータス</th>
+                  <th class="px-4 py-3 text-left table-header"><span class="sr-only">操作</span></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr class="table-row">
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 font-medium">A001</td>
+                  <td class="px-4 py-3 font-medium text-slate-900">株式会社サンプル商事</td>
+                  <!-- 改善: 法人バッジを brand-800 で統一 -->
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-800 text-white">法人</span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700">3月</td>
+                  <td class="px-4 py-3 text-slate-700">山田 太郎</td>
+                  <td class="px-4 py-3 text-slate-700">鈴木 花子</td>
+                  <td class="px-4 py-3 text-slate-700">田中 先生</td>
+                  <td class="px-4 py-3 text-slate-700">佐藤 次郎</td>
+                  <!-- 改善: 契約完了は緑系（セマンティクス維持）、ただし彩度・サイズ統一 -->
+                  <td class="px-4 py-3">
+                    <span class="badge-active inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium">契約完了</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a href="#" class="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900">
+                      詳細 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr class="table-row">
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 font-medium">A002</td>
+                  <td class="px-4 py-3 font-medium text-slate-900">田中 ひろし（個人）</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">個人</span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700">12月</td>
+                  <td class="px-4 py-3 text-slate-700">鈴木 花子</td>
+                  <td class="px-4 py-3 text-slate-400">—</td>
+                  <td class="px-4 py-3 text-slate-700">田中 先生</td>
+                  <td class="px-4 py-3 text-slate-400">—</td>
+                  <td class="px-4 py-3">
+                    <span class="badge-active inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium">契約完了</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a href="#" class="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900">
+                      詳細 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr class="table-row">
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 font-medium">B003</td>
+                  <td class="px-4 py-3 font-medium text-slate-900">有限会社テスト工業</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-800 text-white">法人</span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700">9月</td>
+                  <td class="px-4 py-3 text-slate-700">山田 太郎</td>
+                  <td class="px-4 py-3 text-slate-700">高橋 一郎</td>
+                  <td class="px-4 py-3 text-slate-700">田中 先生</td>
+                  <td class="px-4 py-3 text-slate-400">—</td>
+                  <!-- 改善: 終了ステータスはグレー系で統一（badge-ended） -->
+                  <td class="px-4 py-3">
+                    <span class="badge-ended inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium">休止中</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a href="#" class="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900">
+                      詳細 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr class="table-row">
+                  <td class="px-4 py-3 font-mono text-xs text-slate-500 font-medium">C004</td>
+                  <td class="px-4 py-3 font-medium text-slate-900">佐々木 美奈子（個人）</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">個人</span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700">12月</td>
+                  <td class="px-4 py-3 text-slate-700">高橋 一郎</td>
+                  <td class="px-4 py-3 text-slate-400">—</td>
+                  <td class="px-4 py-3 text-slate-700">田中 先生</td>
+                  <td class="px-4 py-3 text-slate-400">—</td>
+                  <!-- 検討中ステータス: badge-prospect（黄色系） -->
+                  <td class="px-4 py-3">
+                    <span class="badge-prospect inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium">顧問契約検討中</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a href="#" class="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900">
+                      詳細 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ページネーション（改善: ブランドカラー統一） -->
+          <div class="flex items-center justify-between text-sm text-slate-500">
+            <span>42件中 1–20件を表示</span>
+            <div class="flex items-center gap-1">
+              <button class="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors" disabled>前へ</button>
+              <button class="px-3 py-1.5 rounded-md border border-brand-800 bg-brand-800 text-white font-medium">1</button>
+              <button class="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 transition-colors">2</button>
+              <button class="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 transition-colors">3</button>
+              <button class="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 transition-colors">次へ</button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- 改善サマリー（モック説明用） -->
+    <div class="fixed bottom-4 right-4 bg-brand-50 border border-brand-200 rounded-lg p-4 max-w-xs text-xs text-brand-800 shadow-lg">
+      <p class="font-semibold mb-1">After の主要改善点</p>
+      <ul class="space-y-1 list-disc list-inside">
+        <li>テーブルヘッダー: uppercase + letter-spacing で視覚階層化</li>
+        <li>StatusBadge: 4 variant（active/process/prospect/ended）に統一</li>
+        <li>フィルタバー: 「絞り込み」ラベル廃止・Placeholder で代替</li>
+        <li>CTAボタン: 動詞化「顧客を追加する」</li>
+        <li>ページネーション: ブランドカラー統一</li>
+      </ul>
+    </div>
+  </body>
+</html>

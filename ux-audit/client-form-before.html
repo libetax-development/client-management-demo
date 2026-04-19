@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>顧客フォーム — Before（現状）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- サイドバー（簡易版） -->
+      <aside class="w-56 bg-gray-900 flex flex-col shrink-0">
+        <div class="px-4 py-4 border-b border-gray-700">
+          <span class="text-white font-bold text-sm">リベ大税理士法人</span>
+        </div>
+        <nav class="flex-1 px-2 py-3 space-y-0.5">
+          <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm bg-gray-800 text-white font-medium">
+            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            顧客管理
+          </a>
+        </nav>
+      </aside>
+
+      <div class="flex-1 flex flex-col">
+        <header class="h-14 border-b bg-white px-6 flex items-center">
+          <span class="text-sm text-gray-500">顧客登録</span>
+        </header>
+
+        <main class="flex-1 p-6">
+          <div class="max-w-2xl mx-auto space-y-4">
+            <!-- ページタイトル（現状: 単純なh1のみ。必須凡例なし） -->
+            <h1 class="text-2xl font-bold text-gray-900">顧客登録</h1>
+
+            <!-- 問題: 必須マーク（*）の説明が一切ない -->
+
+            <!-- タブ（現状: タブ名が直感的でない） -->
+            <div class="bg-white rounded-lg border overflow-hidden">
+              <!-- タブヘッダー -->
+              <div class="border-b flex">
+                <!-- アクティブタブ -->
+                <button class="px-4 py-3 text-sm font-medium text-gray-900 border-b-2 border-gray-900">基本情報</button>
+                <!-- 問題: 「契約・税務」という名前は何が含まれるか不明 -->
+                <button class="px-4 py-3 text-sm text-gray-500 hover:text-gray-700">契約・税務</button>
+                <!-- 問題: 「連絡先・連携」は2つの異なる概念が混在 -->
+                <button class="px-4 py-3 text-sm text-gray-500 hover:text-gray-700">連絡先・連携</button>
+              </div>
+
+              <!-- 基本情報タブ（現状） -->
+              <div class="p-4 space-y-3">
+                <!-- 問題: 約50フィールドが3タブに分散。どこに何があるか分からない -->
+
+                <!-- 問題: 必須ラベルに * を付けているが凡例が画面内にない -->
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">顧客コード *</label>
+                  <input type="text" placeholder="例: A001" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">顧客名 *</label>
+                  <div class="flex gap-2">
+                    <input type="text" placeholder="例: 株式会社サンプル商事" class="flex-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                    <button class="px-3 py-2 border rounded-md text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-1 whitespace-nowrap">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                      法人番号検索
+                    </button>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">種別</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>法人</option>
+                    <option>個人</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">決算月</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>選択...</option>
+                    <option>1月</option>
+                    <option>3月</option>
+                    <option>12月</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">業種</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>選択...</option>
+                    <option>製造業</option>
+                    <option>小売業</option>
+                    <option>IT・情報</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">郵便番号</label>
+                  <input type="text" placeholder="例: 100-0004" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">住所</label>
+                  <input type="text" placeholder="例: 東京都千代田区大手町1-1-1" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">電話番号</label>
+                  <input type="text" placeholder="例: 03-1234-5678" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">代表者</label>
+                  <input type="text" placeholder="例: 山本 太郎" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">法人番号</label>
+                  <input type="text" placeholder="例: 1234567890123" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <!-- 担当者セクション -->
+                <h3 class="text-sm font-semibold text-gray-900 pt-2">担当者</h3>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">主担当</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>選択...</option>
+                    <option>山田 太郎</option>
+                    <option>鈴木 花子</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">副担当</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>未割当</option>
+                    <option>山田 太郎</option>
+                    <option>鈴木 花子</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">税理士</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>未割当</option>
+                    <option>田中 先生</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">記帳担当</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>未割当</option>
+                    <option>佐藤 次郎</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">契約ステータス</label>
+                  <select class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option>選択...</option>
+                    <option>契約完了</option>
+                    <option>見込み</option>
+                  </select>
+                </div>
+
+                <!-- 問題: 「管理表No」が何を意味するか全く不明 -->
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">管理表No</label>
+                  <input type="text" placeholder="" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-sm font-medium text-gray-700">備考</label>
+                  <textarea rows="3" class="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- アクションボタン（現状: 途中保存不可・ボタン名が名詞止め） -->
+        <div class="sticky bottom-0 border-t bg-white py-4 px-6 flex items-center justify-end gap-3">
+          <button class="px-4 py-2 border rounded-md text-sm text-gray-700 hover:bg-gray-50">キャンセル</button>
+          <!-- 問題: 「作成」では「何を作成するのか」が不明 -->
+          <button class="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800">作成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 問題サマリー -->
+    <div class="fixed bottom-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-xs text-xs text-red-700 shadow-lg">
+      <p class="font-semibold mb-1">Before の主要問題点</p>
+      <ul class="space-y-1 list-disc list-inside">
+        <li>約50フィールドが3タブに分散・途中保存不可</li>
+        <li>「シティネーム」「CWURL」「管理表No」等の内部略語</li>
+        <li>「作成」ボタン — 何を作成するか不明</li>
+        <li>必須マーク（*）の凡例説明なし</li>
+        <li>タブ名「連絡先・連携」が2概念混在</li>
+        <li>簡易登録の手段がなく、初回登録のハードルが高い</li>
+      </ul>
+    </div>
+  </body>
+</html>

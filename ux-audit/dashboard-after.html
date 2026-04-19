@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ダッシュボード — After（改善案）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // ブランドカラー確定案
+              // primary: #1e40af (blue-800) — 信頼感・専門性。税理士業らしい落ち着きのある濃紺青
+              // accent:  #2563eb (blue-600) — primary のライト版。ホバー・アクティブ状態に使用
+              // 根拠: oklch(0.55 0.22 258) ≒ #1e40af。彩度0.22、輝度0.55でAAA準拠のコントラスト比を確保
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      }
+      /* アクティブサイドバー項目 */
+      .nav-active {
+        background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+        color: #fff;
+      }
+      /* SummaryCard ホバーアニメーション */
+      .summary-card {
+        transition:
+          box-shadow 0.15s ease,
+          transform 0.1s ease;
+      }
+      .summary-card:hover {
+        box-shadow: 0 8px 20px -4px rgba(30, 64, 175, 0.15);
+        transform: translateY(-1px);
+      }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <!-- レイアウト: サイドバー + メイン -->
+    <div class="flex min-h-screen">
+      <!-- サイドバー（改善: アイコン色を親から継承。アクティブ状態はブランド青） -->
+      <aside class="w-56 bg-slate-900 flex flex-col shrink-0">
+        <!-- ロゴエリア: ブランド青のアクセントライン -->
+        <div class="px-4 py-4 border-b border-slate-700 flex items-center gap-2">
+          <div class="w-1.5 h-6 rounded-full bg-blue-500"></div>
+          <span class="text-white font-bold text-sm">リベ大税理士法人</span>
+        </div>
+        <nav class="flex-1 px-2 py-3 space-y-0.5" aria-label="メインナビゲーション">
+          <!-- 改善: アクティブ状態にブランド青グラデーション。左境界線で強調 -->
+          <a
+            href="#"
+            class="nav-active flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium border-l-2 border-blue-400"
+          >
+            <!-- 改善: text-* なし。親のtext-whiteを継承 -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+            ダッシュボード
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <!-- 改善: アイコン色を削除 → 親の text-slate-400/text-white を継承 -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            顧客管理
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            タスク管理
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+            進捗管理表
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            工数管理
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            報告書
+          </a>
+          <a
+            href="#"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 text-sm transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            カレンダー
+          </a>
+        </nav>
+      </aside>
+
+      <!-- メインコンテンツ -->
+      <div class="flex-1 flex flex-col">
+        <!-- ヘッダー: ブランドカラーの細いトップボーダーで上部を引き締め -->
+        <header
+          class="bg-white border-b border-t-2 border-t-blue-700 h-14 flex items-center justify-between px-6 shadow-sm"
+        >
+          <!-- パンくず（改善案: 現状はなし） -->
+          <nav aria-label="パンくず" class="flex items-center gap-1.5 text-sm">
+            <span class="text-slate-400">ホーム</span>
+            <svg
+              class="w-3.5 h-3.5 text-slate-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+            <span class="text-blue-700 font-medium">ダッシュボード</span>
+          </nav>
+          <div class="flex items-center gap-3">
+            <!-- 通知ベル: 未読バッジにブランド青 -->
+            <button
+              class="relative p-1.5 rounded-md hover:bg-slate-100"
+              aria-label="通知を確認する"
+            >
+              <svg
+                class="w-5 h-5 text-slate-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              <span class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-blue-600"></span>
+            </button>
+            <div class="flex items-center gap-2 text-sm">
+              <!-- アバター: ブランド青背景 -->
+              <div
+                class="h-8 w-8 rounded-full bg-blue-800 flex items-center justify-center text-white text-xs font-bold"
+              >
+                田
+              </div>
+              <span class="text-slate-700">田中ひろあき</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- ページ本体 -->
+        <main class="flex-1 p-6 overflow-auto">
+          <!-- ページタイトル: ブランド青のアクセントラインで見出しを引き立て -->
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900">ダッシュボード</h1>
+              <p class="mt-1 text-sm text-slate-500">
+                田中さん、お疲れさまです。本日 2026年4月18日（土）
+              </p>
+            </div>
+            <!-- クイックアクション -->
+            <a
+              href="#"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-800 hover:bg-blue-900 text-white text-sm font-medium transition-colors shadow-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              タスクを追加する
+            </a>
+          </div>
+
+          <!-- サマリーカード: 改善版 -->
+          <!-- 改善: 左ボーダーアクセント + ブランド青アイコン背景 + shadow-sm + hover上昇エフェクト -->
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-6">
+            <!-- 未完了タスク: ブランド青アイコン。視線誘導の起点 -->
+            <a href="#" class="block">
+              <div
+                class="summary-card flex items-center gap-4 rounded-xl p-5 bg-white border border-slate-200 border-l-4 border-l-blue-700 shadow-sm"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50"
+                >
+                  <svg
+                    class="w-6 h-6 text-blue-700"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-slate-900">12</p>
+                  <p class="text-sm text-slate-500">未完了タスク</p>
+                </div>
+                <svg
+                  class="w-4 h-4 text-slate-300 ml-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </a>
+
+            <!-- 期限超過: 赤ボーダー。アラート優先度を明確に -->
+            <a href="#" class="block">
+              <div
+                class="summary-card flex items-center gap-4 rounded-xl p-5 bg-white border border-red-100 border-l-4 border-l-red-500 shadow-sm"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50"
+                >
+                  <svg
+                    class="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-red-600">3</p>
+                  <p class="text-sm text-slate-500">期限超過</p>
+                </div>
+                <!-- 緊急バッジ: 視線誘導の強化 -->
+                <span
+                  class="ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700"
+                  >要対応</span
+                >
+              </div>
+            </a>
+
+            <!-- 今週期限: 黄ボーダー -->
+            <a href="#" class="block">
+              <div
+                class="summary-card flex items-center gap-4 rounded-xl p-5 bg-white border border-amber-100 border-l-4 border-l-amber-400 shadow-sm"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50"
+                >
+                  <svg
+                    class="w-6 h-6 text-amber-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-amber-700">5</p>
+                  <p class="text-sm text-slate-500">今週期限</p>
+                </div>
+                <svg
+                  class="w-4 h-4 text-slate-300 ml-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </a>
+
+            <!-- 担当顧客数: ブランド青ボーダー -->
+            <a href="#" class="block">
+              <div
+                class="summary-card flex items-center gap-4 rounded-xl p-5 bg-white border border-slate-200 border-l-4 border-l-blue-500 shadow-sm"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50"
+                >
+                  <svg
+                    class="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-slate-900">8</p>
+                  <p class="text-sm text-slate-500">担当顧客数</p>
+                </div>
+                <svg
+                  class="w-4 h-4 text-slate-300 ml-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </a>
+          </div>
+
+          <!-- グラフエリア: Card コンポーネント統一（生div廃止） -->
+          <!-- 改善: Cardコンポーネント相当のデザインに統一。ヘッダーボーダーで区画を明確化 -->
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
+            <!-- タスクステータス -->
+            <div class="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-semibold text-slate-900 text-sm">タスクステータス</h3>
+                <span class="text-xs text-slate-400">合計 14件</span>
+              </div>
+              <div class="p-5 flex items-center gap-6">
+                <!-- 円グラフ -->
+                <svg viewBox="0 0 120 120" class="w-28 h-28 shrink-0">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="45"
+                    fill="none"
+                    stroke="#94a3b8"
+                    stroke-width="22"
+                    stroke-dasharray="85 197"
+                    stroke-dashoffset="0"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="45"
+                    fill="none"
+                    stroke="#2563eb"
+                    stroke-width="22"
+                    stroke-dasharray="70 212"
+                    stroke-dashoffset="-85"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="45"
+                    fill="none"
+                    stroke="#ef4444"
+                    stroke-width="22"
+                    stroke-dasharray="27 255"
+                    stroke-dashoffset="-155"
+                  />
+                  <circle cx="60" cy="60" r="35" fill="white" />
+                  <text
+                    x="60"
+                    y="58"
+                    text-anchor="middle"
+                    font-size="16"
+                    font-weight="bold"
+                    fill="#1e293b"
+                  >
+                    14
+                  </text>
+                  <text x="60" y="70" text-anchor="middle" font-size="8" fill="#94a3b8">件</text>
+                </svg>
+                <div class="flex flex-col gap-2 text-sm">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="inline-block w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"
+                    ></span>
+                    <span class="text-slate-500">未対応</span>
+                    <span class="ml-auto font-semibold text-slate-700">7件</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                    <span class="text-slate-500">対応中</span>
+                    <span class="ml-auto font-semibold text-blue-700">5件</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span>
+                    <span class="text-slate-500">差戻し</span>
+                    <span class="ml-auto font-semibold text-red-600">2件</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 週別完了数 -->
+            <div class="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-semibold text-slate-900 text-sm">週別タスク完了数</h3>
+                <span class="text-xs text-slate-400">直近6週</span>
+              </div>
+              <div class="p-5">
+                <div class="flex items-end gap-2 h-36">
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-medium text-slate-600">3</span>
+                    <div
+                      class="w-full bg-blue-200 rounded-t transition-all"
+                      style="height: 30%"
+                    ></div>
+                    <span class="text-xs text-slate-400 whitespace-nowrap">3/10</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-medium text-slate-600">5</span>
+                    <div class="w-full bg-blue-300 rounded-t" style="height: 50%"></div>
+                    <span class="text-xs text-slate-400 whitespace-nowrap">3/17</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-medium text-slate-600">7</span>
+                    <div class="w-full bg-blue-500 rounded-t" style="height: 70%"></div>
+                    <span class="text-xs text-slate-400 whitespace-nowrap">3/24</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-medium text-slate-600">4</span>
+                    <div class="w-full bg-blue-400 rounded-t" style="height: 40%"></div>
+                    <span class="text-xs text-slate-400 whitespace-nowrap">3/31</span>
+                  </div>
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-medium text-slate-600">8</span>
+                    <div class="w-full bg-blue-600 rounded-t" style="height: 80%"></div>
+                    <span class="text-xs text-slate-400 whitespace-nowrap">4/7</span>
+                  </div>
+                  <!-- 今週: ブランド青で強調 -->
+                  <div class="flex flex-col items-center gap-1.5 flex-1">
+                    <span class="text-xs font-bold text-blue-800">6</span>
+                    <div
+                      class="w-full bg-blue-800 rounded-t ring-2 ring-blue-300"
+                      style="height: 60%"
+                    ></div>
+                    <span class="text-xs font-medium text-blue-700 whitespace-nowrap">4/14</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 下段: 今日のタスク + 通知 -->
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- 今日のタスク -->
+            <!-- 改善: テーブルヘッダーに uppercase + text-xs + tracking-wide で視覚階層化 -->
+            <div class="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <div class="border-b border-slate-100 px-5 py-3.5 flex items-center justify-between">
+                <h3 class="font-semibold text-slate-900 text-sm">今日のタスク</h3>
+                <a href="#" class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >すべて見る</a
+                >
+              </div>
+              <table class="w-full text-sm">
+                <thead>
+                  <!-- 改善: uppercase + text-xs + text-slate-400 + tracking-wider で情報階層を明確に -->
+                  <tr class="border-b border-slate-100 bg-slate-50">
+                    <th
+                      class="px-5 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                    >
+                      顧客
+                    </th>
+                    <th
+                      class="px-5 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                    >
+                      タスク
+                    </th>
+                    <th
+                      class="px-5 py-2.5 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                    >
+                      状態
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3 text-slate-600 whitespace-nowrap text-xs">山田商事</td>
+                    <td class="px-5 py-3">
+                      <!-- リンク: ブランド青 -->
+                      <a
+                        href="#"
+                        class="text-blue-700 hover:text-blue-900 hover:underline font-medium"
+                        >決算書類の確認</a
+                      >
+                    </td>
+                    <td class="px-5 py-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700"
+                        >対応中</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3 text-slate-600 whitespace-nowrap text-xs">鈴木建設</td>
+                    <td class="px-5 py-3">
+                      <a
+                        href="#"
+                        class="text-blue-700 hover:text-blue-900 hover:underline font-medium"
+                        >申告書ドラフトの送付</a
+                      >
+                    </td>
+                    <td class="px-5 py-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600"
+                        >未対応</span
+                      >
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3 text-slate-600 whitespace-nowrap text-xs">田中フーズ</td>
+                    <td class="px-5 py-3">
+                      <a
+                        href="#"
+                        class="text-blue-700 hover:text-blue-900 hover:underline font-medium"
+                        >資料整理・確認</a
+                      >
+                    </td>
+                    <td class="px-5 py-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700"
+                        >差戻し</span
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 通知 -->
+            <!-- 改善: 未読ドットをブランド青に。未読背景も blue-50 で識別しやすく -->
+            <div class="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+                <h3 class="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                  通知
+                  <!-- 未読バッジ: ブランド青 -->
+                  <span
+                    class="inline-flex items-center justify-center h-4 w-4 rounded-full bg-blue-600 text-white text-xs font-bold"
+                    >2</span
+                  >
+                </h3>
+                <button
+                  class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  すべて既読にする
+                </button>
+              </div>
+              <ul class="divide-y divide-slate-100">
+                <!-- 未読: bg-blue-50 で視覚的に識別しやすく -->
+                <li
+                  class="flex items-start gap-3 px-5 py-3.5 bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors"
+                >
+                  <div class="mt-1.5 shrink-0">
+                    <!-- 改善: 未読ドットをブランド青に -->
+                    <div class="h-2 w-2 rounded-full bg-blue-600"></div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-slate-900">
+                      タスク「年末調整書類確認」が割り当てられました
+                    </p>
+                    <p class="mt-0.5 text-xs text-slate-400">2分前</p>
+                  </div>
+                  <svg
+                    class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </li>
+                <li
+                  class="flex items-start gap-3 px-5 py-3.5 bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors"
+                >
+                  <div class="mt-1.5 shrink-0">
+                    <div class="h-2 w-2 rounded-full bg-blue-600"></div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-slate-900">
+                      タスク「法人決算書作成」の期限が近づいています
+                    </p>
+                    <p class="mt-0.5 text-xs text-slate-400">1時間前</p>
+                  </div>
+                  <svg
+                    class="w-4 h-4 text-slate-300 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </li>
+                <li
+                  class="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors"
+                >
+                  <div class="mt-1.5 shrink-0">
+                    <div class="h-2 w-2 rounded-full bg-transparent"></div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm text-slate-500">報告書「4月月次レポート」が作成されました</p>
+                    <p class="mt-0.5 text-xs text-slate-400">昨日</p>
+                  </div>
+                </li>
+                <li
+                  class="flex items-start gap-3 px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors"
+                >
+                  <div class="mt-1.5 shrink-0">
+                    <div class="h-2 w-2 rounded-full bg-transparent"></div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm text-slate-500">タスク「源泉徴収票の確認」が完了しました</p>
+                    <p class="mt-0.5 text-xs text-slate-400">2日前</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- 改善ポイントラベル（確認用） -->
+    <div
+      class="fixed bottom-4 right-4 bg-blue-900 text-white text-xs p-3 rounded-lg max-w-xs shadow-lg"
+    >
+      <p class="font-bold mb-1">After — 主な改善ポイント</p>
+      <ul class="space-y-0.5 text-blue-200">
+        <li>・primary を #1e40af（blue-800）に変更</li>
+        <li>・サイドバーアイコン色を統一（継承）</li>
+        <li>・SummaryCard に左ボーダーアクセント追加</li>
+        <li>・グラフwrapper を Card 統一デザインに</li>
+        <li>・未読通知ドット・背景をブランド青に</li>
+        <li>・テーブルヘッダーに uppercase + text-xs 追加</li>
+      </ul>
+    </div>
+  </body>
+</html>
