@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=375px, initial-scale=1.0" />
+    <title>進捗管理マトリクス After — モバイル版（改善後）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+        background: #f8fafc;
+        max-width: 375px;
+        margin: 0 auto;
+      }
+      /* ブランドカラー */
+      :root {
+        --primary: #1e40af;
+        --primary-light: #eff6ff;
+      }
+      /* ステータスバッジ（色+アイコン+テキスト） */
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 500;
+      }
+      .status-todo {
+        color: #94a3b8;
+        background: #f1f5f9;
+      }
+      .status-in-progress {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .status-done {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .status-returned {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      /* カード */
+      .client-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: box-shadow 0.15s;
+      }
+      .client-card:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+      .client-card.returned {
+        border-left: 3px solid #dc2626;
+      }
+      .client-card.in-progress {
+        border-left: 3px solid #3b82f6;
+      }
+      .client-card.done {
+        border-left: 3px solid #16a34a;
+      }
+      /* 工程チップ */
+      .step-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 11px;
+        padding: 3px 7px;
+        border-radius: 4px;
+        white-space: nowrap;
+        margin: 2px;
+      }
+      /* ボタン */
+      .btn-primary {
+        background: #1e40af;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        font-weight: 600;
+        transition: background 0.15s;
+        min-height: 44px;
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+      }
+      .btn-outline {
+        background: #fff;
+        color: #374151;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px;
+        transition: all 0.15s;
+      }
+      .btn-outline:hover {
+        background: #f8fafc;
+      }
+      /* サマリーカード */
+      .summary-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px 12px;
+        border-left: 3px solid transparent;
+      }
+      .summary-card.complete {
+        border-left-color: #16a34a;
+      }
+      .summary-card.incomplete {
+        border-left-color: #d97706;
+      }
+      .summary-card.returned {
+        border-left-color: #dc2626;
+      }
+      /* フィルタシート用 */
+      .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 13px;
+        cursor: pointer;
+        min-height: 44px;
+      }
+      /* 展開パネル */
+      .step-panel {
+        padding: 12px 14px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: none;
+      }
+      .step-panel.open {
+        display: block;
+      }
+    </style>
+    <script>
+      function toggleCard(id) {
+        const panel = document.getElementById(id)
+        panel.classList.toggle('open')
+      }
+      function toggleFilter() {
+        const panel = document.getElementById('filter-panel')
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
+      }
+    </script>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body>
+    <!-- 改善ラベル -->
+    <div
+      style="
+        background: #1e40af;
+        color: #fff;
+        font-size: 11px;
+        text-align: center;
+        padding: 5px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      "
+    >
+      AFTER — モバイル版（375px）カード型ビュー / タップ領域 44px以上 / 全工程操作可能
+    </div>
+
+    <!-- ヘッダー -->
+    <header
+      style="
+        height: 56px;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 10px;
+        position: sticky;
+        top: 22px;
+        z-index: 90;
+      "
+    >
+      <button
+        style="
+          min-width: 44px;
+          min-height: 44px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #1e40af;
+          font-size: 20px;
+        "
+      >
+        ←
+      </button>
+      <div style="min-width: 0; flex: 1">
+        <div
+          style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em"
+        >
+          進捗管理表
+        </div>
+        <div
+          style="
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          "
+        >
+          2025年 年末調整
+        </div>
+      </div>
+      <!-- 改善: ハンバーガー的なメニューボタン -->
+      <button
+        style="
+          min-width: 44px;
+          min-height: 44px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          background: #fff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+        "
+      >
+        ⋮
+      </button>
+    </header>
+
+    <!-- コンテンツ -->
+    <div style="padding: 12px">
+      <!-- サマリーカード（3つに絞る） -->
+      <div
+        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px"
+      >
+        <div class="summary-card">
+          <div style="font-size: 10px; color: #64748b">全件</div>
+          <div style="font-size: 22px; font-weight: 700; color: #0f172a">5</div>
+        </div>
+        <div class="summary-card incomplete">
+          <div style="font-size: 10px; color: #64748b">◯ 未完了</div>
+          <div style="font-size: 22px; font-weight: 700; color: #d97706">4</div>
+        </div>
+        <div class="summary-card returned">
+          <div style="font-size: 10px; color: #64748b">↩ 差戻し</div>
+          <div style="font-size: 22px; font-weight: 700; color: #dc2626">1</div>
+        </div>
+      </div>
+
+      <!-- 絞り込み（改善: フィルタボタン→Sheet展開パターン） -->
+      <div style="display: flex; gap: 8px; margin-bottom: 14px">
+        <button class="filter-btn" onclick="toggleFilter()" style="flex: 1">
+          <span>🔍</span> 絞り込み・検索
+        </button>
+        <button class="btn-outline" style="width: auto; padding: 0 14px">未完了のみ</button>
+      </div>
+
+      <!-- フィルタパネル（折りたたみ） -->
+      <div
+        id="filter-panel"
+        style="
+          display: none;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 14px;
+          margin-bottom: 14px;
+        "
+      >
+        <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 10px">
+          絞り込み条件
+        </div>
+        <div style="margin-bottom: 10px">
+          <label style="font-size: 11px; color: #64748b; display: block; margin-bottom: 4px"
+            >担当者</label
+          >
+          <select
+            style="
+              width: 100%;
+              border: 1px solid #e2e8f0;
+              border-radius: 6px;
+              padding: 10px;
+              font-size: 13px;
+              height: 44px;
+            "
+          >
+            <option>全担当者</option>
+            <option>田中 太郎</option>
+            <option>佐藤 花子</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 10px">
+          <label style="font-size: 11px; color: #64748b; display: block; margin-bottom: 4px"
+            >顧客名・コードで検索</label
+          >
+          <input
+            type="text"
+            placeholder="例: アルファ / A001"
+            style="
+              width: 100%;
+              border: 1px solid #e2e8f0;
+              border-radius: 6px;
+              padding: 10px;
+              font-size: 13px;
+              box-sizing: border-box;
+              height: 44px;
+            "
+          />
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            min-height: 44px;
+            cursor: pointer;
+          "
+        >
+          <input type="checkbox" style="width: 18px; height: 18px" />
+          <span style="font-size: 13px">主担当先のみ表示</span>
+        </div>
+        <button class="btn-primary" style="margin-top: 12px">この条件で絞り込む</button>
+      </div>
+
+      <!-- カードリスト（改善: PC横長テーブル → モバイル縦カード） -->
+      <div
+        style="
+          font-size: 11px;
+          font-weight: 600;
+          color: #64748b;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        "
+      >
+        顧客 5件
+      </div>
+
+      <!-- カード1: 全完了 -->
+      <div class="client-card done" onclick="toggleCard('steps-1')">
+        <div style="padding: 14px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px">
+                株式会社アルファ商事
+              </div>
+              <div style="font-size: 11px; color: #64748b">A001</div>
+            </div>
+            <span class="status-badge status-done">✓ 全工程完了</span>
+          </div>
+          <!-- 工程チップ一覧（折りたたみ前のプレビュー） -->
+          <div style="display: flex; flex-wrap: wrap; gap: 4px">
+            <span class="step-chip status-done">✓ 書類収集</span>
+            <span class="step-chip status-done">✓ 内容確認</span>
+            <span class="step-chip status-done">✓ 計算入力</span>
+            <span class="step-chip status-done">✓ 照合確認</span>
+            <span class="step-chip status-done">✓ 申告提出</span>
+            <span class="step-chip status-done">✓ 完了確認</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- カード2: 進行中（タップで展開） -->
+      <div class="client-card in-progress">
+        <div style="padding: 14px" onclick="toggleCard('steps-2')">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px">
+                有限会社ベータ工業
+              </div>
+              <div style="font-size: 11px; color: #64748b">B002 ・ 担当: 田中太郎</div>
+            </div>
+            <span class="status-badge status-in-progress">▶ 対応中</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px">
+            <span class="step-chip status-done">✓ 書類収集</span>
+            <span class="step-chip status-in-progress">▶ 内容確認</span>
+            <span class="step-chip status-todo">— 計算入力</span>
+            <span class="step-chip status-todo">— 照合確認</span>
+            <span class="step-chip status-todo">— 申告提出</span>
+            <span class="step-chip status-todo">— 完了確認</span>
+          </div>
+          <div
+            style="
+              font-size: 11px;
+              color: #64748b;
+              margin-top: 8px;
+              padding-top: 8px;
+              border-top: 1px solid #f1f5f9;
+            "
+          >
+            備考: 追加書類待ち &nbsp;&nbsp;
+            <span style="color: #3b82f6">タップして工程を更新 ↓</span>
+          </div>
+        </div>
+        <!-- 展開パネル: 工程ごとのステータス更新 -->
+        <div id="steps-2" class="step-panel">
+          <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 10px">
+            工程ステータスを更新
+          </div>
+          <!-- 各工程の更新UI（タップ領域 44px以上） -->
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #dcfce7;
+                border-radius: 8px;
+                min-height: 44px;
+              "
+            >
+              <span style="font-size: 13px; font-weight: 500; color: #15803d">✓ 書類収集</span>
+              <span style="font-size: 11px; color: #15803d">完了</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #dbeafe;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+              "
+            >
+              <span style="font-size: 13px; font-weight: 500; color: #1d4ed8">▶ 内容確認</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #1d4ed8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+                onclick="event.stopPropagation()"
+              >
+                <option value="in_progress" selected>対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+                <option value="todo">未対応</option>
+              </select>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <span style="font-size: 13px; color: #94a3b8">— 計算入力</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #94a3b8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+                onclick="event.stopPropagation()"
+              >
+                <option value="todo" selected>未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+              </select>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <span style="font-size: 13px; color: #94a3b8">— 照合確認</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #94a3b8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+              >
+                <option value="todo" selected>未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+              </select>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <span style="font-size: 13px; color: #94a3b8">— 申告提出</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #94a3b8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+              >
+                <option value="todo" selected>未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+              </select>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <span style="font-size: 13px; color: #94a3b8">— 完了確認</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #94a3b8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+              >
+                <option value="todo" selected>未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+              </select>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 8px">備考: 追加書類待ち</div>
+        </div>
+      </div>
+
+      <!-- カード3: 差戻し -->
+      <div class="client-card returned" onclick="toggleCard('steps-3')">
+        <div style="padding: 14px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px">ガンマ株式会社</div>
+              <div style="font-size: 11px; color: #64748b">C003 ・ 担当: 佐藤花子</div>
+            </div>
+            <span class="status-badge status-returned">↩ 差戻しあり</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px">
+            <span class="step-chip status-done">✓ 書類収集</span>
+            <span class="step-chip status-done">✓ 内容確認</span>
+            <span class="step-chip status-returned">↩ 計算入力</span>
+            <span class="step-chip status-todo">— 照合確認</span>
+            <span class="step-chip status-todo">— 申告提出</span>
+            <span class="step-chip status-todo">— 完了確認</span>
+          </div>
+          <div
+            style="
+              font-size: 11px;
+              color: #b91c1c;
+              margin-top: 8px;
+              padding-top: 8px;
+              border-top: 1px solid #fee2e2;
+            "
+          >
+            備考: 計算ミス・要修正
+          </div>
+        </div>
+        <div id="steps-3" class="step-panel">
+          <div style="font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 10px">
+            工程ステータスを更新
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #dcfce7;
+                border-radius: 8px;
+                min-height: 44px;
+              "
+            >
+              <span style="font-size: 13px; font-weight: 500; color: #15803d">✓ 書類収集</span>
+              <span style="font-size: 11px; color: #15803d">完了</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #dcfce7;
+                border-radius: 8px;
+                min-height: 44px;
+              "
+            >
+              <span style="font-size: 13px; font-weight: 500; color: #15803d">✓ 内容確認</span>
+              <span style="font-size: 11px; color: #15803d">完了</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #fee2e2;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+              "
+            >
+              <span style="font-size: 13px; font-weight: 500; color: #b91c1c">↩ 計算入力</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #b91c1c;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+                onclick="event.stopPropagation()"
+              >
+                <option value="returned" selected>差戻し</option>
+                <option value="todo">未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+              </select>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                min-height: 44px;
+                cursor: pointer;
+                border: 1px solid #e2e8f0;
+              "
+            >
+              <span style="font-size: 13px; color: #94a3b8">— 照合確認</span>
+              <select
+                style="
+                  border: none;
+                  background: transparent;
+                  font-size: 12px;
+                  color: #94a3b8;
+                  cursor: pointer;
+                  min-height: 32px;
+                "
+              >
+                <option value="todo" selected>未対応</option>
+                <option value="in_progress">対応中</option>
+                <option value="done">完了</option>
+                <option value="returned">差戻し</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- カード4 -->
+      <div class="client-card in-progress" onclick="toggleCard('steps-4')">
+        <div style="padding: 14px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px">
+                デルタコーポレーション
+              </div>
+              <div style="font-size: 11px; color: #64748b">D004 ・ 担当: 田中太郎</div>
+            </div>
+            <span class="status-badge status-in-progress">▶ 対応中</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px">
+            <span class="step-chip status-in-progress">▶ 書類収集</span>
+            <span class="step-chip status-todo">— 内容確認</span>
+            <span class="step-chip status-todo">— 計算入力</span>
+            <span class="step-chip status-todo">— 照合確認</span>
+            <span class="step-chip status-todo">— 申告提出</span>
+            <span class="step-chip status-todo">— 完了確認</span>
+          </div>
+        </div>
+        <div id="steps-4" class="step-panel" style="display: none">
+          <div style="font-size: 12px; color: #64748b">タップで展開して更新できます（省略）</div>
+        </div>
+      </div>
+
+      <!-- カード5 -->
+      <div class="client-card" onclick="toggleCard('steps-5')">
+        <div style="padding: 14px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <div>
+              <div style="font-weight: 700; color: #0f172a; font-size: 14px">
+                イプシロン合同会社
+              </div>
+              <div style="font-size: 11px; color: #64748b">E005 ・ 担当: 佐藤花子</div>
+            </div>
+            <span class="status-badge status-todo">— 未着手</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px">
+            <span class="step-chip status-todo">— 書類収集</span>
+            <span class="step-chip status-todo">— 内容確認</span>
+            <span class="step-chip status-todo">— 計算入力</span>
+            <span class="step-chip status-todo">— 照合確認</span>
+            <span class="step-chip status-todo">— 申告提出</span>
+            <span class="step-chip status-todo">— 完了確認</span>
+          </div>
+        </div>
+        <div id="steps-5" class="step-panel" style="display: none">
+          <div style="font-size: 12px; color: #64748b">タップで展開して更新できます（省略）</div>
+        </div>
+      </div>
+
+      <!-- 改善サマリー -->
+      <div
+        style="
+          margin-top: 20px;
+          border: 1px solid #bfdbfe;
+          border-radius: 8px;
+          padding: 12px;
+          background: #eff6ff;
+        "
+      >
+        <div style="font-size: 12px; font-weight: bold; color: #1e40af; margin-bottom: 8px">
+          改善ポイント（モバイル版 After）
+        </div>
+        <ul
+          style="
+            font-size: 11px;
+            color: #1e3a8a;
+            list-style: disc;
+            padding-left: 16px;
+            line-height: 1.8;
+          "
+        >
+          <li>横スクロールなし — カード型で全工程を縦表示。スマホで全件操作可能</li>
+          <li>タップ領域44px以上 — WCAG準拠。全ての操作が確実にタップできる</li>
+          <li>カードをタップ → 工程リスト展開 → Selectで即時更新のフロー</li>
+          <li>ステータスをアイコン+テキスト+色の3要素で表現（色覚多様性対応）</li>
+          <li>差戻し行は赤いleft-borderで強調 — 要対応状態が一目でわかる</li>
+          <li>フィルタは「絞り込みボタン→パネル展開」パターン — フィルタ選択肢が折り返さない</li>
+          <li>ヘッダーに「⋮」メニュー — 管理ボタンを折り畳んでコンテンツ領域を確保</li>
+          <li>担当者名をカードに表示 — 担当フィルタなしでも誰の顧客か判別可能</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>UI/UX Phase 2 — Before/After モック索引</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-900">
+    <header class="bg-brand-800 text-white">
+      <div class="max-w-5xl mx-auto px-4 py-6">
+        <p class="text-xs font-semibold uppercase tracking-widest text-brand-100">リベ大税理士法人 顧客管理システム</p>
+        <h1 class="text-2xl font-bold mt-1">UI/UX Phase 2 — Before/After モック</h1>
+        <p class="text-sm text-brand-100 mt-2">
+          ブランドカラー：落ち着いた青（#1e40af） / 作成 2026-04-18〜2026-04-19 / 5画面
+        </p>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
+      <!-- ダッシュボード -->
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mb-1">① ダッシュボード</h2>
+        <p class="text-sm text-slate-500 mb-4">毎日最初に開くアプリの顔。ブランドカラー・SummaryCard洗練・グラフCard化。</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <a href="dashboard-before.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 font-medium">現状</p>
+          </a>
+          <a href="dashboard-after.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 進捗マトリクス -->
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mb-1">② 進捗マトリクス</h2>
+        <p class="text-sm text-slate-500 mb-4">スマホで完全に使えなかった致命的問題を解消。モバイル専用カードビュー追加。</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <a href="progress-matrix-before-pc.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 text-sm font-medium">PC</p>
+          </a>
+          <a href="progress-matrix-after-pc.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 text-sm font-medium text-brand-900">PC</p>
+          </a>
+          <a href="progress-matrix-before-mobile.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 text-sm font-medium">モバイル</p>
+          </a>
+          <a href="progress-matrix-after-mobile.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 text-sm font-medium text-brand-900">モバイル</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- サイドバー + ヘッダー -->
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mb-1">③ サイドバー + ヘッダー（全画面共通）</h2>
+        <p class="text-sm text-slate-500 mb-4">アイコン色22色散乱を統一。ブランドカラーのアクティブ状態 + パンくず追加。</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="sidebar-header-before.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 font-medium">現状</p>
+          </a>
+          <a href="sidebar-header-after.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案（PC）</p>
+          </a>
+          <a href="sidebar-header-mobile.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案（モバイル）</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 顧客一覧 -->
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mb-1">④ 顧客一覧</h2>
+        <p class="text-sm text-slate-500 mb-4">テーブルヘッダー視覚階層化 / StatusBadge統一 / モバイルDrawer + カードビュー（税理士・記帳担当も表示）。</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="client-list-before.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 font-medium">現状</p>
+          </a>
+          <a href="client-list-after.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案（PC）</p>
+          </a>
+          <a href="client-list-after-mobile.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案（モバイル）</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- 顧客フォーム -->
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 mb-1">⑤ 顧客フォーム</h2>
+        <p class="text-sm text-slate-500 mb-4">略語ラベル全廃（シティネーム→リベシティ ユーザー名 等） / ボタン動詞化 / 「かんたん登録」ダイアログ新設。</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="client-form-before.html" class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-600 transition">
+            <span class="inline-block text-xs font-semibold text-slate-500 uppercase tracking-wide">Before</span>
+            <p class="mt-1 font-medium">現状</p>
+          </a>
+          <a href="client-form-after.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">改善案（フル）</p>
+          </a>
+          <a href="client-form-simple-dialog.html" class="block bg-white border-2 border-brand-800 rounded-lg p-4 hover:bg-brand-50 transition">
+            <span class="inline-block text-xs font-semibold text-brand-700 uppercase tracking-wide">After</span>
+            <p class="mt-1 font-medium text-brand-900">かんたん登録ダイアログ</p>
+          </a>
+        </div>
+      </section>
+
+      <footer class="pt-6 border-t border-slate-200 text-xs text-slate-400">
+        <p>このページは関係者向けの確認用です（検索エンジン非公開）。</p>
+        <p class="mt-1">詳細レポート: <code>docs/ux-audit/INTEGRATED_REPORT.md</code>（リポジトリ内）</p>
+      </footer>
+    </main>
+  </body>
+</html>

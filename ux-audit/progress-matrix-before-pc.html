@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>進捗管理マトリクス Before — PC版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --primary: oklch(0.205 0 0);
+        --muted: oklch(0.97 0 0);
+      }
+      body {
+        font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+        background: #f9fafb;
+      }
+      .sidebar {
+        background: #111827;
+        width: 240px;
+        min-height: 100vh;
+      }
+      .icon-blue {
+        color: #60a5fa;
+      }
+      .icon-emerald {
+        color: #34d399;
+      }
+      .icon-violet {
+        color: #a78bfa;
+      }
+      .icon-sky {
+        color: #38bdf8;
+      }
+      .icon-teal {
+        color: #2dd4bf;
+      }
+      .icon-orange {
+        color: #fb923c;
+      }
+      .icon-indigo {
+        color: #818cf8;
+      }
+      .icon-rose {
+        color: #fb7185;
+      }
+      .status-todo {
+        color: #9ca3af;
+      }
+      .status-in-progress {
+        color: #2563eb;
+        font-weight: 500;
+      }
+      .status-done {
+        color: #16a34a;
+        font-weight: 500;
+      }
+      .status-returned {
+        color: #dc2626;
+        font-weight: 500;
+      }
+      .cell-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 36px;
+        font-size: 12px;
+        transition: background 0.15s;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+      }
+      .cell-btn:hover {
+        background: #f3f4f6;
+      }
+      .cell-btn.in-progress:hover {
+        background: #dbeafe;
+      }
+      .cell-btn.done:hover {
+        background: #dcfce7;
+      }
+      .cell-btn.returned:hover {
+        background: #fee2e2;
+      }
+      .summary-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fff;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: box-shadow 0.15s;
+      }
+      .summary-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      /* 診断ポイントのハイライト */
+      .diag-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc2626;
+        color: #fff;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 9999px;
+        z-index: 50;
+      }
+      .diag-wrap {
+        position: relative;
+        display: inline-block;
+      }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body>
+    <!-- 診断ラベル -->
+    <div
+      style="background: #1e40af; color: #fff; font-size: 12px; text-align: center; padding: 6px"
+    >
+      BEFORE — PC版（現状の忠実な再現）診断ポイントは赤バッジで示す
+    </div>
+
+    <div class="flex" style="min-height: 100vh">
+      <!-- サイドバー -->
+      <aside class="sidebar flex-shrink-0 flex flex-col py-4 px-3">
+        <div class="flex items-center gap-2 px-2 mb-6">
+          <span class="text-white font-bold text-sm">リベ大税理士法人</span>
+        </div>
+        <nav class="space-y-1 text-sm">
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-blue">⊞</span> ダッシュボード
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-emerald">👥</span> 顧客一覧
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded bg-gray-800 text-white cursor-pointer"
+          >
+            <span class="icon-violet">📊</span> 進捗管理表
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-sky">✓</span> タスク
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-teal">⏱</span> 工数管理
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-orange">📄</span> 報告書
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-indigo">📅</span> カレンダー
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span class="icon-rose">💰</span> 報酬管理
+          </div>
+          <div
+            class="flex items-center gap-2 px-2 py-1.5 rounded text-gray-400 cursor-pointer hover:bg-gray-800"
+          >
+            <span style="color: #f59e0b">⚙</span> 設定
+          </div>
+        </nav>
+        <!-- 診断ポイント: アイコン色が多色 -->
+        <div
+          style="
+            margin-top: auto;
+            border: 1px dashed #dc2626;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            color: #dc2626;
+          "
+        >
+          P0: アイコン色が9色以上散乱。意味を持たない装飾的な多色使い
+        </div>
+      </aside>
+
+      <!-- メイン -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- ヘッダー -->
+        <header class="h-14 bg-white border-b flex items-center px-4 gap-4">
+          <div class="diag-wrap">
+            <span class="text-sm font-medium text-gray-900">進捗管理表</span>
+            <span class="diag-badge">P2</span>
+          </div>
+          <div class="text-xs text-gray-500">階層情報なし・ページタイトルのみ</div>
+          <div class="ml-auto flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+              田
+            </div>
+          </div>
+        </header>
+
+        <!-- コンテンツ -->
+        <main class="flex-1 p-4 overflow-auto">
+          <!-- ページヘッダー行 -->
+          <div class="flex items-center justify-between gap-2 flex-wrap mb-4">
+            <div class="flex items-center gap-2">
+              <button
+                class="text-xs border rounded px-2 py-1 flex items-center gap-1 hover:bg-gray-50"
+              >
+                ← 戻る
+              </button>
+              <div>
+                <h1 class="text-2xl font-bold text-gray-900">2025年 年末調整</h1>
+                <p class="text-xs text-gray-500">年末調整 ・管理者: 田中 太郎</p>
+              </div>
+            </div>
+            <!-- ボタン群: モバイルではあふれる -->
+            <div class="diag-wrap flex gap-2">
+              <button
+                class="text-xs border rounded px-2 py-1.5 flex items-center gap-1 bg-white hover:bg-gray-50"
+              >
+                👤+ 顧客追加
+              </button>
+              <button
+                class="text-xs border rounded px-2 py-1.5 flex items-center gap-1 bg-white hover:bg-gray-50"
+              >
+                ⚙ 設定
+              </button>
+              <button
+                class="text-xs border rounded px-2 py-1.5 flex items-center gap-1 bg-white hover:bg-gray-50"
+              >
+                💾 テンプレ保存
+              </button>
+              <button
+                class="text-xs border rounded px-2 py-1.5 flex items-center gap-1 bg-white hover:bg-gray-50"
+              >
+                テンプレート管理
+              </button>
+              <button
+                class="text-xs border rounded px-2 py-1.5 flex items-center gap-1 bg-white hover:bg-gray-50"
+              >
+                ↓ CSV
+              </button>
+              <span class="diag-badge">P1</span>
+            </div>
+          </div>
+
+          <!-- フィルタ行 -->
+          <div class="flex items-center gap-3 flex-wrap mb-4">
+            <select class="text-xs border rounded px-2 py-1.5 w-28 h-8 bg-white">
+              <option>全担当者</option>
+              <option>田中 太郎</option>
+              <option>佐藤 花子</option>
+            </select>
+            <label class="flex items-center gap-1 text-xs cursor-pointer">
+              <input type="checkbox" /> 主担当先のみ
+            </label>
+            <input
+              type="text"
+              placeholder="キーワード検索..."
+              class="text-xs border rounded px-2 py-1.5 w-44 h-8"
+            />
+            <label class="flex items-center gap-1 text-xs cursor-pointer">
+              <input type="checkbox" /> 未完了のみ
+            </label>
+          </div>
+
+          <!-- サマリーカード -->
+          <div class="grid grid-cols-4 gap-2 mb-4">
+            <div class="summary-card">
+              <div class="text-xs text-gray-500">対象件数</div>
+              <div class="text-2xl font-bold text-gray-900">5</div>
+            </div>
+            <div class="summary-card" style="border-color: #16a34a">
+              <div class="text-xs text-gray-500">完了</div>
+              <div class="text-2xl font-bold text-green-600">1</div>
+            </div>
+            <div class="summary-card">
+              <div class="text-xs text-gray-500">未完了</div>
+              <div class="text-2xl font-bold text-yellow-600">4</div>
+            </div>
+            <div class="summary-card">
+              <div class="text-xs text-gray-500">差戻し</div>
+              <div class="text-2xl font-bold text-red-600">1</div>
+            </div>
+          </div>
+
+          <!-- マトリクステーブル -->
+          <div class="bg-white rounded-lg border overflow-x-auto">
+            <!-- 診断ポイント -->
+            <div
+              style="
+                background: #fee2e2;
+                border-bottom: 1px dashed #dc2626;
+                padding: 6px 12px;
+                font-size: 11px;
+                color: #dc2626;
+              "
+            >
+              P0: このテーブルは生の&lt;table&gt;&lt;select&gt;要素で実装。shadcn/ui
+              から完全逸脱。総幅 = 44 + 200 + (6列×72) + 140 = 816px が最低幅 →
+              スマホ375pxで全列がはみ出す
+            </div>
+            <table class="border-collapse text-xs" style="width: 816px; min-width: 100%">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th
+                    class="sticky left-0 z-30 bg-gray-100 border-b border-r px-2 py-1.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </th>
+                  <th
+                    class="sticky left-11 z-30 bg-gray-100 border-b border-r px-2 py-1.5 text-left font-medium"
+                    style="width: 160px"
+                  >
+                    顧客名
+                  </th>
+                  <th
+                    class="sticky z-30 bg-gray-100 border-b border-r px-2 py-1.5 text-left font-medium"
+                    style="width: 40px; left: 204px"
+                  >
+                    CD
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    書類収集
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    内容確認
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    計算入力
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    照合確認
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    申告提出
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b border-r px-1 py-1.5 text-center font-medium"
+                    style="width: 72px"
+                  >
+                    完了確認
+                  </th>
+                  <th
+                    class="bg-gray-100 border-b px-2 py-1.5 text-left font-medium"
+                    style="width: 140px"
+                  >
+                    備考
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 行1: 全完了 -->
+                <tr class="border-b hover:bg-gray-50">
+                  <td
+                    class="sticky left-0 bg-white border-r px-2 py-0.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </td>
+                  <td
+                    class="sticky left-11 bg-white border-r px-2 py-0.5 font-medium whitespace-nowrap"
+                    style="width: 160px"
+                  >
+                    株式会社アルファ商事
+                  </td>
+                  <td
+                    class="sticky bg-white border-r px-2 py-0.5 text-gray-500 whitespace-nowrap"
+                    style="width: 40px; left: 204px"
+                  >
+                    A001
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/01</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/05</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/10</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/12</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/15</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">04/16</button>
+                  </td>
+                  <td style="width: 140px"><div class="px-2 py-1 text-xs text-gray-400">-</div></td>
+                </tr>
+                <!-- 行2: 進行中 -->
+                <tr class="border-b hover:bg-gray-50">
+                  <td
+                    class="sticky left-0 bg-white border-r px-2 py-0.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </td>
+                  <td
+                    class="sticky left-11 bg-white border-r px-2 py-0.5 font-medium whitespace-nowrap"
+                    style="width: 160px"
+                  >
+                    有限会社ベータ工業
+                  </td>
+                  <td
+                    class="sticky bg-white border-r px-2 py-0.5 text-gray-500 whitespace-nowrap"
+                    style="width: 40px; left: 204px"
+                  >
+                    B002
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">✓</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn in-progress status-in-progress">対応中</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td style="width: 140px">
+                    <div class="px-2 py-1 text-xs text-gray-500">追加書類待ち</div>
+                  </td>
+                </tr>
+                <!-- 行3: 差戻し -->
+                <tr class="border-b hover:bg-gray-50">
+                  <td
+                    class="sticky left-0 bg-white border-r px-2 py-0.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </td>
+                  <td
+                    class="sticky left-11 bg-white border-r px-2 py-0.5 font-medium whitespace-nowrap"
+                    style="width: 160px"
+                  >
+                    ガンマ株式会社
+                  </td>
+                  <td
+                    class="sticky bg-white border-r px-2 py-0.5 text-gray-500 whitespace-nowrap"
+                    style="width: 40px; left: 204px"
+                  >
+                    C003
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">✓</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn done status-done">✓</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn returned status-returned">差戻</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td style="width: 140px">
+                    <div class="px-2 py-1 text-xs text-red-600">計算ミス・要修正</div>
+                  </td>
+                </tr>
+                <!-- 行4 -->
+                <tr class="border-b hover:bg-gray-50">
+                  <td
+                    class="sticky left-0 bg-white border-r px-2 py-0.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </td>
+                  <td
+                    class="sticky left-11 bg-white border-r px-2 py-0.5 font-medium whitespace-nowrap"
+                    style="width: 160px"
+                  >
+                    デルタコーポレーション
+                  </td>
+                  <td
+                    class="sticky bg-white border-r px-2 py-0.5 text-gray-500 whitespace-nowrap"
+                    style="width: 40px; left: 204px"
+                  >
+                    D004
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn in-progress status-in-progress">対応中</button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td style="width: 140px"><div class="px-2 py-1 text-xs text-gray-400">-</div></td>
+                </tr>
+                <!-- 行5 -->
+                <tr class="border-b last:border-0 hover:bg-gray-50">
+                  <td
+                    class="sticky left-0 bg-white border-r px-2 py-0.5 text-center"
+                    style="width: 44px"
+                  >
+                    <input type="checkbox" />
+                  </td>
+                  <td
+                    class="sticky left-11 bg-white border-r px-2 py-0.5 font-medium whitespace-nowrap"
+                    style="width: 160px"
+                  >
+                    イプシロン合同会社
+                  </td>
+                  <td
+                    class="sticky bg-white border-r px-2 py-0.5 text-gray-500 whitespace-nowrap"
+                    style="width: 40px; left: 204px"
+                  >
+                    E005
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td class="border-r p-0" style="width: 72px">
+                    <button class="cell-btn status-todo"></button>
+                  </td>
+                  <td style="width: 140px"><div class="px-2 py-1 text-xs text-gray-400">-</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 診断サマリー -->
+          <div
+            style="
+              margin-top: 24px;
+              border: 1px solid #fca5a5;
+              border-radius: 8px;
+              padding: 12px;
+              background: #fff7f7;
+            "
+          >
+            <div style="font-size: 12px; font-weight: bold; color: #dc2626; margin-bottom: 8px">
+              診断まとめ（PC版 Before）
+            </div>
+            <ul
+              style="
+                font-size: 11px;
+                color: #7f1d1d;
+                list-style: disc;
+                padding-left: 16px;
+                line-height: 1.7;
+              "
+            >
+              <li>
+                P0: 生の &lt;table&gt;&lt;select&gt; 要素 — shadcn/ui
+                から完全逸脱、スタイルが他テーブルと乖離
+              </li>
+              <li>P0: テーブル最低幅816px — スマホ375pxで全列がはみ出しステータス更新不可</li>
+              <li>P0: サイドバーアイコン色が9色以上 — 意味のない装飾的多色使い</li>
+              <li>P1: ヘッダーボタンが5個以上 — モバイルでは折り返して画面を圧迫</li>
+              <li>P1: ステータス色のみの表現 — アイコンもテキスト凡例もなくアクセシビリティ問題</li>
+              <li>P1: ステータス循環クリックの操作説明なし — 初見では操作方法が分からない</li>
+              <li>P2: ヘッダーにブレッドクラムなし — 深い画面でも「進捗管理表」のみ表示</li>
+            </ul>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

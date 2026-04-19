@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>顧客一覧 — After モバイル（375px）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+        background-color: #f8fafc;
+      }
+      /* モバイルDrawerオーバーレイ */
+      .drawer-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 40;
+      }
+      .drawer {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: #fff;
+        border-radius: 1rem 1rem 0 0;
+        z-index: 50;
+        padding: 1.25rem 1rem 2rem;
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+        animation: slideUp 0.22s ease;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      .badge-active { background-color: #dcfce7; color: #166534; }
+      .badge-process { background-color: #dbeafe; color: #1e40af; }
+      .badge-prospect { background-color: #fef9c3; color: #854d0e; }
+      .badge-ended { background-color: #f1f5f9; color: #64748b; }
+      /* カードビュー */
+      .client-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.625rem;
+        padding: 1rem;
+        transition: box-shadow 0.15s;
+      }
+      .client-card:active { box-shadow: 0 0 0 2px #1e40af; }
+    </style>
+      <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body>
+    <!-- モバイルビュー（375px幅を想定） -->
+    <div class="max-w-[375px] mx-auto min-h-screen flex flex-col">
+
+      <!-- モバイルヘッダー -->
+      <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <button class="p-1.5 rounded-md hover:bg-slate-100" aria-label="メニューを開く">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <span class="font-semibold text-slate-800 text-sm">顧客一覧</span>
+        <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-800 text-xs font-semibold">田</div>
+      </header>
+
+      <!-- コンテンツ -->
+      <main class="flex-1 px-4 py-4 space-y-3">
+
+        <!-- 検索バー + フィルタボタン（モバイル: 検索とフィルタDrawerボタンの2列） -->
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+            <input type="text" placeholder="顧客名・コードで検索" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 bg-white" />
+          </div>
+          <!-- フィルタボタン: 条件適用中はバッジ表示 -->
+          <button
+            class="relative flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 whitespace-nowrap"
+            aria-label="絞り込みを開く"
+            onclick="document.getElementById('filterDrawer').style.display='block'; document.getElementById('drawerOverlay').style.display='block';"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+            絞り込み
+            <!-- 条件適用中バッジ -->
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">1</span>
+          </button>
+        </div>
+
+        <!-- 適用中フィルタチップ -->
+        <div class="flex flex-wrap gap-1.5">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-medium rounded-full">
+            ステータス: 契約完了
+            <button class="ml-0.5 hover:text-brand-900" aria-label="ステータスフィルタを解除">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </span>
+        </div>
+
+        <!-- 件数 + 顧客追加ボタン -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-slate-500">42件</span>
+          <a href="#" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-800 hover:bg-brand-900 text-white text-sm font-medium rounded-md">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            顧客を追加する
+          </a>
+        </div>
+
+        <!-- カードビュー（モバイル専用: テーブルの代わり） -->
+        <div class="space-y-2.5">
+          <!-- カード1 -->
+          <a href="#" class="client-card block">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[11px] font-mono text-slate-400 shrink-0">A001</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-brand-800 text-white shrink-0">法人</span>
+                </div>
+                <p class="font-semibold text-slate-900 text-sm leading-snug">株式会社サンプル商事</p>
+                <!-- 担当情報（モバイルで重要情報を縦に整理） -->
+                <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  <span>主: 山田 太郎</span>
+                  <span>副: 鈴木 花子</span>
+                  <span>税: 岸田 ゆうこ</span>
+                  <span>記: 高橋 一郎</span>
+                  <span class="text-slate-400">3月決算</span>
+                </div>
+              </div>
+              <div class="ml-2 shrink-0">
+                <span class="badge-active inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium">契約完了</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- カード2 -->
+          <a href="#" class="client-card block">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[11px] font-mono text-slate-400 shrink-0">A002</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 shrink-0">個人</span>
+                </div>
+                <p class="font-semibold text-slate-900 text-sm leading-snug">田中 ひろし</p>
+                <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  <span>主: 鈴木 花子</span>
+                  <span>税: 岸田 ゆうこ</span>
+                  <span>記: 田中 次郎</span>
+                  <span class="text-slate-400">12月決算</span>
+                </div>
+              </div>
+              <div class="ml-2 shrink-0">
+                <span class="badge-active inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium">契約完了</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- カード3 -->
+          <a href="#" class="client-card block">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[11px] font-mono text-slate-400 shrink-0">B003</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-brand-800 text-white shrink-0">法人</span>
+                </div>
+                <p class="font-semibold text-slate-900 text-sm leading-snug">有限会社テスト工業</p>
+                <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  <span>主: 山田 太郎</span>
+                  <span>副: 高橋 一郎</span>
+                  <span>税: 岸田 ゆうこ</span>
+                  <span>記: 鈴木 花子</span>
+                  <span class="text-slate-400">9月決算</span>
+                </div>
+              </div>
+              <div class="ml-2 shrink-0">
+                <span class="badge-ended inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium">休止中</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- カード4 -->
+          <a href="#" class="client-card block">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[11px] font-mono text-slate-400 shrink-0">C004</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 shrink-0">個人</span>
+                </div>
+                <p class="font-semibold text-slate-900 text-sm leading-snug">佐々木 美奈子</p>
+                <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  <span>主: 高橋 一郎</span>
+                  <span>税: 田中 次郎</span>
+                  <span>記: 岸田 ゆうこ</span>
+                  <span class="text-slate-400">12月決算</span>
+                </div>
+              </div>
+              <div class="ml-2 shrink-0">
+                <span class="badge-prospect inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium">検討中</span>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- ページネーション（モバイル: シンプル化） -->
+        <div class="flex items-center justify-between pt-1 text-sm text-slate-500">
+          <span class="text-xs">42件中 1–20件</span>
+          <div class="flex items-center gap-1">
+            <button class="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-40" disabled>前へ</button>
+            <span class="px-3 py-1.5 rounded-md bg-brand-800 text-white text-xs font-medium">1 / 3</span>
+            <button class="px-3 py-1.5 rounded-md border border-slate-200 text-xs hover:bg-slate-50">次へ</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- フィルタDrawer（モバイル専用: 下から出るボトムシート） -->
+    <div id="drawerOverlay" class="drawer-overlay" style="display:none" onclick="document.getElementById('filterDrawer').style.display='none'; this.style.display='none';"></div>
+    <div id="filterDrawer" class="drawer" style="display:none">
+      <!-- ハンドル -->
+      <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-900">絞り込み</h2>
+        <button
+          class="text-sm text-slate-400 hover:text-slate-600"
+          onclick="document.getElementById('filterDrawer').style.display='none'; document.getElementById('drawerOverlay').style.display='none';"
+        >閉じる</button>
+      </div>
+      <!-- フィルタ項目 -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">種別</label>
+          <div class="flex gap-2">
+            <button class="px-3 py-1.5 rounded-md border border-brand-600 bg-brand-50 text-brand-700 text-sm font-medium">全て</button>
+            <button class="px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 text-sm">法人</button>
+            <button class="px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 text-sm">個人</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">ステータス</label>
+          <select class="w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-600">
+            <option>全ステータス</option>
+            <option selected>契約完了</option>
+            <option>契約書手続中</option>
+            <option>見込み</option>
+            <option>顧問契約検討中</option>
+            <option>休止中</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">担当者</label>
+          <select class="w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-600">
+            <option>全担当者</option>
+            <option>山田 太郎</option>
+            <option>鈴木 花子</option>
+            <option>高橋 一郎</option>
+          </select>
+        </div>
+      </div>
+      <!-- アクションボタン -->
+      <div class="flex gap-2 mt-6">
+        <button class="flex-1 py-2.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">リセット</button>
+        <button
+          class="flex-1 py-2.5 bg-brand-800 hover:bg-brand-900 text-white rounded-md text-sm font-medium"
+          onclick="document.getElementById('filterDrawer').style.display='none'; document.getElementById('drawerOverlay').style.display='none';"
+        >この条件で絞り込む</button>
+      </div>
+    </div>
+  </body>
+</html>
