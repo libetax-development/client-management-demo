@@ -64,7 +64,8 @@ function submitEditTask() {
 
 function deleteTask() {
   const id = getVal('edit-task-id');
-  if (!confirm('このタスクを削除しますか？')) return;
+  const task = MOCK_DATA.tasks.find(x => x.id === id);
+  if (!confirm(`タスク「${task ? task.title : id}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.tasks = MOCK_DATA.tasks.filter(x => x.id !== id);
   hideModal('task-edit-modal');
   navigateTo('tasks');

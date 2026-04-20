@@ -187,7 +187,8 @@ function submitChatRoom() {
 
 function deleteChatRoom() {
   if (!editingChatRoomId) return;
-  if (!confirm('このチャットルームを削除しますか？')) return;
+  const room = getChatRoomById(editingChatRoomId);
+  if (!confirm(`チャットルーム「${room ? room.roomName : editingChatRoomId}」を削除しますか？\nこの操作は取り消せません。`)) return;
   const idx = MOCK_DATA.chatRooms.findIndex(r => r.id === editingChatRoomId);
   if (idx >= 0) MOCK_DATA.chatRooms.splice(idx, 1);
   closeChatRoomModal();

@@ -184,7 +184,9 @@ function editTimeEntry(id) {
 }
 
 function deleteTimeEntry(id) {
-  if (!confirm('この工数エントリを削除しますか？')) return;
+  const entry = MOCK_DATA.timeEntries.find(e => e.id === id);
+  const label = entry ? `${entry.date} ${entry.description}` : id;
+  if (!confirm(`工数エントリ「${label}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.timeEntries = MOCK_DATA.timeEntries.filter(e => e.id !== id);
   // ページ再描画
   navigateTo('timesheet');

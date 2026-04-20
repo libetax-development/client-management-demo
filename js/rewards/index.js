@@ -269,7 +269,9 @@ function submitRewardAdjust(month) {
 }
 
 function deleteRewardAdjust(id) {
-  if (!confirm('この調整を削除しますか？')) return;
+  const adj = (MOCK_DATA.rewardAdjustments || []).find(a => a.id === id);
+  const label = adj ? `${adj.reason}（${adj.amount.toLocaleString()}円）` : id;
+  if (!confirm(`調整「${label}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.rewardAdjustments = (MOCK_DATA.rewardAdjustments || []).filter(a => a.id !== id);
   closeRewardAdjustModal();
   const content = document.getElementById('page-content');

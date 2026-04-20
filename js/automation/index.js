@@ -104,7 +104,8 @@ function submitNewAutomationRule() {
 }
 
 function deleteAutomationRule(id) {
-  if (!confirm('このルールを削除しますか？')) return;
+  const rule = MOCK_DATA.automationRules.find(r => r.id === id);
+  if (!confirm(`ルール「${rule ? rule.name : id}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.automationRules = MOCK_DATA.automationRules.filter(r => r.id !== id);
   const content = document.getElementById('page-content');
   if (content) renderAutomation(content);

@@ -76,7 +76,9 @@ function renderTeamCards() {
 }
 
 function removeTeamMember(teamId, memberId) {
-  if (!confirm('このメンバーを削除しますか？')) return;
+  const member = MOCK_DATA.teamMembers.find(m => m.id === memberId);
+  const user = member ? getUserById(member.userId) : null;
+  if (!confirm(`メンバー「${user ? user.name : memberId}」をチームから削除しますか？\nこの操作は取り消せません。`)) return;
   const idx = MOCK_DATA.teamMembers.findIndex(m => m.id === memberId);
   if (idx >= 0) MOCK_DATA.teamMembers.splice(idx, 1);
   renderTeamCards();

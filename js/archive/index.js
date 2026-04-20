@@ -60,7 +60,8 @@ function renderArchiveList() {
 }
 
 function deleteArchive(archId) {
-  if (!confirm('このアーカイブを削除しますか？')) return;
+  const archive = MOCK_DATA.clientArchives.find(a => a.id === archId);
+  if (!confirm(`アーカイブ「${archive ? archive.name : archId}」を削除しますか？\nこの操作は取り消せません。`)) return;
   const idx = MOCK_DATA.clientArchives.findIndex(a => a.id === archId);
   if (idx >= 0) MOCK_DATA.clientArchives.splice(idx, 1);
   renderArchiveList();

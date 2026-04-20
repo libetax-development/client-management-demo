@@ -57,7 +57,8 @@ function editDepartment(deptId) {
 }
 
 function deleteDepartment(deptId) {
-  if (!confirm('この部署を削除しますか？')) return;
+  const dept = MOCK_DATA.departments.find(x => x.deptId === deptId);
+  if (!confirm(`部署「${dept ? dept.deptName : deptId}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.departments = MOCK_DATA.departments.filter(x => x.deptId !== deptId);
   settingsRerender();
 }
@@ -484,7 +485,8 @@ function saveReportTemplate() {
 }
 
 function deleteReportTemplate(id) {
-  if (!confirm('このテンプレートを削除しますか？')) return;
+  const tmpl = (MOCK_DATA.reportTemplates || []).find(x => x.id === id);
+  if (!confirm(`テンプレート「${tmpl ? tmpl.name : id}」を削除しますか？\nこの操作は取り消せません。`)) return;
   MOCK_DATA.reportTemplates = (MOCK_DATA.reportTemplates || []).filter(x => x.id !== id);
   settingsActiveTab = 6;
   settingsRerender();
