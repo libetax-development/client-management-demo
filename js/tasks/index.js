@@ -198,12 +198,16 @@ function renderTaskTable() {
   renderTableBody('task-table-body', pageItems, t => {
     const client = getClientById(t.clientId);
     const assignee = getUserById(t.assigneeUserId);
+    const overdue = t.dueDate && t.dueDate < today && t.status !== '完了';
+    const dateCell = t.dueDate
+      ? `<span${overdue ? ' style="color:var(--danger);font-weight:500;"' : ''}>${overdue ? '⚠ ' : ''}${formatDate(t.dueDate)}</span>`
+      : '<span style="color:var(--gray-400)">-</span>';
     return `<tr class="clickable" onclick="navigateTo('task-detail',{id:'${t.id}'})">
       <td><strong>${escapeHtml(t.title)}</strong></td>
       <td>${escapeHtml(client?.name || '-')}</td>
       <td>${escapeHtml(assignee?.name || '-')}</td>
       <td onclick="event.stopPropagation()">${renderTaskStatusSelect(t)}</td>
-      <td>${formatDate(t.dueDate)}</td>
+      <td>${dateCell}</td>
     </tr>`;
   }, 5);
 
