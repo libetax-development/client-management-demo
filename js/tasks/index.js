@@ -261,6 +261,46 @@ function changeTaskStatus(taskId, newStatus) {
   }
 }
 
+/** タスク詳細用ステータス遷移ボタン（モバイルflex-wrap対応） */
+function renderTaskStatusActions(task) {
+  const container = document.getElementById('task-status-actions');
+  if (!container) return;
+  const transitions = getTaskTransitions(task.status);
+  if (transitions.length === 0) { container.innerHTML = ''; return; }
+
+  const TRANSITION_MAP = {
+    '未着手->進行中': { label: '進行中にする', cls: 'btn-primary' },
+    '進行中->完了': { label: '完了にする', cls: 'btn-primary' },
+    '完了->進行中': { label: '進行中に戻す', cls: 'btn-secondary' },
+    '差戻し->進行中': { label: '進行中にする', cls: 'btn-primary' },
+  };
+
+  const buttons = transitions.map(to => {
+    const key = `${task.status}->${to}`;
+    const meta = TRANSITION_MAP[key] || { label: to + 'にする', cls: 'btn-primary' };
+    return `<button class="btn ${meta.cls} btn-sm" onclick="changeTaskStatusDetail('${task.id}','${to}')">${meta.label}</button>`;
+  }).join('');
+
+  container.innerHTML = `<div class="status-actions-row">${buttons}</div>`;
+}
+
+function changeTaskStatusDetail(taskId, newStatus) {
+  const task = MOCK_DATA.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.status = newStatus;
+  if (newStatus === '完了') {
+    task.completedAt = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' });
+  } else {
+    task.completedAt = null;
+  }
+  // ステータスバッジを更新
+  const statusEl = document.querySelector('.detail-value .status-badge');
+  if (statusEl) {
+    statusEl.outerHTML = renderStatusBadge(newStatus);
+  }
+  renderTaskStatusActions(task);
+}
+
 // ===========================
 // タスク詳細
 // ===========================
@@ -286,6 +326,7 @@ function renderTaskDetail(el, params) {
           <div class="detail-row"><div class="detail-label">作成日</div><div class="detail-value">${formatDate(t.createdAt)}</div></div>
           ${t.completedAt ? `<div class="detail-row"><div class="detail-label">完了日</div><div class="detail-value">${formatDateTime(t.completedAt)}</div></div>` : ''}
           ${t.templateRunId ? `<div class="detail-row"><div class="detail-label">テンプレート</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('template-detail',{id:'${t.templateRunId}'})">テンプレートから生成</a></div></div>` : ''}
+          <div class="status-actions" id="task-status-actions"></div>
         </div>
       </div>
       <div>
@@ -336,6 +377,7 @@ function renderTaskDetail(el, params) {
   renderTaskComments(t.id);
   renderChecklist(t);
   renderTaskFiles(t.id);
+  renderTaskStatusActions(t);
 
   document.getElementById('task-file-add').addEventListener('click', () => addTaskFile(t.id));
   document.getElementById('task-comment-send').addEventListener('click', () => submitTaskComment(t.id));
