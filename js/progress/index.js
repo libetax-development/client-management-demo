@@ -144,17 +144,18 @@ function renderProgressDetail(el, params) {
   document.getElementById('header-title').textContent = `進捗管理表 - ${sheet.name}`;
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <a href="#" onclick="event.preventDefault();navigateTo('progress')">&larr; 進捗管理表一覧に戻る</a>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+    <div class="pg-detail-header">
+      <a href="#" onclick="event.preventDefault();navigateTo('progress')">&larr; 戻る</a>
+      <div class="pg-detail-actions">
         <button class="btn btn-secondary btn-sm" onclick="addProgressTargets('${sheet.id}')">+ 顧客追加</button>
-        <button class="btn btn-secondary btn-sm" onclick="saveAsProgressTemplate('${sheet.id}')">テンプレ保存</button>
-        <button class="btn btn-secondary btn-sm" onclick="navigateTo('templates')">テンプレート管理</button>
+        <button class="btn btn-secondary btn-sm pg-desktop-only" onclick="saveAsProgressTemplate('${sheet.id}')">テンプレ保存</button>
+        <button class="btn btn-secondary btn-sm pg-desktop-only" onclick="navigateTo('templates')">テンプレート管理</button>
         <button class="btn btn-secondary btn-sm" onclick="exportProgressCSV('${sheet.id}')">CSV</button>
       </div>
     </div>
 
-    <div class="toolbar" style="flex-wrap:wrap;">
+    <!-- フィルタ: PC表示 -->
+    <div class="toolbar pg-filter-pc" style="flex-wrap:wrap;">
       <select class="filter-select" id="pd-assignee-filter">
         <option value="">全担当者</option>
         ${buildUserOptions()}
@@ -162,10 +163,51 @@ function renderProgressDetail(el, params) {
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;">
         <input type="checkbox" id="pd-main-only"> 主担当先のみ
       </label>
-      <input type="text" class="search-input" placeholder="キーワード検索..." id="pd-search" style="width:100%;max-width:176px;">
+      <input type="text" class="search-input" placeholder="キーワード検索..." id="pd-search-pc" style="width:100%;max-width:176px;">
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;">
         <input type="checkbox" id="pd-incomplete-only"> 未完了のみ
       </label>
+    </div>
+
+    <!-- フィルタ: モバイル表示 -->
+    <div class="toolbar pg-filter-mobile">
+      <input type="text" class="search-input" placeholder="キーワード検索..." id="pd-search" style="flex:1;width:auto;min-width:0;">
+      <button class="btn btn-secondary btn-sm" id="pg-filter-btn" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        フィルタ<span class="filter-badge" id="pg-filter-badge" style="display:none"></span>
+      </button>
+    </div>
+
+    <!-- フィルタードロワー（モバイル） -->
+    <div class="filter-drawer-overlay" id="pg-filter-overlay"></div>
+    <div class="filter-drawer" id="pg-filter-drawer">
+      <div class="filter-drawer-header">
+        <span style="font-weight:600;font-size:14px;">フィルタ</span>
+        <button class="btn btn-secondary btn-sm" id="pg-filter-close">✕</button>
+      </div>
+      <div class="filter-drawer-body">
+        <div class="filter-drawer-group">
+          <label style="font-size:12px;font-weight:500;color:var(--gray-600);margin-bottom:4px;display:block;">担当者</label>
+          <select class="filter-select" id="pd-assignee-filter-m" style="width:100%;">
+            <option value="">全担当者</option>
+            ${buildUserOptions()}
+          </select>
+        </div>
+        <div class="filter-drawer-group">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="pd-main-only-m"> 主担当先のみ
+          </label>
+        </div>
+        <div class="filter-drawer-group">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="pd-incomplete-only-m"> 未完了のみ
+          </label>
+        </div>
+      </div>
+      <div class="filter-drawer-footer">
+        <button class="btn btn-secondary btn-sm" id="pg-filter-reset">リセット</button>
+        <button class="btn btn-primary btn-sm" id="pg-filter-apply">絞り込む</button>
+      </div>
     </div>
 
     <div class="stats-grid" id="pd-summary"></div>
@@ -188,7 +230,9 @@ function renderProgressDetail(el, params) {
   function draw() {
     const assigneeFilter = document.getElementById('pd-assignee-filter')?.value || '';
     const mainOnly = document.getElementById('pd-main-only')?.checked || false;
-    const search = (document.getElementById('pd-search')?.value || '').toLowerCase();
+    const searchMobile = (document.getElementById('pd-search')?.value || '').toLowerCase();
+    const searchPC = (document.getElementById('pd-search-pc')?.value || '').toLowerCase();
+    const search = searchMobile || searchPC;
     const incompleteOnly = document.getElementById('pd-incomplete-only')?.checked || false;
 
     let targets = sheet.targets.filter(t => {
@@ -290,7 +334,54 @@ function renderProgressDetail(el, params) {
     draw();
   };
 
-  bindFilters(['pd-assignee-filter', 'pd-main-only', 'pd-search', 'pd-incomplete-only'], draw);
+  // フィルタードロワー（モバイル）
+  function pgOpenDrawer() {
+    document.getElementById('pg-filter-drawer').classList.add('open');
+    document.getElementById('pg-filter-overlay').classList.add('open');
+  }
+  function pgCloseDrawer() {
+    document.getElementById('pg-filter-drawer').classList.remove('open');
+    document.getElementById('pg-filter-overlay').classList.remove('open');
+  }
+  function pgUpdateFilterBadge() {
+    const assignee = document.getElementById('pd-assignee-filter-m')?.value || '';
+    const mainOnly = document.getElementById('pd-main-only-m')?.checked || false;
+    const incompleteOnly = document.getElementById('pd-incomplete-only-m')?.checked || false;
+    const count = (assignee ? 1 : 0) + (mainOnly ? 1 : 0) + (incompleteOnly ? 1 : 0);
+    const badge = document.getElementById('pg-filter-badge');
+    if (badge) {
+      badge.style.display = count > 0 ? 'inline-flex' : 'none';
+      badge.textContent = count;
+    }
+  }
+  function pgApplyDrawer() {
+    // PC側に同期
+    const assignee = document.getElementById('pd-assignee-filter-m')?.value || '';
+    const mainOnly = document.getElementById('pd-main-only-m')?.checked || false;
+    const incompleteOnly = document.getElementById('pd-incomplete-only-m')?.checked || false;
+    const pcAssignee = document.getElementById('pd-assignee-filter');
+    const pcMain = document.getElementById('pd-main-only');
+    const pcIncomplete = document.getElementById('pd-incomplete-only');
+    if (pcAssignee) pcAssignee.value = assignee;
+    if (pcMain) pcMain.checked = mainOnly;
+    if (pcIncomplete) pcIncomplete.checked = incompleteOnly;
+    pgUpdateFilterBadge();
+    pgCloseDrawer();
+    draw();
+  }
+
+  document.getElementById('pg-filter-btn')?.addEventListener('click', pgOpenDrawer);
+  document.getElementById('pg-filter-close')?.addEventListener('click', pgCloseDrawer);
+  document.getElementById('pg-filter-overlay')?.addEventListener('click', pgCloseDrawer);
+  document.getElementById('pg-filter-apply')?.addEventListener('click', pgApplyDrawer);
+  document.getElementById('pg-filter-reset')?.addEventListener('click', () => {
+    ['pd-assignee-filter-m'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['pd-main-only-m', 'pd-incomplete-only-m'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+    pgUpdateFilterBadge();
+  });
+  document.getElementById('pd-search')?.addEventListener('input', draw);
+
+  bindFilters(['pd-assignee-filter', 'pd-main-only', 'pd-search-pc', 'pd-incomplete-only'], draw);
   draw();
 }
 

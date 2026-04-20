@@ -315,6 +315,17 @@ tbody tr.clickable { cursor: pointer; }
 .toggle input:checked + .toggle-slider { background: var(--primary); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
 
+/* ── 進捗管理表 ヘッダー・フィルタ（モバイル対応） ── */
+.pg-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap; }
+.pg-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pg-filter-mobile { display: none; }
+.pg-filter-pc { display: flex; }
+@media (max-width: 768px) {
+  .pg-desktop-only { display: none !important; }
+  .pg-filter-mobile { display: flex; gap: 8px; align-items: center; }
+  .pg-filter-pc { display: none; }
+}
+
 /* ── 進捗管理表 ── */
 .pg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .pg-progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
