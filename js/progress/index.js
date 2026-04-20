@@ -146,9 +146,11 @@ function renderProgressDetail(el, params) {
   el.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <a href="#" onclick="event.preventDefault();navigateTo('progress')">&larr; 進捗管理表一覧に戻る</a>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="saveAsProgressTemplate('${sheet.id}')">テンプレートとして保存</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn btn-secondary btn-sm" onclick="addProgressTargets('${sheet.id}')">+ 顧客追加</button>
+        <button class="btn btn-secondary btn-sm" onclick="saveAsProgressTemplate('${sheet.id}')">テンプレ保存</button>
         <button class="btn btn-secondary btn-sm" onclick="navigateTo('templates')">テンプレート管理</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportProgressCSV('${sheet.id}')">CSV</button>
       </div>
     </div>
 
@@ -160,13 +162,10 @@ function renderProgressDetail(el, params) {
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;">
         <input type="checkbox" id="pd-main-only"> 主担当先のみ
       </label>
-      <input type="text" class="search-input" placeholder="キーワード検索..." id="pd-search" style="width:180px;">
+      <input type="text" class="search-input" placeholder="キーワード検索..." id="pd-search" style="width:100%;max-width:176px;">
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;">
         <input type="checkbox" id="pd-incomplete-only"> 未完了のみ
       </label>
-      <div class="spacer"></div>
-      <button class="btn btn-secondary btn-sm" onclick="exportProgressCSV('${sheet.id}')">エクスポート</button>
-      <button class="btn btn-secondary btn-sm" onclick="bulkStatusUpdate('${sheet.id}')">一括操作</button>
     </div>
 
     <div class="stats-grid" id="pd-summary"></div>
