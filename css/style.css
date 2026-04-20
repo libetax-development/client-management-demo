@@ -200,6 +200,8 @@ tbody tr.clickable { cursor: pointer; }
 .detail-value { font-size: 13px; color: var(--gray-800); }
 .status-actions { padding: 12px 0 4px; border-top: 1px solid var(--gray-100); margin-top: 8px; }
 .status-actions-row { display: flex; flex-wrap: wrap; gap: 8px; }
+/* フォームフッター（保存・キャンセルボタン）— iOS safe area対応 */
+.form-footer { position: sticky; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--gray-200); background: #fff; padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
 
 /* ── タブ ── */
 .tab-bar { display: flex; border-bottom: 2px solid var(--gray-200); margin-bottom: 20px; }
@@ -208,8 +210,8 @@ tbody tr.clickable { cursor: pointer; }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
 /* ── ビュー切替 ── */
-.view-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.view-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; background: var(--gray-100); color: var(--gray-600); border: none; cursor: pointer; }
+.view-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.view-tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; background: var(--gray-100); color: var(--gray-600); border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
 .view-tab.active { background: var(--primary); color: #fff; }
 
 /* ── 空状態 ── */
