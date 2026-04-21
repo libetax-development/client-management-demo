@@ -4,7 +4,8 @@
 
 // ── タスク作成モーダル ──
 function openTaskModal() {
-  document.getElementById('new-task-client').innerHTML = buildClientOptions(true);
+  document.getElementById('new-task-client').innerHTML =
+    '<option value="">（指定なし／個人タスク）</option>' + buildClientOptions(true);
   document.getElementById('new-task-assignee').innerHTML = buildUserOptions('staff');
   resetForm(['new-task-title', 'new-task-due']);
   document.getElementById('new-task-status').value = '未着手';
@@ -23,7 +24,8 @@ function submitNewTask() {
 
   MOCK_DATA.tasks.push({
     id: generateId('tk-', MOCK_DATA.tasks),
-    clientId, assigneeUserId: assigneeId, title, status, dueDate,
+    clientId: clientId || null,
+    assigneeUserId: assigneeId, title, status, dueDate,
     createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }),
   });
 

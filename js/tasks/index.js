@@ -200,7 +200,7 @@ function renderTaskTable() {
     const assignee = getUserById(t.assigneeUserId);
     return `<tr class="clickable" onclick="navigateTo('task-detail',{id:'${t.id}'})">
       <td><strong>${escapeHtml(t.title)}</strong></td>
-      <td>${escapeHtml(client?.name || '-')}</td>
+      <td>${client ? escapeHtml(client.name) : '<span style="color:var(--gray-400);font-size:12px;">（個人タスク）</span>'}</td>
       <td>${escapeHtml(assignee?.name || '-')}</td>
       <td onclick="event.stopPropagation()">${renderTaskStatusSelect(t)}</td>
       <td>${formatDate(t.dueDate)}</td>
@@ -319,7 +319,7 @@ function renderTaskDetail(el, params) {
         <div class="card-body">
           <div class="detail-row"><div class="detail-label">タスク名</div><div class="detail-value">${escapeHtml(t.title)}</div></div>
           ${t.description ? `<div class="detail-row"><div class="detail-label">説明</div><div class="detail-value">${escapeHtml(t.description)}</div></div>` : ''}
-          <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${t.clientId}'})">${escapeHtml(client?.name || '-')}</a></div></div>
+          <div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value">${client ? `<a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${t.clientId}'})">${escapeHtml(client.name)}</a>` : '<span style="color:var(--gray-500);">（個人タスク）</span>'}</div></div>
           <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${escapeHtml(assignee?.name || '-')}</div></div>
           <div class="detail-row"><div class="detail-label">ステータス</div><div class="detail-value">${renderStatusBadge(t.status)}</div></div>
           <div class="detail-row"><div class="detail-label">期限</div><div class="detail-value">${formatDate(t.dueDate)}</div></div>
