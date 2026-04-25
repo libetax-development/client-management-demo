@@ -116,7 +116,10 @@ function renderCalendar(el) {
       const dow = (firstDay + d - 1) % 7; // 0=月, 5=土, 6=日
       const holidayName = getHolidayName(ds);
       const dayTasks = tasks.filter(t => t.dueDate === ds);
-      const dayEvents = events.filter(e => e.date === ds);
+      const dayEvents = events.filter(e => {
+        const eEnd = e.endDate || e.date;
+        return e.date <= ds && eEnd >= ds;
+      });
       const allItems = [];
 
       dayTasks.forEach(t => {
@@ -125,8 +128,9 @@ function renderCalendar(el) {
       });
       dayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
+        const multiDayLabel = e.endDate && e.endDate > e.date ? ' [複数日]' : '';
         const timeStr = e.time ? e.time + ' ' : '';
-        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${escapeHtml(e.title + (e.location ? ' (' + e.location + ')' : ''))}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${escapeHtml(timeStr + e.title.slice(0, 10))}</div>` });
+        allItems.push({ html: `<div class="cal-event ${typeClass}" title="${escapeHtml(e.title + multiDayLabel + (e.location ? ' (' + e.location + ')' : ''))}" onclick="event.stopPropagation();showCalEventDetail('${e.id}')" style="cursor:pointer;">${escapeHtml(timeStr + e.title.slice(0, 10))}${multiDayLabel}</div>` });
       });
 
       const isHolidayDay = !!holidayName;
@@ -188,7 +192,11 @@ function renderCalendar(el) {
     weekDates.forEach(dt => {
       const ds = dateStrFromDate(dt);
       const dayTasks = tasks.filter(t => t.dueDate === ds);
-      const alldayEvents = events.filter(e => e.date === ds && !e.time);
+      const alldayEvents = events.filter(e => {
+        if (e.time) return false; // 時刻あり → 時間帯行に表示
+        const eEnd = e.endDate || e.date;
+        return e.date <= ds && eEnd >= ds;
+      });
       const items = [];
       dayTasks.forEach(t => {
         const client = getClientById(t.clientId);
@@ -196,7 +204,8 @@ function renderCalendar(el) {
       });
       alldayEvents.forEach(e => {
         const typeClass = e.type === 'deadline' ? 'cal-event-deadline' : e.type === 'internal' ? 'cal-event-internal' : 'cal-event-meeting';
-        items.push(`<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;" title="${escapeHtml(e.title)}">${escapeHtml(e.title.slice(0, 10))}</div>`);
+        const multiDayLabel = e.endDate && e.endDate > e.date ? ' [複数日]' : '';
+        items.push(`<div class="cal-event ${typeClass}" style="font-size:10px;margin:1px 0;" title="${escapeHtml(e.title + multiDayLabel)}">${escapeHtml(e.title.slice(0, 10))}${multiDayLabel}</div>`);
       });
       html += `<td style="padding:4px;border:1px solid var(--gray-200);vertical-align:top;min-width:100px;">${items.join('')}</td>`;
     });
@@ -302,7 +311,8 @@ function renderCalendar(el) {
       return true;
     }) : [];
     const dayEvents = typeFilter !== 'task' ? MOCK_DATA.calendarEvents.filter(e => {
-      if (e.date !== dateStr) return false;
+      const eEnd = e.endDate || e.date;
+      if (e.date > dateStr || eEnd < dateStr) return false;
       if (userFilter && e.userId && e.userId !== userFilter) return false;
       return true;
     }) : [];
@@ -416,26 +426,123 @@ function renderCalendar(el) {
 function openEventModal() {
   document.getElementById('new-ev-user').innerHTML = '<option value="">なし</option>' + buildUserOptions();
   document.getElementById('new-ev-client').innerHTML = '<option value="">なし</option>' + buildClientOptions(true);
-  resetForm(['new-ev-title', 'new-ev-date', 'new-ev-time', 'new-ev-duration', 'new-ev-location']);
+  resetForm(['new-ev-title', 'new-ev-start-date', 'new-ev-end-date', 'new-ev-time', 'new-ev-end-time', 'new-ev-duration', 'new-ev-location', 'new-ev-link-timesheet']);
   setFormValues({ 'new-ev-type': 'meeting' });
+
+  // エラー表示リセット
+  const dateErr = document.getElementById('new-ev-date-error');
+  const timeErr = document.getElementById('new-ev-time-error');
+  if (dateErr) { dateErr.style.display = 'none'; dateErr.textContent = ''; }
+  if (timeErr) { timeErr.style.display = 'none'; timeErr.textContent = ''; }
+
+  // 日跨ぎ関連UI初期化（工数連動チェックボックスを通常表示）
+  updateTimesheetLinkVisibility();
+
+  // 開始日変更時に終了日をデフォルト同期 + 日跨ぎUI更新
+  const startDateEl = document.getElementById('new-ev-start-date');
+  const endDateEl = document.getElementById('new-ev-end-date');
+  startDateEl.onchange = function () {
+    if (!endDateEl.value || endDateEl.value < startDateEl.value) {
+      endDateEl.value = startDateEl.value;
+    }
+    updateTimesheetLinkVisibility();
+    clearEventFormErrors();
+  };
+  endDateEl.onchange = function () {
+    updateTimesheetLinkVisibility();
+    clearEventFormErrors();
+  };
+
+  // 顧客変更時に工数連動チェックボックスの自動ON
+  document.getElementById('new-ev-client').onchange = function () {
+    const isMultiDay = isEventMultiDay();
+    if (!isMultiDay && this.value) {
+      document.getElementById('new-ev-link-timesheet').checked = true;
+    }
+    updateTimesheetLinkVisibility();
+  };
+
   showModal('event-create-modal');
+}
+
+// 日跨ぎかどうかを判定
+function isEventMultiDay() {
+  const startDate = getVal('new-ev-start-date');
+  const endDate = getVal('new-ev-end-date');
+  return startDate && endDate && endDate > startDate;
+}
+
+// 工数連動UIの表示切り替え（日跨ぎ時はdisabled表示）
+function updateTimesheetLinkVisibility() {
+  const normalGroup = document.getElementById('new-ev-link-timesheet-group');
+  const disabledGroup = document.getElementById('new-ev-link-timesheet-disabled-group');
+  if (!normalGroup || !disabledGroup) return;
+  if (isEventMultiDay()) {
+    normalGroup.style.display = 'none';
+    disabledGroup.style.display = 'block';
+    // 日跨ぎ時はチェックを強制OFF
+    const cb = document.getElementById('new-ev-link-timesheet');
+    if (cb) cb.checked = false;
+  } else {
+    normalGroup.style.display = 'flex';
+    disabledGroup.style.display = 'none';
+  }
+}
+
+// エラー表示クリア
+function clearEventFormErrors() {
+  const dateErr = document.getElementById('new-ev-date-error');
+  const timeErr = document.getElementById('new-ev-time-error');
+  if (dateErr) { dateErr.style.display = 'none'; dateErr.textContent = ''; }
+  if (timeErr) { timeErr.style.display = 'none'; timeErr.textContent = ''; }
 }
 
 function submitNewEvent() {
   const title = getValTrim('new-ev-title');
-  const date = getVal('new-ev-date');
+  const startDate = getVal('new-ev-start-date');
+  const endDate = getVal('new-ev-end-date');
+
+  clearEventFormErrors();
+
   if (!title) { alert('タイトルを入力してください'); return; }
-  if (!date) { alert('日付を入力してください'); return; }
+  if (!startDate) { alert('開始日を入力してください'); return; }
+  if (!endDate) { alert('終了日を入力してください'); return; }
+
+  // バリデーション: endDate < startDate
+  if (endDate < startDate) {
+    const dateErr = document.getElementById('new-ev-date-error');
+    dateErr.textContent = '終了日は開始日以降の日付を選択してください';
+    dateErr.style.display = 'block';
+    return;
+  }
+
+  const startTime = getVal('new-ev-time') || null;
+  const endTime = getVal('new-ev-end-time') || null;
+  const multiDay = endDate > startDate;
+
+  // 同日かつ終了時刻 < 開始時刻のチェック（日跨ぎ時はスキップ）
+  if (!multiDay && startTime && endTime && endTime <= startTime) {
+    const timeErr = document.getElementById('new-ev-time-error');
+    timeErr.textContent = '終了時刻は開始時刻より後の時刻を選択してください';
+    timeErr.style.display = 'block';
+    return;
+  }
+
+  const linkToTimesheet = !multiDay && !!document.getElementById('new-ev-link-timesheet')?.checked;
 
   MOCK_DATA.calendarEvents.push({
     id: generateId('ev-', MOCK_DATA.calendarEvents),
-    title, date,
-    time: getVal('new-ev-time') || null,
+    title,
+    date: startDate,
+    endDate: multiDay ? endDate : null,
+    time: startTime,
+    endTime: (!multiDay && endTime) ? endTime : null,
     duration: getValInt('new-ev-duration') || null,
     type: getVal('new-ev-type'),
     userId: getVal('new-ev-user') || null,
     clientId: getVal('new-ev-client') || null,
     location: getValTrim('new-ev-location') || null,
+    linkToTimesheet,
   });
   hideModal('event-create-modal');
   navigateTo('calendar');
@@ -448,15 +555,20 @@ function showCalEventDetail(eventId) {
   const client = e.clientId ? getClientById(e.clientId) : null;
   const typeLabel = { meeting: '面談', internal: '社内', deadline: '期限' }[e.type] || e.type;
   const dur = e.duration ? e.duration + '分' : '-';
+  const isMultiDay = e.endDate && e.endDate > e.date;
+  const dateDisplay = isMultiDay
+    ? `${formatDate(e.date)} 〜 ${formatDate(e.endDate)}`
+    : formatDate(e.date);
+  const timeDisplay = isMultiDay ? '日跨ぎ' : (e.time || '終日');
   const detail = document.getElementById('cal-day-detail');
   detail.innerHTML = `<div class="card">
     <div class="card-header"><h3>イベント詳細</h3><button class="btn-icon" onclick="document.getElementById('cal-day-detail').style.display='none'">&times;</button></div>
     <div class="card-body">
       <div class="detail-row"><div class="detail-label">タイトル</div><div class="detail-value"><strong>${escapeHtml(e.title)}</strong></div></div>
       <div class="detail-row"><div class="detail-label">種別</div><div class="detail-value">${escapeHtml(typeLabel)}</div></div>
-      <div class="detail-row"><div class="detail-label">日付</div><div class="detail-value">${formatDate(e.date)}</div></div>
-      <div class="detail-row"><div class="detail-label">時間</div><div class="detail-value">${e.time || '終日'}</div></div>
-      <div class="detail-row"><div class="detail-label">所要時間</div><div class="detail-value">${dur}</div></div>
+      <div class="detail-row"><div class="detail-label">期間</div><div class="detail-value">${dateDisplay}</div></div>
+      <div class="detail-row"><div class="detail-label">時間</div><div class="detail-value">${timeDisplay}</div></div>
+      ${!isMultiDay ? `<div class="detail-row"><div class="detail-label">所要時間</div><div class="detail-value">${dur}</div></div>` : ''}
       <div class="detail-row"><div class="detail-label">担当者</div><div class="detail-value">${escapeHtml(user?.name || '-')}</div></div>
       ${client ? `<div class="detail-row"><div class="detail-label">顧客</div><div class="detail-value"><a href="#" onclick="event.preventDefault();navigateTo('client-detail',{id:'${client.id}'})">${escapeHtml(client.name)}</a></div></div>` : ''}
       <div class="detail-row"><div class="detail-label">場所</div><div class="detail-value">${e.location ? escapeHtml(e.location) : '-'}</div></div>

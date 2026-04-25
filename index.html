@@ -124,7 +124,7 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="new-task-client">顧客</label>
+        <label for="new-task-client">顧客 <span style="font-size:11px;color:var(--gray-400);font-weight:normal;">（任意）</span></label>
         <select id="new-task-client"></select>
       </div>
       <div class="form-group">
@@ -986,14 +986,26 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div class="form-group">
-          <label>日付</label>
-          <input type="date" id="new-ev-date">
+          <label for="new-ev-start-date">開始日 <span style="color:var(--danger);">*</span></label>
+          <input type="date" id="new-ev-start-date">
         </div>
         <div class="form-group">
-          <label>時間</label>
-          <input type="time" id="new-ev-time" step="300">
+          <label for="new-ev-end-date">終了日 <span style="color:var(--danger);">*</span></label>
+          <input type="date" id="new-ev-end-date">
         </div>
       </div>
+      <div id="new-ev-date-error" style="display:none;color:var(--danger);font-size:12px;margin-top:-12px;margin-bottom:12px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group">
+          <label>開始時刻</label>
+          <input type="time" id="new-ev-time" step="300">
+        </div>
+        <div class="form-group" id="new-ev-end-time-group">
+          <label>終了時刻</label>
+          <input type="time" id="new-ev-end-time" step="300">
+        </div>
+      </div>
+      <div id="new-ev-time-error" style="display:none;color:var(--danger);font-size:12px;margin-top:-12px;margin-bottom:12px;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         <div class="form-group">
           <label>種別</label>
@@ -1025,6 +1037,17 @@
       <div class="form-group">
         <label>場所</label>
         <input type="text" id="new-ev-location" placeholder="例: Zoom / 来所 / 会議室A">
+      </div>
+      <div id="new-ev-link-timesheet-group" style="display:flex;align-items:center;gap:8px;padding:10px 0;">
+        <input type="checkbox" id="new-ev-link-timesheet" style="width:16px;height:16px;cursor:pointer;">
+        <label for="new-ev-link-timesheet" style="font-size:13px;color:var(--gray-700);cursor:pointer;margin:0;">工数管理にも登録する</label>
+      </div>
+      <div id="new-ev-link-timesheet-disabled-group" style="display:none;padding:10px 0;">
+        <div style="display:flex;align-items:center;gap:8px;opacity:0.5;">
+          <input type="checkbox" disabled style="width:16px;height:16px;">
+          <label style="font-size:13px;color:var(--gray-500);margin:0;">工数管理にも登録する</label>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:4px;padding-left:24px;">日跨ぎスケジュールは工数管理と連動しません</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1282,7 +1305,7 @@
 <script src="js/timesheet/index.js?v=20260420b"></script>
 <script src="js/reports/index.js?v=20260407a"></script>
 <script src="js/calendar/holidays.js?v=20260407a"></script>
-<script src="js/calendar/index.js?v=20260407a"></script>
+<script src="js/calendar/index.js?v=20260424a"></script>
 <script src="js/rewards/index.js?v=20260420b"></script>
 <script src="js/custom-fields/index.js?v=20260407a"></script>
 <script src="js/templates/index.js?v=20260407a"></script>
