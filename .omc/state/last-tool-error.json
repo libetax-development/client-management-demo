@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd ~/dev/director/tools/client-management-demo && GIT_EDITOR=true git rebase --continue && git push origin main\",\"description\":\"Continue rebase with auto editor and push\"}",
-  "error": "Exit code 1\n[detached HEAD 9660f0a] feat: タスク一覧にモバイルフィルタードロワーを追加\n 3 files changed, 212 insertions(+), 21 deletions(-)\nSuccessfully rebased and updated refs/heads/develop.\nTo https://github.com/libetax/client-management-demo.git\n ! [rejected]        main -> main (non-fast-forward)\nerror: failed to push some refs to 'https://github.com/libetax/client-management-demo.git'\nhint: Updates were rejected because a pushed branch tip is behind its remote\nhint: counterpart. If you want to integrate the rem...",
-  "timestamp": "2026-04-20T07:46:12.839Z",
-  "retry_count": 4
-}

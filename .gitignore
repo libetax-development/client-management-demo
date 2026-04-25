@@ -1,1 +1,4 @@
 .claude/worktrees/
+.omc/
+.env*
+.DS_Store
