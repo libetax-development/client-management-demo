@@ -9,6 +9,13 @@ function renderRewards(el) {
         <option value="2026-02">2026年2月</option>
         <option value="2026-01">2026年1月</option>
       </select>
+      <select class="filter-select" id="rw-spot-category-filter" title="SPOT報酬の区分絞り込み（SPOTタブ時のみ有効）">
+        <option value="">SPOT区分：すべて</option>
+        <option value="日税">日税</option>
+        <option value="請求">請求</option>
+        <option value="その他">その他</option>
+        <option value="__pending__">日税未転記のみ</option>
+      </select>
       <div class="spacer"></div>
       <button class="btn btn-csv btn-sm" onclick="exportRewardCSV()">CSV出力</button>
       <button class="btn btn-secondary btn-sm" onclick="openRewardAdjustModal()">+ 報酬調整</button>
@@ -49,6 +56,7 @@ function renderRewards(el) {
     }
   });
   document.getElementById('rw-month-filter').addEventListener('change', refresh);
+  document.getElementById('rw-spot-category-filter')?.addEventListener('change', refresh);
   refresh();
 }
 
@@ -123,34 +131,63 @@ function renderRewardData(month, viewType) {
     tbody.innerHTML = rows;
   } else if (viewType === 'spot') {
     title.textContent = 'SPOT報酬一覧';
-    thead.innerHTML = '<tr><th>顧客名</th><th>種別</th><th>時期</th><th>内容</th><th>金額</th><th>主担当</th></tr>';
+    // R3/R4: 「区分」「日税転記」列を追加（日税RPA連動の準備）
+    thead.innerHTML =
+      '<tr><th>顧客名</th><th>種別</th><th>時期</th><th>区分</th><th>内容</th><th>金額</th><th>主担当</th><th>日税転記</th></tr>';
+
+    const categoryFilter = document.getElementById('rw-spot-category-filter')?.value || '';
 
     // 全顧客のSPOT報酬から該当月のものを抽出
     const spotRows = [];
     getActiveClients().forEach(c => {
       (c.spotFees || []).forEach(sf => {
         if (sf.timing === month || (sf.timing && sf.timing.slice(0, 7) === month)) {
-          spotRows.push({ client: c, spot: sf });
+          // category 未設定は「その他」として扱う（既存データ互換）
+          const category = sf.category || 'その他';
+          // 区分フィルタ適用
+          if (categoryFilter === '__pending__') {
+            if (category !== '日税' || sf.transferredAt) return;
+          } else if (categoryFilter && category !== categoryFilter) {
+            return;
+          }
+          spotRows.push({ client: c, spot: sf, category });
         }
       });
     });
 
     const spotTotal = spotRows.reduce((sum, r) => sum + (r.spot.amount || 0), 0);
+    const nichizeiPending = spotRows.filter(r => r.category === '日税' && !r.spot.transferredAt).length;
 
-    // サマリーにSPOT合計を追加
-    document.getElementById('rw-summary').innerHTML += buildStatCard('red', 'SPOT報酬計', spotTotal.toLocaleString(), '円');
+    // サマリーに SPOT 合計 + 日税未転記件数を追加
+    let summaryHtml = buildStatCard('red', 'SPOT報酬計', spotTotal.toLocaleString(), '円');
+    if (nichizeiPending > 0) {
+      summaryHtml += buildStatCard('orange', '日税未転記', String(nichizeiPending), '件');
+    }
+    document.getElementById('rw-summary').innerHTML += summaryHtml;
+
+    const renderCategoryBadge = (cat) => {
+      const cls = cat === '日税' ? 'status-todo' : cat === '請求' ? 'status-done' : 'status-outline';
+      return `<span class="status-badge ${cls}" style="font-size:11px;">${escapeHtml(cat)}</span>`;
+    };
 
     tbody.innerHTML = spotRows.length === 0
-      ? '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);">該当月のSPOT報酬はありません</td></tr>'
+      ? '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);">該当月のSPOT報酬はありません</td></tr>'
       : spotRows.map(r => {
         const main = getAssigneeUser(r.client.id, 'main');
+        const transferredCell = r.category === '日税'
+          ? (r.spot.transferredAt
+              ? `<span style="color:var(--success);font-size:11px;">✓ ${escapeHtml(r.spot.transferredAt)}</span>`
+              : `<span style="color:var(--warning);font-size:11px;">未転記</span>`)
+          : `<span style="color:var(--gray-400);font-size:11px;">-</span>`;
         return `<tr class="clickable" onclick="navigateTo('client-detail',{id:'${r.client.id}'})">
           <td><strong>${escapeHtml(r.client.name)}</strong></td>
           <td>${renderTypeBadge(r.client.clientType)}</td>
           <td>${escapeHtml(r.spot.timing || '-')}</td>
+          <td>${renderCategoryBadge(r.category)}</td>
           <td>${escapeHtml(r.spot.description || '-')}</td>
           <td><strong>${(r.spot.amount || 0).toLocaleString()}円</strong></td>
           <td>${escapeHtml(main?.name || '-')}</td>
+          <td>${transferredCell}</td>
         </tr>`;
       }).join('');
   }
