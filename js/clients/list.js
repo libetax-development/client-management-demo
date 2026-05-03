@@ -15,6 +15,7 @@ const CLIENT_COLUMNS = [
   { key: 'mgr', label: '税理士', visible: true },
   { key: 'bookkeeper', label: '記帳担当', visible: true },
   { key: 'status', label: 'ステータス', visible: true },
+  { key: 'nichizei', label: '日税登録', visible: false },
 ];
 
 function renderClients(el) {
@@ -51,6 +52,12 @@ function renderClients(el) {
       <select class="filter-select" id="client-main-filter">
         <option value="">全担当者</option>
         ${buildUserOptions()}
+      </select>
+      <select class="filter-select" id="client-nichizei-filter">
+        <option value="">日税登録：すべて</option>
+        <option value="要登録">要登録</option>
+        <option value="登録確認済">登録確認済</option>
+        <option value="__null__">未設定</option>
       </select>
       <div class="spacer"></div>
       <div style="position:relative;">
@@ -92,7 +99,7 @@ function renderClients(el) {
     if (mainSel) mainSel.value = MOCK_DATA.currentUser.id;
   }
   renderClientTable();
-  bindFilters(['client-search', 'client-type-filter', 'client-status-filter', 'client-main-filter'], () => { clientPage = 1; renderClientTable(); });
+  bindFilters(['client-search', 'client-type-filter', 'client-status-filter', 'client-main-filter', 'client-nichizei-filter'], () => { clientPage = 1; renderClientTable(); });
 
   // 列表示トグル
   const toggleBtn = document.getElementById('client-col-toggle-btn');
@@ -129,6 +136,7 @@ function getFilteredClients() {
   const typeFilter = document.getElementById('client-type-filter')?.value || '';
   const statusFilter = document.getElementById('client-status-filter')?.value || '';
   const mainFilter = document.getElementById('client-main-filter')?.value || '';
+  const nichizeiFilter = document.getElementById('client-nichizei-filter')?.value || '';
 
   return MOCK_DATA.clients.filter(c => {
     if (search && !c.name.toLowerCase().includes(search) && !c.clientCode.includes(search)) return false;
@@ -143,6 +151,14 @@ function getFilteredClients() {
       }
     }
     if (mainFilter && getAssigneeUserId(c.id, 'main') !== mainFilter) return false;
+    if (nichizeiFilter) {
+      const nz = c.nichizeiRegistration || '';
+      if (nichizeiFilter === '__null__') {
+        if (nz !== '') return false;
+      } else if (nz !== nichizeiFilter) {
+        return false;
+      }
+    }
     return true;
   });
 }
@@ -165,6 +181,12 @@ function renderClientTable() {
     mgr: c => { const m = getAssigneeUser(c.id, 'reviewer'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
     bookkeeper: c => { const m = getAssigneeUser(c.id, 'bookkeeping_main'); return `<td>${escapeHtml(m?.name || '-')}</td>`; },
     status: c => { const cs = c.contractStatus || '契約中'; return `<td>${renderContractStatusBadge(cs)}</td>`; },
+    nichizei: c => {
+      const nz = c.nichizeiRegistration;
+      if (!nz) return `<td><span style="color:var(--gray-400);font-size:11px;">-</span></td>`;
+      const cls = nz === '登録確認済' ? 'status-badge status-done' : 'status-badge status-todo';
+      return `<td><span class="${cls}" style="font-size:11px;">${escapeHtml(nz)}</span></td>`;
+    },
   };
 
   const total = clients.length;
