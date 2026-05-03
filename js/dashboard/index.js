@@ -20,6 +20,19 @@ function renderDashboard(el) {
   const thisWeekTasks = tasks.filter(t => t.status !== '完了' && t.dueDate >= today && t.dueDate <= endOfWeekStr).length;
   const activeClients = getActiveClients().length;
 
+  // 日税業務サマリー（日税RPA連動・Stream 1+2 の岸田さん日次運用指標）
+  const nichizeiPending = MOCK_DATA.clients.filter(c => c.isActive !== false && c.nichizeiRegistration === '要登録').length;
+  const thisMonth = today.slice(0, 7); // YYYY-MM
+  let nichizeiSpotPending = 0;
+  getActiveClients().forEach(c => {
+    (c.spotFees || []).forEach(sf => {
+      const sfMonth = (sf.timing || '').slice(0, 7);
+      if (sfMonth === thisMonth && sf.category === '日税' && !sf.transferredAt) {
+        nichizeiSpotPending++;
+      }
+    });
+  });
+
   // 今日のタスク
   const todayTasks = tasks.filter(t => t.status !== '完了' && t.dueDate === today);
 
@@ -98,6 +111,32 @@ function renderDashboard(el) {
               </li>`;
             }).join('')}
           </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日税業務サマリー（日税RPA連動・岸田さん日次運用指標） -->
+    <div class="card" style="margin-top: 16px;">
+      <div class="card-header"><h3>日税業務サマリー</h3></div>
+      <div class="card-body">
+        <div class="summary-grid">
+          <div class="summary-card ${nichizeiPending > 0 ? 'variant-warning' : ''}" onclick="navigateTo('clients')" style="cursor:pointer;">
+            <div class="summary-icon ${nichizeiPending > 0 ? 'bg-yellow' : 'bg-gray'}">📋</div>
+            <div class="summary-data">
+              <div class="summary-value">${nichizeiPending}</div>
+              <div class="summary-label">日税登録 要対応</div>
+            </div>
+          </div>
+          <div class="summary-card ${nichizeiSpotPending > 0 ? 'variant-warning' : ''}" onclick="navigateTo('rewards')" style="cursor:pointer;">
+            <div class="summary-icon ${nichizeiSpotPending > 0 ? 'bg-yellow' : 'bg-gray'}">💰</div>
+            <div class="summary-data">
+              <div class="summary-value">${nichizeiSpotPending}</div>
+              <div class="summary-label">日税未転記 (今月SPOT)</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--gray-400);">
+          ※ 顧客一覧で「日税登録：要登録」フィルター / 報酬管理 SPOT で「日税未転記のみ」フィルターから詳細を確認できます
         </div>
       </div>
     </div>
