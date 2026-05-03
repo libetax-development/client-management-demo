@@ -53,25 +53,40 @@ function renderClientDetail(el, params) {
   const relatedClientIds = c ? (c.relatedClientIds || []) : [];
   const otherClients = c ? MOCK_DATA.clients.filter(oc => oc.id !== c.id && !relatedClientIds.includes(oc.id)) : MOCK_DATA.clients;
 
-  // SPOT報酬ビューHTML
+  // SPOT報酬ビューHTML（R3 モック: 区分・転記済を表示）
+  const renderSpotCategoryBadge = (cat) => {
+    const c = cat || 'その他';
+    const cls = c === '日税' ? 'status-todo' : c === '請求' ? 'status-done' : 'status-outline';
+    return `<span class="status-badge ${cls}" style="font-size:10px;">${escapeHtml(c)}</span>`;
+  };
   const spotFeesViewHtml = spotFees.length === 0
     ? '<span style="color:var(--gray-400)">なし</span>'
-    : `<table class="spot-fee-table"><thead><tr><th>タイミング</th><th>金額</th><th>内容</th></tr></thead><tbody>${spotFees.map(sf =>
-        `<tr><td>${escapeHtml(sf.timing || '')}</td><td>${(sf.amount || 0).toLocaleString()}円</td><td>${escapeHtml(sf.description || '')}</td></tr>`
-      ).join('')}</tbody></table>`;
+    : `<table class="spot-fee-table"><thead><tr><th>発生日</th><th>区分</th><th>金額</th><th>内容</th><th>日税転記</th></tr></thead><tbody>${spotFees.map(sf => {
+        const transferred = sf.category === '日税'
+          ? (sf.transferredAt
+              ? `<span style="color:var(--success);font-size:11px;">✓ ${escapeHtml(sf.transferredAt)}</span>`
+              : `<span style="color:var(--warning);font-size:11px;">未転記</span>`)
+          : `<span style="color:var(--gray-400);font-size:11px;">-</span>`;
+        return `<tr><td>${escapeHtml(sf.timing || '')}</td><td>${renderSpotCategoryBadge(sf.category)}</td><td>${(sf.amount || 0).toLocaleString()}円</td><td>${escapeHtml(sf.description || '')}</td><td>${transferred}</td></tr>`;
+      }).join('')}</tbody></table>`;
 
-  // SPOT報酬編集HTML
+  // SPOT報酬編集HTML（R3 モック: 区分 Select + 発生年月日 input）
   const spotFeesEditHtml = `
     <div id="spot-fees-edit-area">
       ${spotFees.map((sf, i) =>
         `<div class="spot-fee-edit-item" data-index="${i}" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;">
-          <span>${escapeHtml(sf.timing || '')}</span> <span>${(sf.amount || 0).toLocaleString()}円</span> <span>${escapeHtml(sf.description || '')}</span>
+          <span>${escapeHtml(sf.timing || '')}</span> ${renderSpotCategoryBadge(sf.category)} <span>${(sf.amount || 0).toLocaleString()}円</span> <span>${escapeHtml(sf.description || '')}</span>
           <button class="spot-fee-del" onclick="removeSpotFee(${i},'${c?.id || ''}')">&times;</button>
         </div>`
       ).join('')}
-      <div class="spot-fee-add-row">
-        <input type="text" id="add-sf-timing" placeholder="2026-05" style="width:90px;">
-        <input type="number" id="add-sf-amount" placeholder="金額" min="0" step="1000">
+      <div class="spot-fee-add-row" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        <input type="date" id="add-sf-timing" title="発生年月日" style="width:130px;">
+        <select id="add-sf-category" title="区分" style="width:80px;font-size:12px;padding:3px 6px;border:1px solid var(--gray-200);border-radius:4px;">
+          <option value="その他">その他</option>
+          <option value="日税">日税</option>
+          <option value="請求">請求</option>
+        </select>
+        <input type="number" id="add-sf-amount" placeholder="金額" min="0" step="1000" style="width:90px;">
         <input type="text" id="add-sf-desc" class="spot-fee-desc-input" placeholder="内容">
         <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="addSpotFee('${c?.id || ''}')">追加</button>
       </div>
@@ -488,16 +503,17 @@ function saveClientInline(id) {
   }
 }
 
-// SPOT報酬の追加・削除
+// SPOT報酬の追加・削除（R3 モック: 区分 + 発生年月日も保存）
 function addSpotFee(clientId) {
   const timing = (document.getElementById('add-sf-timing')?.value || '').trim();
   const amount = parseInt(document.getElementById('add-sf-amount')?.value) || 0;
   const description = (document.getElementById('add-sf-desc')?.value || '').trim();
-  if (!timing || !amount) { alert('タイミングと金額を入力してください'); return; }
+  const category = (document.getElementById('add-sf-category')?.value || 'その他').trim();
+  if (!timing || !amount) { alert('発生年月日と金額を入力してください'); return; }
   const c = getClientById(clientId);
   if (!c) return;
   if (!c.spotFees) c.spotFees = [];
-  c.spotFees.push({ id: 'sf-' + Date.now(), timing, amount, description });
+  c.spotFees.push({ id: 'sf-' + Date.now(), timing, amount, description, category, transferredAt: null });
   navigateTo('client-detail', { id: clientId });
 }
 
