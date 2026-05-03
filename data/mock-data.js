@@ -239,8 +239,14 @@ const MOCK_DATA = {
     },
     {
       id: 'ps-004', name: '年末調整管理表（R6）', category: '年末調整', status: '終了',
-      managerId: 'u-002', createdAt: '2024-11-01', showReportLink: false,
+      managerId: 'u-002', createdAt: '2024-11-01', endedAt: '2025-03-15', showReportLink: false,
       columns: ['年末調整', '源泉所得税', '総括表', '法定調書', '償却資産'],
+      targets: [],
+    },
+    {
+      id: 'ps-005', name: '法人決算管理表（前年度・旧）', category: '法人決算', status: '終了',
+      managerId: 'u-002', createdAt: '2024-06-01', endedAt: '2025-01-10', showReportLink: false,
+      columns: ['記帳確認', '決算整理', '申告書作成', '申告書提出'],
       targets: [],
     },
   ],

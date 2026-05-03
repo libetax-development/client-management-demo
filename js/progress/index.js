@@ -28,11 +28,20 @@ function renderProgress(el) {
   let activeTab = 'active';
   let viewMode = 'list';
 
+  // FB#48: 進捗管理表一覧の並び替え（admin のみ、利用中タブのみ）
+  // demo では currentUser.role === 'admin' を admin と判定
+  const isAdmin = MOCK_DATA.currentUser.role === 'admin';
+
   function draw() {
-    const sheets = MOCK_DATA.progressSheets.filter(s => {
+    // active タブは MOCK_DATA の配列順で表示（並び替え操作で順番が変わる）
+    // ended タブは endedAt 降順（終了した順）で表示
+    let sheets = MOCK_DATA.progressSheets.filter(s => {
       if (activeTab === 'active') return s.status === '利用中';
       return s.status === '終了';
     });
+    if (activeTab === 'ended') {
+      sheets = [...sheets].sort((a, b) => (b.endedAt || '').localeCompare(a.endedAt || ''));
+    }
 
     const container = document.getElementById('pg-list');
 
@@ -41,19 +50,22 @@ function renderProgress(el) {
       return;
     }
 
+    const showReorder = activeTab === 'active' && isAdmin;
+
     if (viewMode === 'list') {
       container.innerHTML = `
         <div class="card">
           <div class="table-wrapper">
             <table>
               <thead><tr>
+                ${showReorder ? '<th style="width:80px;">並び替え</th>' : ''}
                 <th>分類</th><th>進捗管理表名</th><th>対象</th>
                 <th>未完了（担当先）</th><th>未完了（全体）</th>
                 <th>完了（担当先）</th><th>完了（全体）</th>
                 <th>管理者</th><th>操作</th>
               </tr></thead>
               <tbody>
-                ${sheets.map(s => {
+                ${sheets.map((s, idx) => {
                   const mgr = getUserById(s.managerId);
                   const totalTargets = s.targets.length;
                   const incomplete = s.targets.filter(t => Object.values(t.steps).some(v => v !== '完了')).length;
@@ -64,7 +76,13 @@ function renderProgress(el) {
                   const myIncomplete = myTargets.filter(t => Object.values(t.steps).some(v => v !== '完了')).length;
                   const myComplete = myTargets.length - myIncomplete;
                   const complete = totalTargets - incomplete;
+                  const isFirst = idx === 0;
+                  const isLast = idx === sheets.length - 1;
                   return `<tr class="clickable" onclick="navigateTo('progress-detail',{id:'${s.id}'})">
+                    ${showReorder ? `<td onclick="event.stopPropagation()" style="white-space:nowrap;">
+                      <button class="btn btn-secondary btn-sm" style="padding:2px 6px;margin-right:2px;" ${isFirst ? 'disabled' : ''} onclick="event.stopPropagation();moveProgressSheet('${s.id}','up')" aria-label="上へ移動">↑</button>
+                      <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" ${isLast ? 'disabled' : ''} onclick="event.stopPropagation();moveProgressSheet('${s.id}','down')" aria-label="下へ移動">↓</button>
+                    </td>` : ''}
                     <td><span class="type-badge type-corp">${escapeHtml(s.category)}</span></td>
                     <td><strong>${escapeHtml(s.name)}</strong></td>
                     <td>${totalTargets}件</td>
@@ -84,11 +102,13 @@ function renderProgress(el) {
         </div>
       `;
     } else {
-      container.innerHTML = `<div class="pg-grid">${sheets.map(s => {
+      container.innerHTML = `<div class="pg-grid">${sheets.map((s, idx) => {
         const mgr = getUserById(s.managerId);
         const totalTargets = s.targets.length;
         const complete = s.targets.filter(t => Object.values(t.steps).every(v => v === '完了')).length;
         const pct = totalTargets > 0 ? Math.round((complete / totalTargets) * 100) : 0;
+        const isFirst = idx === 0;
+        const isLast = idx === sheets.length - 1;
         return `
           <div class="card clickable" onclick="navigateTo('progress-detail',{id:'${s.id}'})" style="cursor:pointer;">
             <div class="card-header">
@@ -102,7 +122,11 @@ function renderProgress(el) {
                 <span>${pct}%</span>
               </div>
               <div style="margin-top:12px;font-size:12px;color:var(--gray-500);">管理者: ${escapeHtml(mgr?.name || '-')}</div>
-              <div style="margin-top:8px;text-align:right;">
+              <div style="margin-top:8px;text-align:right;display:flex;gap:4px;justify-content:flex-end;">
+                ${showReorder ? `
+                  <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" ${isFirst ? 'disabled' : ''} onclick="event.stopPropagation();moveProgressSheet('${s.id}','up')" aria-label="上へ移動">↑</button>
+                  <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" ${isLast ? 'disabled' : ''} onclick="event.stopPropagation();moveProgressSheet('${s.id}','down')" aria-label="下へ移動">↓</button>
+                ` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openProgressSettingsModal('${s.id}')">設定変更</button>
               </div>
             </div>
@@ -111,6 +135,23 @@ function renderProgress(el) {
       }).join('')}</div>`;
     }
   }
+
+  // FB#48: 隣接スワップで並び替え（admin のみ、利用中タブのみ）
+  // 本番側では reorder_progress_sheets_swap RPC（SECURITY DEFINER + FOR UPDATE）で race 対策する
+  window.moveProgressSheet = function(sheetId, direction) {
+    if (!isAdmin || activeTab !== 'active') return;
+    const sheets = MOCK_DATA.progressSheets;
+    const activeSheets = sheets.filter(s => s.status === '利用中');
+    const visibleIdx = activeSheets.findIndex(s => s.id === sheetId);
+    if (visibleIdx < 0) return;
+    const newVisibleIdx = direction === 'up' ? visibleIdx - 1 : visibleIdx + 1;
+    if (newVisibleIdx < 0 || newVisibleIdx >= activeSheets.length) return;
+    // sheets 全体での実 index を取得して 2 件スワップ
+    const realA = sheets.findIndex(s => s.id === activeSheets[visibleIdx].id);
+    const realB = sheets.findIndex(s => s.id === activeSheets[newVisibleIdx].id);
+    [sheets[realA], sheets[realB]] = [sheets[realB], sheets[realA]];
+    draw();
+  };
 
   document.getElementById('pg-create-btn').addEventListener('click', () => {
     openProgressCreateModal();
