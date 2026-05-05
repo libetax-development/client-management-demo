@@ -59,7 +59,39 @@ function submitNewTimeEntry() {
 }
 
 // ── 報告書作成モーダル ──
+// FB#53: 下書き編集対応のため editingReportId で編集中の id を保持
+let editingReportId = null;
+
 function openReportModal() {
+  editingReportId = null;
+  _rpResetModalForCreate();
+  showModal('report-create-modal');
+}
+
+// 下書き編集モーダルを開く（FB#53）
+function openReportEditModal(reportId) {
+  const r = MOCK_DATA.reports.find(x => x.id === reportId);
+  if (!r) return;
+  editingReportId = reportId;
+  _rpResetModalForCreate();
+  // 既存値で埋める
+  setFormValues({
+    'new-rp-type': r.type || '業務報告書',
+    'new-rp-category': r.category || '確定申告',
+    'new-rp-client': r.clientName || '',
+    'new-rp-title': r.title || '',
+    'new-rp-rank': r.rank || 'B',
+    'new-rp-attach': !!r.hasAttachment,
+  });
+  const bodyEl = document.getElementById('new-rp-body');
+  if (bodyEl) bodyEl.value = r.body || '';
+  // モーダルタイトルとボタンを編集モード表示に切り替え
+  const titleEl = document.querySelector('#report-create-modal .modal-header h3');
+  if (titleEl) titleEl.textContent = '下書きを編集';
+  showModal('report-create-modal');
+}
+
+function _rpResetModalForCreate() {
   setFormValues({
     'new-rp-type': '業務報告書', 'new-rp-category': '確定申告',
     'new-rp-rank': 'B', 'new-rp-attach': false,
@@ -93,7 +125,9 @@ function openReportModal() {
   }
   const countEl = document.getElementById('new-rp-recipients-count');
   if (countEl) countEl.textContent = '';
-  showModal('report-create-modal');
+  // タイトル初期化（新規モード）
+  const titleEl = document.querySelector('#report-create-modal .modal-header h3');
+  if (titleEl) titleEl.textContent = '新規報告書作成';
 }
 
 function applyReportTemplate() {
@@ -116,7 +150,17 @@ function applyReportTemplate() {
   if (bodyEl) bodyEl.value = body;
 }
 
+// 新規作成 or 編集（公開）
 function submitNewReport() {
+  _submitReport({ asDraft: false });
+}
+
+// 下書き保存（FB#53）
+function submitNewReportAsDraft() {
+  _submitReport({ asDraft: true });
+}
+
+function _submitReport({ asDraft }) {
   const title = getValTrim('new-rp-title');
   const clientName = getValTrim('new-rp-client');
   const type = getVal('new-rp-type');
@@ -126,15 +170,55 @@ function submitNewReport() {
   const bodyEl = document.getElementById('new-rp-body');
   const body = bodyEl ? bodyEl.value.trim() : '';
 
-  if (!title) { alert('タイトルを入力してください'); return; }
+  // 下書き保存はタイトル空でも許容（執筆途中を保存できるように）
+  if (!asDraft && !title) { alert('タイトルを入力してください'); return; }
 
+  if (editingReportId) {
+    // 既存下書きの更新
+    const r = MOCK_DATA.reports.find(x => x.id === editingReportId);
+    if (r) {
+      Object.assign(r, {
+        type, category, clientName, title: title || r.title || '（無題）', rank, hasAttachment, body,
+      });
+      if (asDraft) {
+        r.status = 'draft';
+        r.readStatus = '一時保存中';
+      } else {
+        // 公開（一方向、戻し不可）
+        r.status = 'published';
+        r.readStatus = '未読';
+      }
+    }
+    editingReportId = null;
+    hideModal('report-create-modal');
+    if (asDraft) {
+      // 下書き保存後は下書きタブを開いた状態で一覧へ
+      if (typeof rpStatusTab !== 'undefined') rpStatusTab = 'draft';
+      if (currentPage === 'reports') navigateTo('reports');
+      else { navigateTo('reports'); }
+    } else {
+      alert(`報告書「${title}」を公開しました（モック）`);
+      navigateTo('reports');
+    }
+    return;
+  }
+
+  // 新規作成
   MOCK_DATA.reports.push({
     id: generateId('rp-', MOCK_DATA.reports),
     createdAt: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }) + 'T' + new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo' }),
     authorId: MOCK_DATA.currentUser.id, type, category,
-    clientName, title, rank, readStatus: '一時保存中', hasAttachment, body,
+    clientName, title: title || '（無題下書き）', rank, hasAttachment, body,
+    status: asDraft ? 'draft' : 'published',
+    readStatus: asDraft ? '一時保存中' : '未読',
   });
   hideModal('report-create-modal');
-  if (currentPage === 'reports') navigateTo('reports');
-  else alert(`報告書「${title}」を作成しました`);
+  if (asDraft) {
+    if (typeof rpStatusTab !== 'undefined') rpStatusTab = 'draft';
+    if (currentPage === 'reports') navigateTo('reports');
+    else { navigateTo('reports'); }
+  } else {
+    if (currentPage === 'reports') navigateTo('reports');
+    else alert(`報告書「${title}」を作成しました`);
+  }
 }

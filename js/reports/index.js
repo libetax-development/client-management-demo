@@ -6,8 +6,21 @@ const rpPerPage = 20;
 let rpInitialClient = '';
 let rpReadFilter = 'all';
 let rpTypeFilter = 'all';
+let rpStatusTab = 'published'; // 'published' | 'draft' (FB#53 一時保存タブ)
 let rpExpandedSet = new Set();
 let rpSearchState = { category: '', author: '', period: '1年以内', dateFrom: '', dateTo: '', ranks: [], attachOnly: false, draftOnly: false, keyword: '', client: '' };
+
+// status フィールド未設定の旧データは readStatus から推定（後方互換）
+function rpGetStatus(r) {
+  if (r.status === 'draft' || r.status === 'published') return r.status;
+  return r.readStatus === '一時保存中' ? 'draft' : 'published';
+}
+
+// 下書きの閲覧権限: 作成者本人 or admin のみ
+function rpCanViewDraft(r) {
+  const cur = MOCK_DATA.currentUser;
+  return cur && (cur.role === 'admin' || r.authorId === cur.id);
+}
 
 function navigateToReportsWithClient(clientName) {
   rpInitialClient = clientName;
@@ -18,6 +31,10 @@ function renderReports(el) {
   rpPage = 1;
 
   el.innerHTML = `
+    <div class="rp-tabs" id="rp-status-tabs" style="border-bottom:1px solid var(--gray-200);margin-bottom:12px;">
+      <button class="tab-btn ${rpStatusTab === 'published' ? 'active' : ''}" data-status="published" onclick="rpSetStatusTab(this)">公開済み</button>
+      <button class="tab-btn ${rpStatusTab === 'draft' ? 'active' : ''}" data-status="draft" onclick="rpSetStatusTab(this)">下書き <span id="rp-draft-count" style="font-size:11px;color:var(--gray-400);margin-left:4px;"></span></button>
+    </div>
     <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
       <input type="text" class="search-input" placeholder="タイトルで検索..." id="rp-search">
       <select class="filter-select" id="rp-type-filter">
@@ -58,6 +75,15 @@ function renderReports(el) {
 
 function rpGetFiltered() {
   let reports = [...MOCK_DATA.reports];
+
+  // タブによる status 絞り込み（FB#53 下書き分離）
+  if (rpStatusTab === 'draft') {
+    // 下書きは作成者本人または admin のみ閲覧可
+    reports = reports.filter(r => rpGetStatus(r) === 'draft' && rpCanViewDraft(r));
+  } else {
+    reports = reports.filter(r => rpGetStatus(r) === 'published');
+  }
+
   const search = (document.getElementById('rp-search')?.value || '').toLowerCase();
   const typeFilter = document.getElementById('rp-type-filter')?.value || '';
   const categoryFilter = document.getElementById('rp-category-filter')?.value || '';
@@ -89,6 +115,13 @@ function rpGetFiltered() {
 }
 
 function rpRenderList() {
+  // 下書きタブのカウントバッジを更新
+  const draftCountEl = document.getElementById('rp-draft-count');
+  if (draftCountEl) {
+    const draftCount = MOCK_DATA.reports.filter(r => rpGetStatus(r) === 'draft' && rpCanViewDraft(r)).length;
+    draftCountEl.textContent = draftCount > 0 ? `(${draftCount})` : '';
+  }
+
   const all = rpGetFiltered();
   const totalPages = Math.max(1, Math.ceil(all.length / rpPerPage));
   if (rpPage > totalPages) rpPage = totalPages;
@@ -97,19 +130,23 @@ function rpRenderList() {
 
   const tbody = document.getElementById('rp-table-body');
   if (all.length === 0) {
-    tbody.innerHTML = renderEmptyRow(8, '該当する報告書がありません');
+    const msg = rpStatusTab === 'draft' ? '下書きはありません' : '該当する報告書がありません';
+    tbody.innerHTML = renderEmptyRow(8, msg);
   } else {
     tbody.innerHTML = page.map(r => {
       const author = getUserById(r.authorId);
-      const isUnread = r.readStatus === '未読';
+      const isDraft = rpGetStatus(r) === 'draft';
+      const isUnread = !isDraft && r.readStatus === '未読';
       const unreadDot = isUnread ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--primary);"></span>' : '';
-      const rowBg = isUnread ? ' style="background:rgba(37,99,235,0.04);"' : '';
+      // 下書きは薄いグレー背景、未読は薄い青背景
+      const rowBg = isDraft ? ' style="background:var(--gray-50);"' : (isUnread ? ' style="background:rgba(37,99,235,0.04);"' : '');
       const rankBadge = r.rank
         ? `<span class="status-badge ${r.rank === 'A' ? 'status-done' : r.rank === 'B' ? 'status-todo' : 'status-outline'}" style="font-size:11px;">${r.rank}</span>`
         : '-';
+      const draftBadge = isDraft ? ' <span class="rp-row-badge rp-badge-draft" style="margin-left:6px;">下書き</span>' : '';
       return `<tr class="clickable" onclick="rpClickReport('${r.id}')"${rowBg}>
         <td style="text-align:center;">${unreadDot}</td>
-        <td><strong>${escapeHtml(r.title)}</strong></td>
+        <td><strong>${escapeHtml(r.title)}</strong>${draftBadge}</td>
         <td>${escapeHtml(r.clientName || '-')}</td>
         <td>${escapeHtml(author?.name || '-')}</td>
         <td><span class="status-badge status-outline" style="font-size:11px;">${escapeHtml(r.type)}</span></td>
@@ -136,6 +173,13 @@ function rpRenderList() {
 
 function rpGoPage(n) { rpPage = n; rpRenderList(); }
 
+function rpSetStatusTab(btn) {
+  rpStatusTab = btn.dataset.status;
+  document.querySelectorAll('#rp-status-tabs .tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+  rpPage = 1;
+  rpRenderList();
+}
+
 function rpSetReadFilter(btn) {
   rpReadFilter = btn.dataset.rf;
   btn.closest('.rp-tabs').querySelectorAll('[data-rf]').forEach(b => b.classList.toggle('active', b === btn));
@@ -157,7 +201,8 @@ function rpMarkAllRead() {
 
 function rpClickReport(id) {
   const r = MOCK_DATA.reports.find(x => x.id === id);
-  if (r && r.readStatus === '未読') r.readStatus = '既読';
+  // 下書きは未読扱いしない（FB#53）
+  if (r && rpGetStatus(r) !== 'draft' && r.readStatus === '未読') r.readStatus = '既読';
   navigateTo('report-detail', { id });
 }
 
@@ -167,21 +212,64 @@ function rpClickReport(id) {
 function renderReportDetail(el, params) {
   const r = MOCK_DATA.reports.find(x => x.id === params.id);
   if (!r) { el.innerHTML = renderEmptyState('報告書が見つかりません'); return; }
+  const isDraft = rpGetStatus(r) === 'draft';
+  // 下書きは作成者本人 + admin のみ閲覧可（FB#53）
+  if (isDraft && !rpCanViewDraft(r)) {
+    el.innerHTML = renderEmptyState('この下書きを閲覧する権限がありません');
+    return;
+  }
   const author = getUserById(r.authorId);
   document.getElementById('header-title').textContent = `報告書詳細 - ${r.title}`;
 
   // bodyフィールドがあればそれを使用、なければモック本文を生成
   const mockBody = r.body || generateReportBody(r);
 
+  // バッジ表示: 下書き/未読/既読
+  const badgeHtml = isDraft
+    ? '<span class="rp-row-badge rp-badge-draft">下書き</span>'
+    : `<span class="rp-row-badge ${r.readStatus === '未読' ? 'rp-badge-unread' : 'rp-badge-read'}">${escapeHtml(r.readStatus)}</span>`;
+
+  // 戻るリンク（下書き詳細から戻ったときに下書きタブを保持）
+  const backLink = `<a href="#" onclick="event.preventDefault();navigateTo('reports')">&larr; 報告書一覧に戻る</a>`;
+
+  // 下書き時の操作ボタン
+  const draftActions = isDraft ? `
+            <button class="btn btn-secondary btn-sm" onclick="openReportEditModal('${r.id}')">下書きを編集</button>
+            <button class="btn btn-primary btn-sm" onclick="rpPublishDraft('${r.id}')">公開する</button>
+            <button class="btn btn-link btn-sm" style="color:#b91c1c;" onclick="rpDeleteDraft('${r.id}')">下書きを削除</button>
+  ` : `
+            <button class="btn btn-secondary btn-sm" onclick="alert('Chatworkに転送しました（モック）')">Chatworkに転送</button>
+            <button class="btn btn-secondary btn-sm" onclick="alert('PDFをダウンロードしました（モック）')">PDF出力</button>
+  `;
+
+  // 下書きの場合は外部リンク・コメントを抑制（FB#53: コメント不可）
+  const externalLinksCard = isDraft ? '' : `
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h3>外部リンク</h3></div>
+          <div class="card-body">
+            <div id="rp-links-list">${(r.links || []).map((lnk, i) => `
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
+                <a href="${escapeHtml(sanitizeUrl(lnk.url))}" target="_blank" rel="noopener" style="flex:1;font-size:13px;word-break:break-all;">${escapeHtml(lnk.label || lnk.url)}</a>
+                <button class="btn-icon" title="削除" style="font-size:14px;color:var(--gray-400);" onclick="rpRemoveLink('${r.id}',${i})">×</button>
+              </div>
+            `).join('') || '<div style="padding:4px 0;font-size:13px;color:var(--gray-400);">リンクはまだありません</div>'}</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <input type="text" class="search-input" id="rp-link-url" style="flex:2;width:auto;font-size:13px;" placeholder="URL（例: https://drive.google.com/...）">
+              <input type="text" class="search-input" id="rp-link-label" style="flex:1;width:auto;font-size:13px;" placeholder="表示名（任意）">
+              <button class="btn btn-primary btn-sm" onclick="rpAddLink('${r.id}')">追加</button>
+            </div>
+          </div>
+        </div>
+  `;
+
   el.innerHTML = `
-    <div style="margin-bottom:16px"><a href="#" onclick="event.preventDefault();navigateTo('reports')">&larr; 報告書一覧に戻る</a></div>
+    <div style="margin-bottom:16px">${backLink}</div>
+    ${isDraft ? '<div class="info-box" style="margin-bottom:16px;background:#fef3c7;border-color:#fde68a;color:#92400e;">この報告書は下書きです。コメント・通知は無効化されており、作成者本人と管理者のみ閲覧できます。</div>' : ''}
     <div class="detail-grid">
       <div class="card">
         <div class="card-header">
           <h3>${escapeHtml(r.title)}</h3>
-          <div style="display:flex;gap:8px;">
-            <span class="rp-row-badge ${r.readStatus === '未読' ? 'rp-badge-unread' : r.readStatus === '一時保存中' ? 'rp-badge-draft' : 'rp-badge-read'}">${escapeHtml(r.readStatus)}</span>
-          </div>
+          <div style="display:flex;gap:8px;">${badgeHtml}</div>
         </div>
         <div class="card-body">
           <div class="pre-wrap">${escapeHtml(mockBody)}</div>
@@ -201,33 +289,38 @@ function renderReportDetail(el, params) {
             <div class="detail-row"><div class="detail-label">添付ファイル</div><div class="detail-value">${r.hasAttachment ? 'あり' : 'なし'}</div></div>
           </div>
         </div>
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-header"><h3>外部リンク</h3></div>
-          <div class="card-body">
-            <div id="rp-links-list">${(r.links || []).map((lnk, i) => `
-              <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-                <a href="${escapeHtml(sanitizeUrl(lnk.url))}" target="_blank" rel="noopener" style="flex:1;font-size:13px;word-break:break-all;">${escapeHtml(lnk.label || lnk.url)}</a>
-                <button class="btn-icon" title="削除" style="font-size:14px;color:var(--gray-400);" onclick="rpRemoveLink('${r.id}',${i})">×</button>
-              </div>
-            `).join('') || '<div style="padding:4px 0;font-size:13px;color:var(--gray-400);">リンクはまだありません</div>'}</div>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <input type="text" class="search-input" id="rp-link-url" style="flex:2;width:auto;font-size:13px;" placeholder="URL（例: https://drive.google.com/...）">
-              <input type="text" class="search-input" id="rp-link-label" style="flex:1;width:auto;font-size:13px;" placeholder="表示名（任意）">
-              <button class="btn btn-primary btn-sm" onclick="rpAddLink('${r.id}')">追加</button>
-            </div>
-          </div>
-        </div>
+        ${externalLinksCard}
         <div class="card">
           <div class="card-header"><h3>操作</h3></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
-            <button class="btn btn-secondary btn-sm" onclick="alert('Chatworkに転送しました（モック）')">Chatworkに転送</button>
-            <button class="btn btn-secondary btn-sm" onclick="alert('PDFをダウンロードしました（モック）')">PDF出力</button>
-            ${r.readStatus === '一時保存中' ? '<button class="btn btn-primary btn-sm" onclick="rpSubmitDraft(\'' + r.id + '\')">提出する</button>' : ''}
+${draftActions}
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+// 下書きを公開（一方向、戻し不可）
+function rpPublishDraft(id) {
+  const r = MOCK_DATA.reports.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm('この下書きを公開しますか？\n公開後は下書きに戻せません。')) return;
+  r.status = 'published';
+  r.readStatus = '未読';
+  rpStatusTab = 'published';
+  alert('報告書を公開しました（モック）');
+  navigateTo('reports');
+}
+
+function rpDeleteDraft(id) {
+  const r = MOCK_DATA.reports.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`下書き「${r.title}」を削除しますか？`)) return;
+  const idx = MOCK_DATA.reports.findIndex(x => x.id === id);
+  if (idx >= 0) MOCK_DATA.reports.splice(idx, 1);
+  rpStatusTab = 'draft';
+  navigateTo('reports');
 }
 
 function rpAddLink(reportId) {
@@ -247,14 +340,6 @@ function rpRemoveLink(reportId, idx) {
   if (!r || !r.links) return;
   r.links.splice(idx, 1);
   navigateTo('report-detail', { id: reportId });
-}
-
-function rpSubmitDraft(id) {
-  const r = MOCK_DATA.reports.find(x => x.id === id);
-  if (r) {
-    r.readStatus = '未読';
-    navigateTo('report-detail', { id });
-  }
 }
 
 function generateReportBody(r) {

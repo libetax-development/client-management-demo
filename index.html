@@ -514,7 +514,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="hideModal('report-create-modal')">キャンセル</button>
-      <button class="btn btn-primary" onclick="submitNewReport()">作成</button>
+      <button class="btn btn-secondary" onclick="submitNewReportAsDraft()">下書き保存</button>
+      <button class="btn btn-primary" onclick="submitNewReport()">公開する</button>
     </div>
   </div>
 </div>
@@ -1282,14 +1283,14 @@
 <!-- CSV取り込み用の非表示input -->
 <input type="file" id="csv-import-input" accept=".csv" style="display:none">
 
-<script src="data/mock-data.js?v=20260407a"></script>
+<script src="data/mock-data.js?v=20260504a"></script>
 <script src="js/utils.js?v=20260407a"></script>
 <script src="js/core.js?v=20260407a"></script>
 <script src="js/modals/common.js?v=20260407a"></script>
 <script src="js/modals/task-modal.js?v=20260420b"></script>
 <script src="js/modals/client-modal.js?v=20260407a"></script>
 <script src="js/modals/staff-modal.js?v=20260407a"></script>
-<script src="js/modals/report-modal.js?v=20260407a"></script>
+<script src="js/modals/report-modal.js?v=20260504a"></script>
 <script src="js/modals/progress-filter.js?v=20260407a"></script>
 <script src="js/modals/progress-create-modal.js?v=20260407a"></script>
 <script src="js/modals/progress-settings-modal.js?v=20260407a"></script>
@@ -1303,7 +1304,7 @@
 <script src="js/progress/index.js?v=20260420d"></script>
 <script src="js/staff/index.js?v=20260407a"></script>
 <script src="js/timesheet/index.js?v=20260420b"></script>
-<script src="js/reports/index.js?v=20260407a"></script>
+<script src="js/reports/index.js?v=20260504a"></script>
 <script src="js/calendar/holidays.js?v=20260407a"></script>
 <script src="js/calendar/index.js?v=20260424a"></script>
 <script src="js/rewards/index.js?v=20260420b"></script>
