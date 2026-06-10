@@ -91,8 +91,9 @@ function renderProgress(el) {
                     <td>${myComplete > 0 ? `<span class="count-badge" style="background:var(--success-light);color:var(--success);">${myComplete}</span>` : '<span style="color:var(--gray-400)">0</span>'}</td>
                     <td>${complete > 0 ? `<span class="count-badge" style="background:var(--success-light);color:var(--success);">${complete}</span>` : '<span style="color:var(--gray-400)">0</span>'}</td>
                     <td>${escapeHtml(mgr?.name || '-')}</td>
-                    <td>
+                    <td style="white-space:nowrap;">
                       <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openProgressSettingsModal('${s.id}')">設定変更</button>
+                      ${isAdmin ? `<button class="btn btn-secondary btn-sm" style="margin-left:4px;" onclick="event.stopPropagation();openProgressCreateModal('${s.id}')" title="このシートをコピーして新規作成">コピー</button>` : ''}
                     </td>
                   </tr>`;
                 }).join('')}
@@ -128,6 +129,7 @@ function renderProgress(el) {
                   <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" ${isLast ? 'disabled' : ''} onclick="event.stopPropagation();moveProgressSheet('${s.id}','down')" aria-label="下へ移動">↓</button>
                 ` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openProgressSettingsModal('${s.id}')">設定変更</button>
+                ${isAdmin ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openProgressCreateModal('${s.id}')" title="このシートをコピーして新規作成">コピー</button>` : ''}
               </div>
             </div>
           </div>

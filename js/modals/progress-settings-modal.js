@@ -245,20 +245,66 @@ function submitEditProgress() {
   else if (currentPage === 'progress-detail') navigateTo('progress-detail', { id });
 }
 
+// #468: テンプレートとして保存（新規 / 既存マイテンプレート上書き）ダイアログ
+var pgTplSaveSheetId = null;
+
 function saveAsProgressTemplate(sheetId) {
   const id = sheetId || getVal('edit-pg-id');
   const s = MOCK_DATA.progressSheets.find(x => x.id === id);
   if (!s) return;
-  const tplName = prompt('テンプレート名を入力してください:', s.name + '（テンプレート）');
-  if (!tplName || !tplName.trim()) return;
-  MOCK_DATA.progressTemplates.push({
-    id: generateId('pt-', MOCK_DATA.progressTemplates),
-    name: tplName.trim(),
-    category: s.category,
-    columns: s.columns.slice(),
-    isCustom: true,
-  });
-  alert('マイテンプレート「' + tplName.trim() + '」として保存しました');
+  pgTplSaveSheetId = id;
+
+  document.getElementById('pg-tplsave-source').textContent =
+    '保存元: ' + s.name + '（' + s.category + ' / ' + s.columns.length + '工程: ' + s.columns.join(', ') + '）';
+  document.getElementById('pg-tplsave-name').value = s.name + '（テンプレート）';
+
+  // 上書き対象はマイテンプレートのみ（プリセットは上書き不可）
+  const customs = (MOCK_DATA.progressTemplates || []).filter(t => t.isCustom);
+  const sel = document.getElementById('pg-tplsave-target');
+  sel.innerHTML = customs.length > 0
+    ? customs.map(t => '<option value="' + t.id + '">' + escapeHtml(t.name) + '（' + escapeHtml(t.category) + ' / ' + t.columns.length + '工程）</option>').join('')
+    : '<option value="">上書きできるマイテンプレートがありません</option>';
+  document.getElementById('pg-tplsave-overwrite-radio').disabled = customs.length === 0;
+
+  document.querySelector('input[name="pg-tplsave-mode"][value="new"]').checked = true;
+  pgTplSaveModeChanged();
+  showModal('pg-save-template-modal');
+}
+
+function pgTplSaveModeChanged() {
+  const mode = document.querySelector('input[name="pg-tplsave-mode"]:checked').value;
+  document.getElementById('pg-tplsave-new-area').style.display = mode === 'new' ? '' : 'none';
+  document.getElementById('pg-tplsave-overwrite-area').style.display = mode === 'overwrite' ? '' : 'none';
+}
+
+function submitTplSave() {
+  const s = MOCK_DATA.progressSheets.find(x => x.id === pgTplSaveSheetId);
+  if (!s) return;
+  const mode = document.querySelector('input[name="pg-tplsave-mode"]:checked').value;
+
+  if (mode === 'new') {
+    const tplName = getValTrim('pg-tplsave-name');
+    if (!tplName) { alert('テンプレート名を入力してください'); return; }
+    MOCK_DATA.progressTemplates.push({
+      id: generateId('pt-', MOCK_DATA.progressTemplates),
+      name: tplName,
+      category: s.category,
+      columns: s.columns.slice(),
+      isCustom: true,
+      showReportLink: s.showReportLink !== false,
+    });
+    alert('マイテンプレート「' + tplName + '」として保存しました');
+  } else {
+    const tplId = getVal('pg-tplsave-target');
+    const tpl = (MOCK_DATA.progressTemplates || []).find(t => t.id === tplId && t.isCustom);
+    if (!tpl) { alert('上書きするテンプレートを選択してください'); return; }
+    if (!confirm('テンプレート「' + tpl.name + '」を、このシートの現在の工程内容（' + s.columns.length + '工程）で上書きします。よろしいですか？\n※この操作は元に戻せません')) return;
+    tpl.category = s.category;
+    tpl.columns = s.columns.slice();
+    tpl.showReportLink = s.showReportLink !== false;
+    alert('テンプレート「' + tpl.name + '」を上書き更新しました');
+  }
+  hideModal('pg-save-template-modal');
 }
 
 // ============================================================

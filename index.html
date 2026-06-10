@@ -564,10 +564,19 @@
       <div id="pg-step-1">
         <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">テンプレートを選択してください</div>
         <div id="pg-template-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+
+        <!-- #468: 既存シートからコピー -->
+        <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin:20px 0 4px;">既存の進捗管理表からコピー</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">工程列・対象顧客を引き継いで新規作成します。進捗データ（セルの状態・完了日・備考）は空の状態で作成されます。</div>
+        <div id="pg-copy-sheet-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
       </div>
 
       <!-- Step 2: 基本情報 + カラム編集 + 対象顧客 -->
       <div id="pg-step-2" style="display:none;">
+        <!-- #468: コピー元バナー -->
+        <div id="pg-copy-banner" style="display:none;background:var(--primary-light,#e0e7ff);border:1px solid var(--primary);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--gray-700);">
+          <span id="pg-copy-banner-text"></span>
+        </div>
         <div class="form-group">
           <label>管理表名</label>
           <input type="text" id="new-pg-name" placeholder="例: 6月決算法人管理表">
@@ -715,6 +724,47 @@
       <button class="btn btn-secondary" onclick="hideModal('progress-create-modal')">キャンセル</button>
       <button class="btn btn-primary" id="pg-btn-next" onclick="pgStepNext()">次へ</button>
       <button class="btn btn-primary" id="pg-btn-create" onclick="submitNewProgress()" style="display:none;">作成</button>
+    </div>
+  </div>
+</div>
+
+<!-- #468: テンプレートとして保存（新規 / 上書き）モーダル -->
+<div class="modal-overlay" id="pg-save-template-modal">
+  <div class="modal" style="width:480px;max-width:95vw;">
+    <div class="modal-header">
+      <h3>テンプレートとして保存</h3>
+      <button class="btn-icon" onclick="hideModal('pg-save-template-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="pg-tplsave-source" style="font-size:12px;color:var(--gray-500);margin-bottom:14px;"></div>
+
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px;">
+        <input type="radio" name="pg-tplsave-mode" value="new" checked onchange="pgTplSaveModeChanged()">
+        <span>新規テンプレートとして保存</span>
+      </label>
+      <div id="pg-tplsave-new-area" style="margin:0 0 14px 24px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>テンプレート名</label>
+          <input type="text" id="pg-tplsave-name" placeholder="例: 法人決算（カスタム）">
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px;">
+        <input type="radio" name="pg-tplsave-mode" value="overwrite" id="pg-tplsave-overwrite-radio" onchange="pgTplSaveModeChanged()">
+        <span>既存のマイテンプレートを上書き更新</span>
+      </label>
+      <div id="pg-tplsave-overwrite-area" style="display:none;margin:0 0 4px 24px;">
+        <div class="form-group" style="margin-bottom:6px;">
+          <label>上書きするテンプレート</label>
+          <select id="pg-tplsave-target" style="width:100%;"></select>
+        </div>
+        <div style="font-size:11px;color:var(--gray-500);">※ このシートの現在の工程列・カテゴリでテンプレートの内容を置き換えます（テンプレート名は変わりません）</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">※ システム標準（プリセット）テンプレートは上書きできません</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('pg-save-template-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitTplSave()">保存</button>
     </div>
   </div>
 </div>
@@ -1292,8 +1342,8 @@
 <script src="js/modals/staff-modal.js?v=20260407a"></script>
 <script src="js/modals/report-modal.js?v=20260504a"></script>
 <script src="js/modals/progress-filter.js?v=20260407a"></script>
-<script src="js/modals/progress-create-modal.js?v=20260407a"></script>
-<script src="js/modals/progress-settings-modal.js?v=20260407a"></script>
+<script src="js/modals/progress-create-modal.js?v=20260611b"></script>
+<script src="js/modals/progress-settings-modal.js?v=20260611a"></script>
 <script src="js/dashboard/index.js?v=20260407a"></script>
 <script src="js/clients/list.js?v=20260420e"></script>
 <script src="js/clients/summary.js?v=20260407a"></script>
@@ -1301,7 +1351,7 @@
 <script src="js/clients/export-import.js?v=20260407a"></script>
 
 <script src="js/tasks/index.js?v=20260420b"></script>
-<script src="js/progress/index.js?v=20260420d"></script>
+<script src="js/progress/index.js?v=20260611a"></script>
 <script src="js/staff/index.js?v=20260407a"></script>
 <script src="js/timesheet/index.js?v=20260420b"></script>
 <script src="js/reports/index.js?v=20260504a"></script>

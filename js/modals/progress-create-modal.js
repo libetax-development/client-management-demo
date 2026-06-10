@@ -5,11 +5,14 @@
 let pgCurrentStep = 1;
 let pgSelectedColumns = [];
 let pgSelectedTemplateId = null;
+let pgCopySourceSheetId = null; // #468: コピー元シートID
 
-function openProgressCreateModal() {
+function openProgressCreateModal(copyFromSheetId) {
   pgCurrentStep = 1;
   pgSelectedColumns = [];
   pgSelectedTemplateId = null;
+  pgCopySourceSheetId = null;
+  document.getElementById('pg-copy-banner').style.display = 'none';
 
   // Step 2 の初期化
   document.getElementById('new-pg-manager').innerHTML = buildUserOptions('leaders');
@@ -33,10 +36,75 @@ function openProgressCreateModal() {
 
   // テンプレート一覧を描画
   renderProgressTemplateList();
+  renderProgressCopySheetList();
 
   // ステップ表示を初期化
   pgShowStep(1);
   showModal('progress-create-modal');
+
+  // #468: 一覧の「コピー」ボタンから開いた場合はコピー元を選択済みで Step 2 へ
+  if (copyFromSheetId) {
+    pgSelectSheetCopy(copyFromSheetId);
+  }
+}
+
+// #468: Step 1 のコピー元シート一覧
+function renderProgressCopySheetList() {
+  var sheets = MOCK_DATA.progressSheets.filter(function(s) { return s.status === '利用中'; });
+  var container = document.getElementById('pg-copy-sheet-list');
+  if (sheets.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray-400);padding:8px;">コピーできる進捗管理表がありません</div>';
+    return;
+  }
+  container.innerHTML = sheets.map(function(s) {
+    return '<div class="pg-tpl-card" onclick="pgSelectSheetCopy(\'' + s.id + '\')">' +
+      '<div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:4px;">' + escapeHtml(s.name) + '</div>' +
+      '<div style="font-size:11px;color:var(--gray-500);">' + escapeHtml(s.category) + ' / ' + s.columns.length + '工程 / 対象 ' + s.targets.length + '件</div>' +
+      '<div style="font-size:11px;color:var(--gray-400);margin-top:4px;">' + s.columns.map(function(c) { return escapeHtml(c); }).join(', ') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// #468: 既存シートを選択してコピー（工程列・対象顧客を引き継ぎ、進捗データは空）
+function pgSelectSheetCopy(sheetId) {
+  var s = MOCK_DATA.progressSheets.find(function(x) { return x.id === sheetId; });
+  if (!s) return;
+
+  pgSelectedTemplateId = null;
+  pgCopySourceSheetId = sheetId;
+  pgSelectedColumns = s.columns.slice();
+
+  document.getElementById('new-pg-name').value = s.name + '（コピー）';
+  document.getElementById('new-pg-category').value = s.category;
+  document.getElementById('pg-show-report-link').checked = s.showReportLink !== false;
+  if (s.managerId) document.getElementById('new-pg-manager').value = s.managerId;
+
+  pgCurrentStep = 2;
+  pgShowStep(2);
+  renderPgColumnsList();
+  pgCreateRenderDisplay();
+  pgCreateRenderCandidates();
+  pgFilterClients();
+  pgBindClientFilters();
+
+  // 対象顧客はコピー元の対象を個別設定モードでプリセット
+  var radios = document.querySelectorAll('input[name="pg-create-target-mode"]');
+  radios.forEach(function(r) { r.checked = r.value === 'manual'; });
+  pgCreateTargetModeChanged('manual');
+  pgCreateFilterConditions = [];
+  pgCreateFilterApplied = false;
+
+  var srcIds = s.targets.map(function(t) { return t.clientId; });
+  document.querySelectorAll('#pg-client-list .pg-client-cb').forEach(function(cb) {
+    cb.checked = srcIds.indexOf(cb.value) >= 0;
+  });
+  pgUpdateSelectedCount();
+
+  // コピー元バナー
+  var banner = document.getElementById('pg-copy-banner');
+  banner.style.display = '';
+  document.getElementById('pg-copy-banner-text').textContent =
+    '「' + s.name + '」からコピー：工程列・対象顧客を引き継ぎます。進捗データ（セルの状態・完了日・備考）は空の状態で作成されます。';
 }
 
 function renderProgressTemplateList() {
@@ -77,6 +145,8 @@ function renderProgressTemplateList() {
 
 function pgSelectTemplate(templateId) {
   pgSelectedTemplateId = templateId;
+  pgCopySourceSheetId = null; // #468: テンプレート選択時はコピー状態を解除
+  document.getElementById('pg-copy-banner').style.display = 'none';
   if (templateId) {
     var tpl = (MOCK_DATA.progressTemplates || []).find(function(t) { return t.id === templateId; });
     if (tpl) {
@@ -145,9 +215,17 @@ function pgStepNext() {
     }
     var mgr = getUserById(getVal('new-pg-manager'));
     var showReportLink = document.getElementById('pg-show-report-link').checked;
+    // #468: コピー元の表示行
+    var copySrc = pgCopySourceSheetId
+      ? MOCK_DATA.progressSheets.find(function(x) { return x.id === pgCopySourceSheetId; })
+      : null;
+    var copyRow = copySrc
+      ? '<div style="font-size:12px;color:var(--gray-500);">コピー元</div><div style="font-size:13px;">' + escapeHtml(copySrc.name) + '<span style="font-size:11px;color:var(--gray-400);margin-left:8px;">進捗データは空で作成</span></div>'
+      : '';
     document.getElementById('pg-confirm-summary').innerHTML =
       '<div class="card"><div class="card-body">' +
       '<div class="detail-grid" style="grid-template-columns:120px 1fr;gap:8px 16px;">' +
+      copyRow +
       '<div style="font-size:12px;color:var(--gray-500);">管理表名</div><div style="font-size:13px;font-weight:600;">' + escapeHtml(name) + '</div>' +
       '<div style="font-size:12px;color:var(--gray-500);">カテゴリ</div><div style="font-size:13px;">' + escapeHtml(getVal('new-pg-category')) + '</div>' +
       '<div style="font-size:12px;color:var(--gray-500);">管理者</div><div style="font-size:13px;">' + (mgr ? escapeHtml(mgr.name) : '-') + '</div>' +
@@ -164,6 +242,7 @@ function pgStepBack() {
   if (pgCurrentStep === 2) {
     pgShowStep(1);
     renderProgressTemplateList();
+    renderProgressCopySheetList();
   } else if (pgCurrentStep === 3) {
     pgShowStep(2);
   }
@@ -171,7 +250,9 @@ function pgStepBack() {
 
 // カラム一覧レンダリング
 function renderPgColumnsList() {
+  // 旧UI(pg-columns-list)は dual-list に置換済みで要素が無い。null guard で後続レンダリングを守る (#468 で発見した先在バグ)
   var container = document.getElementById('pg-columns-list');
+  if (!container) return;
   if (pgSelectedColumns.length === 0) {
     container.innerHTML = '<div style="font-size:12px;color:var(--gray-400);padding:8px;">工程が設定されていません</div>';
     return;
