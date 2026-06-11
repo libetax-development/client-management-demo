@@ -245,7 +245,7 @@ function submitEditProgress() {
   else if (currentPage === 'progress-detail') navigateTo('progress-detail', { id });
 }
 
-// #468: テンプレートとして保存（新規 / 既存マイテンプレート上書き）ダイアログ
+// #468: コピー / テンプレート保存（コピー新規作成・テンプレ新規・テンプレ上書き）ダイアログ
 var pgTplSaveSheetId = null;
 
 function saveAsProgressTemplate(sheetId) {
@@ -255,7 +255,7 @@ function saveAsProgressTemplate(sheetId) {
   pgTplSaveSheetId = id;
 
   document.getElementById('pg-tplsave-source').textContent =
-    '保存元: ' + s.name + '（' + s.category + ' / ' + s.columns.length + '工程: ' + s.columns.join(', ') + '）';
+    '対象: ' + s.name + '（' + s.category + ' / ' + s.columns.length + '工程: ' + s.columns.join(', ') + '）';
   document.getElementById('pg-tplsave-name').value = s.name + '（テンプレート）';
 
   // 上書き対象はマイテンプレートのみ（プリセットは上書き不可）
@@ -266,21 +266,30 @@ function saveAsProgressTemplate(sheetId) {
     : '<option value="">上書きできるマイテンプレートがありません</option>';
   document.getElementById('pg-tplsave-overwrite-radio').disabled = customs.length === 0;
 
-  document.querySelector('input[name="pg-tplsave-mode"][value="new"]').checked = true;
+  document.querySelector('input[name="pg-tplsave-mode"][value="copy"]').checked = true;
   pgTplSaveModeChanged();
   showModal('pg-save-template-modal');
 }
 
 function pgTplSaveModeChanged() {
   const mode = document.querySelector('input[name="pg-tplsave-mode"]:checked').value;
+  document.getElementById('pg-tplsave-copy-area').style.display = mode === 'copy' ? '' : 'none';
   document.getElementById('pg-tplsave-new-area').style.display = mode === 'new' ? '' : 'none';
   document.getElementById('pg-tplsave-overwrite-area').style.display = mode === 'overwrite' ? '' : 'none';
+  document.getElementById('pg-tplsave-submit').textContent = mode === 'copy' ? '次へ' : '保存';
 }
 
 function submitTplSave() {
   const s = MOCK_DATA.progressSheets.find(x => x.id === pgTplSaveSheetId);
   if (!s) return;
   const mode = document.querySelector('input[name="pg-tplsave-mode"]:checked').value;
+
+  if (mode === 'copy') {
+    // コピーして新規作成 → 作成モーダル Step 2 へ（コピー元プリセット）
+    hideModal('pg-save-template-modal');
+    openProgressCreateModal(pgTplSaveSheetId);
+    return;
+  }
 
   if (mode === 'new') {
     const tplName = getValTrim('pg-tplsave-name');

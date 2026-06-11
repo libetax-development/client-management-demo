@@ -36,33 +36,15 @@ function openProgressCreateModal(copyFromSheetId) {
 
   // テンプレート一覧を描画
   renderProgressTemplateList();
-  renderProgressCopySheetList();
 
   // ステップ表示を初期化
   pgShowStep(1);
   showModal('progress-create-modal');
 
-  // #468: 一覧の「コピー」ボタンから開いた場合はコピー元を選択済みで Step 2 へ
+  // #468: シート詳細の「コピー / テンプレ保存」から開いた場合はコピー元を選択済みで Step 2 へ
   if (copyFromSheetId) {
     pgSelectSheetCopy(copyFromSheetId);
   }
-}
-
-// #468: Step 1 のコピー元シート一覧
-function renderProgressCopySheetList() {
-  var sheets = MOCK_DATA.progressSheets.filter(function(s) { return s.status === '利用中'; });
-  var container = document.getElementById('pg-copy-sheet-list');
-  if (sheets.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray-400);padding:8px;">コピーできる進捗管理表がありません</div>';
-    return;
-  }
-  container.innerHTML = sheets.map(function(s) {
-    return '<div class="pg-tpl-card" onclick="pgSelectSheetCopy(\'' + s.id + '\')">' +
-      '<div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:4px;">' + escapeHtml(s.name) + '</div>' +
-      '<div style="font-size:11px;color:var(--gray-500);">' + escapeHtml(s.category) + ' / ' + s.columns.length + '工程 / 対象 ' + s.targets.length + '件</div>' +
-      '<div style="font-size:11px;color:var(--gray-400);margin-top:4px;">' + s.columns.map(function(c) { return escapeHtml(c); }).join(', ') + '</div>' +
-      '</div>';
-  }).join('');
 }
 
 // #468: 既存シートを選択してコピー（工程列・対象顧客を引き継ぎ、進捗データは空）
@@ -242,7 +224,6 @@ function pgStepBack() {
   if (pgCurrentStep === 2) {
     pgShowStep(1);
     renderProgressTemplateList();
-    renderProgressCopySheetList();
   } else if (pgCurrentStep === 3) {
     pgShowStep(2);
   }
