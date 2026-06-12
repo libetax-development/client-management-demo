@@ -25,6 +25,7 @@ function renderRewards(el) {
       <button class="view-tab active" data-view="by-staff">職員別</button>
       <button class="view-tab" data-view="by-client">顧客別</button>
       <button class="view-tab" data-view="spot">SPOT報酬</button>
+      <button class="view-tab" data-view="spot-ledger">スポット台帳</button>
     </div>
 
     <div class="stats-grid" id="rw-summary"></div>
@@ -32,6 +33,7 @@ function renderRewards(el) {
     <div class="card">
       <div class="card-header"><h3 id="rw-table-title">職員別 報酬集計</h3></div>
       <div class="card-body">
+        <div id="sl-controls" style="display:none;"></div>
         <div class="table-wrapper">
           <table>
             <thead id="rw-thead"></thead>
@@ -45,6 +47,14 @@ function renderRewards(el) {
   let activeView = 'by-staff';
   function refresh() {
     const month = document.getElementById('rw-month-filter')?.value || '2026-03';
+    // #439/#440: スポット台帳（案件管理）は spot-ledger.js が描画
+    const slControls = document.getElementById('sl-controls');
+    if (activeView === 'spot-ledger') {
+      if (slControls) slControls.style.display = '';
+      renderSpotLedgerView();
+      return;
+    }
+    if (slControls) slControls.style.display = 'none';
     renderRewardData(month, activeView);
   }
 
