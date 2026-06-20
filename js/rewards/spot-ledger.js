@@ -105,18 +105,16 @@ function renderSpotLedgerView() {
     return `<span class="status-badge ${cls}" style="font-size:11px;">${spotLedgerBillingLabel(b)}</span>`;
   };
 
+  // §11-1 N5: 日税出力カラムは Phase C で開放するため Phase A は非表示
+  // (書込み Server Action 未実装期間に NULL のまま放置されると誤認リスク)
   document.getElementById('rw-thead').innerHTML =
-    '<tr><th>発生日</th><th>顧客名</th><th>カテゴリ</th><th>内容</th><th>金額（税抜）</th><th>回収方法</th><th>担当</th><th>日税出力</th><th></th></tr>';
+    '<tr><th>発生日</th><th>顧客名</th><th>カテゴリ</th><th>内容</th><th>金額（税抜）</th><th>回収方法</th><th>担当</th><th></th></tr>';
   document.getElementById('rw-tbody').innerHTML = rows.length === 0
-    ? '<tr><td colspan="9" style="text-align:center;color:var(--gray-400);">該当するスポット報酬はありません</td></tr>'
+    ? '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);">該当するスポット報酬はありません</td></tr>'
     : rows.map(r => {
         const client = getClientById(r.clientId);
         const staff = getUserById(r.staffUserId);
-        const exportedCell = r.billing !== 'nichizei'
-          ? '<span style="color:var(--gray-400);font-size:11px;">対象外</span>'
-          : r.exportedAt
-            ? `<span style="color:var(--success);font-size:11px;">✓ ${escapeHtml(r.exportedAt)}</span>`
-            : '<span style="color:var(--warning);font-size:11px;">未出力</span>';
+        // Phase C で復活: const exportedCell = r.billing !== 'nichizei' ? ... : (r.exportedAt ? '✓' : '未出力')
         return `<tr>
           <td>${escapeHtml(r.occurredAt)}</td>
           <td><strong>${escapeHtml(client?.name || '-')}</strong></td>
@@ -125,7 +123,6 @@ function renderSpotLedgerView() {
           <td style="text-align:right;${r.amount < 0 ? 'color:var(--danger);' : ''}"><strong>${r.amount.toLocaleString()}円</strong></td>
           <td>${billingBadge(r.billing)}</td>
           <td>${escapeHtml(staff?.name || '-')}</td>
-          <td>${exportedCell}</td>
           <td style="white-space:nowrap;">
             <button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="openSpotLedgerModal('${r.id}')">編集</button>
             <button class="btn btn-secondary btn-sm" style="font-size:11px;color:var(--danger);" onclick="deleteSpotLedgerEntry('${r.id}')">削除</button>
