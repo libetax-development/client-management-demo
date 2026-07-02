@@ -5,9 +5,15 @@
 // メンバー表示トグルON時に「自分」として使うサンプル職員（長谷川 綾・第2チーム）
 const MGMT_REPORT_SAMPLE_MEMBER_ID = 'u-006';
 
-// 生成不可理由のツールチップ文言（既存demoにtooltip専用CSSクラスはないためtitle属性で統一）
+// 生成不可理由のツールチップ文言（title属性はhoverから表示まで遅く読みにくいというひろFBを受け、
+// CSSの吹き出しツールチップ（.has-tooltip / .tooltip-bubble、style.css参照）に変更）
 const MGMT_TOOLTIP_DATA_INSUFFICIENT = 'MF連携済みですが、レポートの元になる月次実績データがまだ取得できていません（同期実行前、またはマネーフォワード側に仕訳入力がない状態です）';
-const MGMT_TOOLTIP_CONSENT_MISSING = 'AIレポート生成には顧問先の同意取得が必要です。同意日時は顧客情報で登録します';
+const MGMT_TOOLTIP_CONSENT_MISSING = 'AIレポート生成には顧問先の同意取得が必要です。同意日時はこのセルをクリックして登録できます';
+
+// 吹き出しツールチップ付きのラベルspanを生成する共通ヘルパー
+function mgmtTooltipSpan(label, text, extraStyle) {
+  return `<span class="has-tooltip" style="${extraStyle || ''}">${escapeHtml(label)}<span class="tooltip-bubble">${escapeHtml(text)}</span></span>`;
+}
 
 // 操作列を含む各列を固定幅にする（table-layout:fixedで完了表示・履歴ボタン追加時も列位置がズレないようにする）
 const MGMT_REPORT_COLGROUP = `
@@ -89,18 +95,26 @@ function renderManagementReportsList() {
 function mgmtReportRow(client, settings, conn) {
   return `<tr>
     <td><strong>${escapeHtml(client.name)}</strong><div style="font-size:11px;color:var(--gray-500);">${escapeHtml(client.clientCode)}</div></td>
-    <td>${mgmtConnBadge(conn)}</td>
+    <td>${mgmtConnBadge(client, conn)}</td>
     <td>${settings?.latestActualMonth ? mgmtFormatMonth(settings.latestActualMonth) : '-'}</td>
     <td>${mgmtFreqCell(client, settings)}</td>
-    <td>${mgmtConsentCell(settings)}</td>
+    <td>${mgmtConsentCell(client, settings)}</td>
     <td>${mgmtActionCell(client, settings, conn)}</td>
   </tr>`;
 }
 
-// 連携状態バッジ: connected=連携済み(緑) / token_expired=要再認証(赤) / 行なし=未連携(灰枠)
-function mgmtConnBadge(conn) {
-  if (!conn) return `<span class="status-badge status-outline">未連携</span>`;
-  if (conn.status === 'token_expired') return `<span class="status-badge status-returned">要再認証</span>`;
+// 連携状態バッジ: connected=連携済み(緑・クリック不可) / token_expired=要再認証(赤・クリックで再連携) / 行なし=未連携(灰枠・クリックで連携)
+// ひろFB: 右端の「MF連携」ボタンは気づきにくいため、バッジ自体からも連携モーダルを開けるようにする（導線は併存）
+// ツールチップはtitle属性ではなくCSS吹き出し（.has-tooltip）で統一（Medium FB対応）。
+// mgmt-badge-clickableのpointerカーソル・hover装飾はhas-tooltipのcursor:help/displayと
+// クラス併用しても打ち消し合わないため、mgmtConsentCellの同意未取得表示と同じ書き方に揃えている
+function mgmtConnBadge(client, conn) {
+  if (!conn) {
+    return `<span class="status-badge status-outline mgmt-badge-clickable has-tooltip" onclick="mgmtOpenConnectModal('${client.id}','connect')">未連携<span class="tooltip-bubble">クリックでMF連携を開始</span></span>`;
+  }
+  if (conn.status === 'token_expired') {
+    return `<span class="status-badge status-returned mgmt-badge-clickable has-tooltip" onclick="mgmtOpenConnectModal('${client.id}','reconnect')">要再認証<span class="tooltip-bubble">クリックで再連携</span></span>`;
+  }
   return `<span class="status-badge status-done">連携済み</span>`;
 }
 
@@ -141,12 +155,19 @@ function mgmtChangeFrequency(clientId, value) {
   }, 1500);
 }
 
-// AI同意の注記。「同意未取得」はgray-400不可のためwarningトークンで可読色にする
-function mgmtConsentCell(settings) {
-  if (settings?.aiReportConsentAt) {
-    return `同意済み<div style="font-size:11px;color:var(--gray-500);">${formatDate(settings.aiReportConsentAt)}</div>`;
-  }
-  return `<span style="font-weight:600;color:var(--warning);cursor:help;" title="${escapeHtml(MGMT_TOOLTIP_CONSENT_MISSING)}">同意未取得</span>`;
+// AI同意セル。クリックで登録/取消モーダルを開く（ひろFB: 「AI同意ってどこで変えれるん？」対応）。
+// 「同意未取得」はgray-400不可のためwarningトークンで可読色にする
+function mgmtConsentCell(client, settings) {
+  const hasConsent = !!settings?.aiReportConsentAt;
+  const inner = hasConsent
+    ? `<span class="mgmt-clickable-text">同意済み</span><div style="font-size:11px;color:var(--gray-500);">${formatDate(settings.aiReportConsentAt)}</div>`
+    : `<span class="has-tooltip mgmt-clickable-text" style="font-weight:600;color:var(--warning);">同意未取得<span class="tooltip-bubble">${escapeHtml(MGMT_TOOLTIP_CONSENT_MISSING)}</span></span>`;
+
+  return `
+    <button type="button" class="mgmt-clickable-cell" onclick="mgmtOpenConsentModal('${client.id}')" style="background:none;border:none;padding:0;text-align:left;font:inherit;color:inherit;width:100%;cursor:pointer;">
+      ${inner}
+    </button>
+  `;
 }
 
 // アクション列: 連携状態×同意×実績月の組み合わせで導線を出し分ける
@@ -163,18 +184,18 @@ function mgmtActionCell(client, settings, conn) {
 
   // 未連携: その場でMF連携モーダルを開く。同意も未取得なら併記（両方欠落表示）
   if (isUnlinked) {
-    const consentNote = hasConsent ? '' : `<div style="font-size:11px;color:var(--warning);margin-top:4px;cursor:help;" title="${escapeHtml(MGMT_TOOLTIP_CONSENT_MISSING)}">同意未取得</div>`;
+    const consentNote = hasConsent ? '' : `<div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('同意未取得', MGMT_TOOLTIP_CONSENT_MISSING, 'color:var(--warning);')}</div>`;
     return `<button class="btn btn-secondary btn-sm" onclick="mgmtOpenConnectModal('${client.id}','connect')">MF連携</button>${consentNote}`;
   }
 
   // 連携済み・同意未取得: 生成不可（disabledのみでは視覚的に押せそうに見えるためopacityも付与）
   if (!hasConsent) {
-    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;color:var(--gray-500);margin-top:4px;cursor:help;" title="${escapeHtml(MGMT_TOOLTIP_CONSENT_MISSING)}">同意未取得</div>`;
+    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('同意未取得', MGMT_TOOLTIP_CONSENT_MISSING, 'color:var(--gray-500);')}</div>`;
   }
 
   // 連携済み・同意済み・実績データ不足: 生成不可
   if (!hasData) {
-    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;color:var(--gray-500);margin-top:4px;cursor:help;" title="${escapeHtml(MGMT_TOOLTIP_DATA_INSUFFICIENT)}">データ不足</div>`;
+    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('データ不足', MGMT_TOOLTIP_DATA_INSUFFICIENT, 'color:var(--gray-500);')}</div>`;
   }
 
   // 生成可能: 生成ボタン + 履歴ボタン（縦積み・固定幅列に収まるコンパクト表示）
@@ -213,6 +234,7 @@ function mgmtGenerateReport(clientId) {
 
 // ── MF連携/再連携モーダル（この画面から離れず連携できるようにする） ──
 function mgmtOpenConnectModal(clientId, mode) {
+  if (document.getElementById('mr-connect-modal')) return; // 多重起動ガード（連打・バッジ+操作列ボタンの二重クリック対策）
   const client = getClientById(clientId);
   const isReconnect = mode === 'reconnect';
 
@@ -306,6 +328,138 @@ function mgmtCloseConnectModal() {
 function mgmtNowJST() {
   const d = new Date();
   return d.toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(' ', 'T');
+}
+
+// JST基準の今日の日付文字列（YYYY-MM-DD）。date inputの既定値用。toISOString()はUTCになるため使わない
+function mgmtTodayJST() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+}
+
+// ── AI同意 登録/取消モーダル（ひろFB: 「AI同意ってどこで変えれるん？」対応） ──
+// 経営レポート一覧・顧客詳細（js/clients/detail.js）の2箇所から呼ばれる共通モーダル。
+// このファイルは経営レポート一覧より後にscriptタグで読み込まれるが、関数はグローバル定義かつ
+// 呼び出しはユーザー操作（クリック）時＝全script読み込み後なので、読み込み順に関係なく呼び出せる。
+// 連携モーダルと同様、処理中タイマーIDを保持しモーダルクローズ時にclearTimeoutして多重操作・裏実行を防ぐ
+let mgmtConsentTimer = null;
+// 呼び出し元ページを更新するための任意コールバック。経営レポート一覧から開いた場合は不要（自動でrenderManagementReportsListが走る）が、
+// 顧客詳細等の他ページから開いた場合はそのページ自身の再描画関数を渡してもらう
+let mgmtConsentOnDone = null;
+
+function mgmtOpenConsentModal(clientId, onDone) {
+  if (document.getElementById('mr-consent-modal')) return; // 多重起動ガード
+  mgmtConsentOnDone = typeof onDone === 'function' ? onDone : null;
+  const client = getClientById(clientId);
+  const settings = getCompanySettings(clientId);
+  const hasConsent = !!settings?.aiReportConsentAt;
+  const dateValue = hasConsent ? settings.aiReportConsentAt.slice(0, 10) : mgmtTodayJST();
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.id = 'mr-consent-modal';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>AIレポート同意の登録</h3>
+        <button class="btn-icon" onclick="mgmtCloseConsentModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">
+          <strong>${escapeHtml(client?.name || '')}</strong><br>
+          顧問先からAIによる経営レポート生成の同意を得た日を記録します。
+        </p>
+        ${hasConsent ? `<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">現在の同意取得日: <strong>${formatDate(settings.aiReportConsentAt)}</strong></p>` : ''}
+        <div class="form-group">
+          <label for="mr-consent-date">同意取得日</label>
+          <input type="date" id="mr-consent-date" value="${escapeHtml(dateValue)}">
+        </div>
+        <p style="font-size:11px;color:var(--gray-500);margin-top:8px;">※実運用では company_settings.ai_report_consent_at を更新します</p>
+        <div id="mr-consent-status" style="margin-top:12px;"></div>
+      </div>
+      <div class="modal-footer">
+        ${hasConsent ? `<button class="btn btn-danger btn-sm" id="mr-consent-revoke" style="margin-right:auto;" onclick="mgmtRevokeConsent('${clientId}')">同意を取り消す</button>` : ''}
+        <button class="btn btn-secondary" onclick="mgmtCloseConsentModal()">キャンセル</button>
+        <button class="btn btn-primary" id="mr-consent-submit" onclick="mgmtSubmitConsent('${clientId}')">登録</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// companySettingsに行がないクライアント（契約解除済み等の旧データ・不整合データ）でも同意登録できるように、
+// 行がなければ既定値で新規追加してから返す。実運用ではDB側のupsertに相当する処理
+// （High FB対応: これまではsettingsがnullだと何も保存せずモーダルだけ閉じるsilent failだった）
+function mgmtEnsureCompanySettings(clientId) {
+  let settings = getCompanySettings(clientId);
+  if (!settings) {
+    settings = { clientId, reportFrequency: 'monthly', latestActualMonth: null, aiReportConsentAt: null };
+    MOCK_DATA.companySettings.push(settings);
+  }
+  return settings;
+}
+
+// 同意登録/取消 共通の完了処理（モーダルを閉じて一覧・呼び出し元を更新する）
+function mgmtFinishConsentUpdate() {
+  const onDone = mgmtConsentOnDone;
+  mgmtCloseConsentModal();
+  renderManagementReportsList(); // 経営レポート一覧が表示されていなければ何もしない
+  if (onDone) onDone();
+}
+
+function mgmtSubmitConsent(clientId) {
+  const dateInput = document.getElementById('mr-consent-date');
+  const submitBtn = document.getElementById('mr-consent-submit');
+  const revokeBtn = document.getElementById('mr-consent-revoke');
+  const status = document.getElementById('mr-consent-status');
+  if (!dateInput || !submitBtn) return;
+
+  const dateValue = dateInput.value;
+  if (!dateValue) {
+    alert('同意取得日を入力してください');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '登録中...';
+  if (revokeBtn) revokeBtn.disabled = true;
+  if (status) status.innerHTML = '<span style="font-size:12px;color:var(--gray-500);">登録しています...</span>';
+
+  mgmtConsentTimer = setTimeout(() => {
+    mgmtConsentTimer = null;
+    const settings = mgmtEnsureCompanySettings(clientId);
+    settings.aiReportConsentAt = `${dateValue}T00:00:00`;
+    mgmtFinishConsentUpdate();
+  }, 800);
+}
+
+function mgmtRevokeConsent(clientId) {
+  const client = getClientById(clientId);
+  if (!confirm(`${client?.name || ''}のAIレポート同意を取り消しますか？\n取り消すとレポート生成ができなくなります。`)) return;
+
+  const submitBtn = document.getElementById('mr-consent-submit');
+  const revokeBtn = document.getElementById('mr-consent-revoke');
+  const status = document.getElementById('mr-consent-status');
+  if (submitBtn) submitBtn.disabled = true;
+  if (revokeBtn) {
+    revokeBtn.disabled = true;
+    revokeBtn.textContent = '取消中...';
+  }
+  if (status) status.innerHTML = '<span style="font-size:12px;color:var(--gray-500);">取り消しています...</span>';
+
+  mgmtConsentTimer = setTimeout(() => {
+    mgmtConsentTimer = null;
+    const settings = mgmtEnsureCompanySettings(clientId);
+    settings.aiReportConsentAt = null;
+    mgmtFinishConsentUpdate();
+  }, 800);
+}
+
+function mgmtCloseConsentModal() {
+  if (mgmtConsentTimer) {
+    clearTimeout(mgmtConsentTimer);
+    mgmtConsentTimer = null;
+  }
+  mgmtConsentOnDone = null;
+  document.getElementById('mr-consent-modal')?.remove();
 }
 
 // ── 過去レポート履歴モーダル ──

@@ -3,11 +3,60 @@
 // ===========================
 let clientEditMode = false;
 
+// タブ切り替え状態（顧客をまたいだ場合はbasicへリセットし、同一顧客の再描画では維持する。
+// FB: 閲覧モードから同意登録→onDoneの全再描画でアクティブタブが「基本情報」へ戻ってしまう問題への対応）
+let clientDetailActiveTab = 'basic';
+let clientDetailActiveTabClientId = null;
+
+// AIレポート同意 登録/変更モーダルを開く（顧客詳細からの呼び出し用ラッパー）。
+// 登録/取消モーダルは経営レポート一覧と共通化されたjs/management-reports/index.jsのmgmtOpenConsentModalを呼び出す
+// （scriptタグの読み込み順は本ファイルの方が先だが、呼び出しはクリック時＝全script読み込み後なので通常問題ない。
+// 念のためスクリプト分割・読み込み失敗耐性としてtypeofチェックを入れる）
+// 更新完了後にこの顧客詳細画面自身を再描画するコールバックを渡し、モーダルを閉じたら即座に反映されるようにする
+function clientOpenAiConsentModal(clientId) {
+  if (typeof mgmtOpenConsentModal !== 'function') {
+    alert('同意登録機能を読み込めませんでした。ページを再読み込みしてください。');
+    return;
+  }
+  mgmtOpenConsentModal(clientId, () => {
+    const content = document.getElementById('page-content');
+    if (content) renderClientDetail(content, { id: clientId });
+  });
+}
+
+// AIレポート同意の表示のみ（編集モード用）。
+// 編集モード中は変更・取消ボタンを出さない。onDoneの全再描画で他フィールドの未保存入力が
+// 無警告で消えてしまうため、同意変更は閲覧モードからのみ行える導線にする（Critical FB対応）
+function renderClientAiConsentReadonly(c) {
+  const settings = getCompanySettings(c.id);
+  const hasConsent = !!settings?.aiReportConsentAt;
+  if (hasConsent) return `同意済み（${escapeHtml(formatDate(settings.aiReportConsentAt))}）`;
+  return `<span style="color:var(--warning);font-weight:600;">同意未取得</span>`;
+}
+
+// AIレポート同意の表示+変更導線（cm#546/#547由来・閲覧モード専用）
+function renderClientAiConsentValue(c) {
+  const settings = getCompanySettings(c.id);
+  const hasConsent = !!settings?.aiReportConsentAt;
+  const onclickJs = `clientOpenAiConsentModal('${c.id}')`;
+
+  if (hasConsent) {
+    return `同意済み（${escapeHtml(formatDate(settings.aiReportConsentAt))}）<button type="button" class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="${onclickJs}">変更・取消</button>`;
+  }
+  return `<span style="color:var(--warning);font-weight:600;">同意未取得</span><button type="button" class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="${onclickJs}">同意を登録</button>`;
+}
+
 function renderClientDetail(el, params) {
   const isNew = params.id === 'new';
   const editing = isNew || clientEditMode;
   const c = isNew ? null : getClientById(params.id);
   if (!isNew && !c) { el.innerHTML = renderEmptyState('顧客が見つかりません'); return; }
+
+  // 顧客が変わった場合のみタブをbasicへリセットする（同一顧客の再描画ではアクティブタブを維持）
+  if (clientDetailActiveTabClientId !== params.id) {
+    clientDetailActiveTab = 'basic';
+    clientDetailActiveTabClientId = params.id;
+  }
 
   const staffOptions = buildUserOptions('staff');
   const fiscalOptions = Array.from({length: 12}, (_, i) =>
@@ -178,12 +227,12 @@ function renderClientDetail(el, params) {
       </div>
       <div class="card-body">
         <div class="view-tabs" id="client-detail-tabs" style="margin-bottom:16px;">
-          <button class="view-tab active" data-ctab="basic">基本情報</button>
-          <button class="view-tab" data-ctab="tax">税務・申告</button>
-          <button class="view-tab" data-ctab="contact">連絡先・連携</button>
+          <button class="view-tab ${clientDetailActiveTab === 'basic' ? 'active' : ''}" data-ctab="basic">基本情報</button>
+          <button class="view-tab ${clientDetailActiveTab === 'tax' ? 'active' : ''}" data-ctab="tax">税務・申告</button>
+          <button class="view-tab ${clientDetailActiveTab === 'contact' ? 'active' : ''}" data-ctab="contact">連絡先・連携</button>
         </div>
 
-        <div id="ctab-basic">
+        <div id="ctab-basic" style="display:${clientDetailActiveTab === 'basic' ? '' : 'none'};">
           <div class="detail-section-title">基本情報</div>
           <div class="detail-row"><div class="detail-label">管理コード</div><div class="detail-value">${editing ? inp('ed-clientCode', c?.clientCode, 'text', '例: 030450') : val(c?.clientCode)}</div></div>
           <div class="detail-row"><div class="detail-label">顧客コード</div><div class="detail-value">${editing ? inp('ed-displayCode', c?.displayCode, 'text', '例: 001') : val(c?.displayCode)}</div></div>
@@ -228,11 +277,12 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">記帳責任者補佐</div><div class="detail-value">${editing ? inp('ed-bookkeepingSub', '', 'select-staff') : val(c ? getAssigneeUser(c.id, 'bookkeeping_sub')?.name : null)}</div></div>
         </div>
 
-        <div id="ctab-tax" style="display:none;">
+        <div id="ctab-tax" style="display:${clientDetailActiveTab === 'tax' ? '' : 'none'};">
           <div class="detail-section-title">税務情報</div>
           <div class="detail-row"><div class="detail-label">日税コード</div><div class="detail-value">${editing ? inp('ed-nichizeiCode', c?.nichizeiCode, 'text', '例: NT-001234') : val(c?.nichizeiCode)}</div></div>
           <div class="detail-row"><div class="detail-label">管理表No</div><div class="detail-value">${editing ? inp('ed-managementNo', c?.managementNo, 'text', '例: M-0450') : val(c?.managementNo)}</div></div>
           <div class="detail-row"><div class="detail-label">MF事業者番号</div><div class="detail-value">${editing ? inp('ed-mfBusinessNo', c?.mfBusinessNo, 'text', '例: MF-001234') : val(c?.mfBusinessNo)}</div></div>
+          ${!isNew ? `<div class="detail-row"><div class="detail-label">AIレポート同意</div><div class="detail-value">${editing ? renderClientAiConsentReadonly(c) : renderClientAiConsentValue(c)}</div></div>` : ''}
           <div class="detail-row"><div class="detail-label">e-Tax利用者識別番号</div><div class="detail-value">${editing ? inp('ed-etaxId', c?.etaxId, 'text', '例: 0012345678901234') : val(c?.etaxId)}</div></div>
           <div class="detail-row"><div class="detail-label">e-Taxパスワード</div><div class="detail-value">${editing ? '<div style="display:flex;align-items:center;gap:4px;"><input type="password" id="ed-etaxPassword" class="inline-edit-input" value="' + escapeHtml(c?.etaxPassword || '') + '" placeholder="パスワードを入力" style="flex:1;"><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordField(\'ed-etaxPassword\', this)" title="表示切替">👁</button></div>' : (c?.etaxPassword ? '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="pw-mask" data-cid="' + escapeHtml(c.id) + '" data-field="etaxPassword">••••••••</span><button type="button" class="btn btn-ghost btn-xs" onclick="togglePasswordMask(this)" title="表示切替">👁</button></span>' : '-')}</div></div>
           <div class="detail-row"><div class="detail-label">eLTAX利用者ID</div><div class="detail-value">${editing ? inp('ed-eltaxId', c?.eltaxId, 'text', '例: LT001234') : val(c?.eltaxId)}</div></div>
@@ -257,7 +307,7 @@ function renderClientDetail(el, params) {
           <div class="detail-row"><div class="detail-label">納付備考</div><div class="detail-value">${editing ? inp('ed-paymentRemarks', c?.paymentInfo?.remarks, 'textarea', '納付に関する備考') : val(c?.paymentInfo?.remarks)}</div></div>
         </div>
 
-        <div id="ctab-contact" style="display:none;">
+        <div id="ctab-contact" style="display:${clientDetailActiveTab === 'contact' ? '' : 'none'};">
           <div class="detail-section-title">連絡先</div>
           <div class="detail-row"><div class="detail-label">メールアドレス</div><div class="detail-value">${editing ? inp('ed-email', c?.email, 'text', '例: info@example.com') : val(c?.email)}</div></div>
           <div class="detail-row"><div class="detail-label">シティネーム</div><div class="detail-value">${editing ? inp('ed-cityName', c?.cityName, 'text', '例: やまもとたろう') : val(c?.cityName)}</div></div>
@@ -353,6 +403,7 @@ function renderClientDetail(el, params) {
   document.getElementById('client-detail-tabs')?.addEventListener('click', e => {
     const tab = e.target.dataset?.ctab;
     if (!tab) return;
+    clientDetailActiveTab = tab;
     document.querySelectorAll('#client-detail-tabs .view-tab').forEach(b => b.classList.toggle('active', b.dataset.ctab === tab));
     ['basic', 'tax', 'contact'].forEach(t => {
       const el = document.getElementById('ctab-' + t);

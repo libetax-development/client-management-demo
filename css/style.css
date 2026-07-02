@@ -229,6 +229,45 @@ tbody tr.row-highlighted:hover { background: #fef9c3; }
 .modal-body { padding: 20px; }
 .modal-footer { padding: 12px 20px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ── ツールチップ（吹き出し・title属性のネイティブ表示は遅く見づらいため代替） ── */
+.has-tooltip { position: relative; display: inline-block; cursor: help; }
+.has-tooltip .tooltip-bubble {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 0;
+  background: var(--gray-900);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 6px;
+  max-width: 260px;
+  width: max-content;
+  white-space: normal;
+  box-shadow: var(--shadow-lg);
+  z-index: 150;
+  pointer-events: none;
+}
+.has-tooltip .tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  border: 5px solid transparent;
+  border-top-color: var(--gray-900);
+}
+.has-tooltip:hover .tooltip-bubble,
+.has-tooltip:focus-visible .tooltip-bubble { display: block; }
+
+/* ── クリックで編集可能なセル（経営レポート AI同意セル等） ── */
+.mgmt-clickable-cell:hover .mgmt-clickable-text { text-decoration: underline; }
+
+/* ── クリックで操作できるバッジ（経営レポート 連携状態バッジ） ── */
+.mgmt-badge-clickable { cursor: pointer; }
+.mgmt-badge-clickable:hover { text-decoration: underline; filter: brightness(0.95); }
+
 /* ── 注意喚起 ── */
 .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px; }
 .alert-warning { background: var(--warning-light); color: #92400e; border: 1px solid #fde68a; }
