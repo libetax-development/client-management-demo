@@ -503,6 +503,14 @@ const MOCK_DATA = {
     { clientId: 'c-009', latestActualMonth: '2026-04', reportFrequency: 'semiannual', aiReportConsentAt: '2026-05-01T09:00:00' },
     { clientId: 'c-010', latestActualMonth: null, reportFrequency: 'quarterly', aiReportConsentAt: '2026-02-10T09:00:00' },
   ],
+  // 過去生成レポート履歴（モック・1-2クライアント分のみ投入し「履歴なし」空表示も確認できるようにする）
+  generatedReports: [
+    { id: 'gr-001', clientId: 'c-001', generatedAt: '2026-06-01T10:00:00', periodLabel: '2026年5月度' },
+    { id: 'gr-002', clientId: 'c-001', generatedAt: '2026-05-01T10:00:00', periodLabel: '2026年4月度' },
+    { id: 'gr-003', clientId: 'c-001', generatedAt: '2026-04-01T10:00:00', periodLabel: '2026年3月度' },
+    { id: 'gr-004', clientId: 'c-006', generatedAt: '2026-06-01T09:30:00', periodLabel: '2026年5月度' },
+    { id: 'gr-005', clientId: 'c-006', generatedAt: '2026-05-01T09:30:00', periodLabel: '2026年4月度' },
+  ],
 };
 
 // ヘルパー関数
@@ -516,6 +524,9 @@ function getActiveUsers() { return MOCK_DATA.users.filter(u => u.isActive); }
 // cm#546/#547: 経営レポート用
 function getMfConnection(clientId) { return MOCK_DATA.mfConnections.find(m => m.clientId === clientId) || null; }
 function getCompanySettings(clientId) { return MOCK_DATA.companySettings.find(s => s.clientId === clientId) || null; }
+function getGeneratedReports(clientId) {
+  return MOCK_DATA.generatedReports.filter(r => r.clientId === clientId).sort((a, b) => b.generatedAt.localeCompare(a.generatedAt));
+}
 
 function getChatRoomsByClient(clientId) { return MOCK_DATA.chatRooms.filter(r => r.clientIds.includes(clientId)); }
 function getChatRoomById(id) { return MOCK_DATA.chatRooms.find(r => r.id === id); }
