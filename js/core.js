@@ -11,7 +11,7 @@ const PAGE_TITLES = {
   tasks: 'タスク一覧', 'task-detail': 'タスク詳細', progress: '進捗管理表',
   'progress-detail': '進捗管理表 詳細', staff: '職員一覧', 'staff-detail': '職員詳細',
   timesheet: '工数管理', reports: '報告書', 'report-detail': '報告書詳細',
-  calendar: 'カレンダー', rewards: '報酬管理',
+  calendar: 'カレンダー', rewards: '報酬管理', 'management-reports': '経営レポート',
   templates: 'タスクテンプレート', 'template-detail': 'テンプレート詳細',
   archive: 'アーカイブ', teams: 'チーム管理',
   'contract-trends': '契約推移',

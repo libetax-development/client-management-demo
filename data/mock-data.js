@@ -476,6 +476,33 @@ const MOCK_DATA = {
     { id: 'n-004', type: 'task_due', message: '佐藤 二郎「確定申告書作成」が差し戻されています', isRead: false, createdAt: '2026-03-09T10:00:00', linkPage: 'task-detail', linkParams: { id: 'tk-006' } },
   ],
   rewardAdjustments: [],
+
+  // cm#546/#547: 経営レポート機能用（安全射影のみ・トークン等の機密値は含めない）
+  // 設計意図: 連携状態の真実源は本番では mf_connections テーブル相当（本モックのmfConnections）。
+  // clients.mfBusinessNo は事業者番号（識別子）のみを表し、連携状態そのものは表さない。
+  // ただし mfBusinessNo を持つ顧客は過去にMF登録された実在事業者であるため、本モックでは
+  // mfBusinessNo有り＝mfConnectionsに何らかの行がある、mfBusinessNo無し＝未連携、で整合させている。
+  mfConnections: [
+    { clientId: 'c-001', status: 'connected', mfOfficeName: '株式会社サンプル商事（MFクラウド会計）', connectedAt: '2025-04-01', lastApiCallAt: '2026-06-30T09:15:00' },
+    { clientId: 'c-002', status: 'connected', mfOfficeName: '合同会社テスト工業（MFクラウド会計）', connectedAt: '2025-06-10', lastApiCallAt: '2026-06-29T14:02:00' },
+    { clientId: 'c-004', status: 'connected', mfOfficeName: '株式会社リベ不動産（MFクラウド会計）', connectedAt: '2025-07-01', lastApiCallAt: '2026-06-28T10:40:00' },
+    { clientId: 'c-006', status: 'connected', mfOfficeName: '有限会社グリーンファーム（MFクラウド会計）', connectedAt: '2025-05-15', lastApiCallAt: '2026-06-30T08:00:00' },
+    { clientId: 'c-007', status: 'token_expired', mfOfficeName: '株式会社デジタルソリューション（MFクラウド会計）', connectedAt: '2025-02-01', lastApiCallAt: '2026-03-18T11:20:00' },
+    { clientId: 'c-009', status: 'connected', mfOfficeName: '株式会社スカイブルー（MFクラウド会計）', connectedAt: '2025-08-01', lastApiCallAt: '2026-06-27T09:45:00' },
+    { clientId: 'c-010', status: 'connected', mfOfficeName: 'NPO法人サポートネット（MFクラウド会計）', connectedAt: '2025-09-01', lastApiCallAt: '2026-06-25T13:10:00' },
+  ],
+  // 経営レポートの提供設定・AI同意状況（対象となりうる全アクティブ顧客分）
+  companySettings: [
+    { clientId: 'c-001', latestActualMonth: '2026-05', reportFrequency: 'monthly', aiReportConsentAt: '2026-04-10T10:00:00' },
+    { clientId: 'c-002', latestActualMonth: '2026-05', reportFrequency: 'monthly', aiReportConsentAt: null },
+    { clientId: 'c-003', latestActualMonth: null, reportFrequency: 'monthly', aiReportConsentAt: null },
+    { clientId: 'c-004', latestActualMonth: null, reportFrequency: 'quarterly', aiReportConsentAt: '2026-01-15T09:30:00' },
+    { clientId: 'c-005', latestActualMonth: null, reportFrequency: 'semiannual', aiReportConsentAt: '2026-02-01T09:00:00' },
+    { clientId: 'c-006', latestActualMonth: '2026-05', reportFrequency: 'monthly', aiReportConsentAt: '2026-03-20T11:00:00' },
+    { clientId: 'c-007', latestActualMonth: '2026-03', reportFrequency: 'monthly', aiReportConsentAt: '2026-01-05T10:00:00' },
+    { clientId: 'c-009', latestActualMonth: '2026-04', reportFrequency: 'semiannual', aiReportConsentAt: '2026-05-01T09:00:00' },
+    { clientId: 'c-010', latestActualMonth: null, reportFrequency: 'quarterly', aiReportConsentAt: '2026-02-10T09:00:00' },
+  ],
 };
 
 // ヘルパー関数
@@ -485,6 +512,10 @@ function getTasksByClient(clientId) { return MOCK_DATA.tasks.filter(t => t.clien
 
 function getActiveClients() { return MOCK_DATA.clients.filter(c => c.isActive); }
 function getActiveUsers() { return MOCK_DATA.users.filter(u => u.isActive); }
+
+// cm#546/#547: 経営レポート用
+function getMfConnection(clientId) { return MOCK_DATA.mfConnections.find(m => m.clientId === clientId) || null; }
+function getCompanySettings(clientId) { return MOCK_DATA.companySettings.find(s => s.clientId === clientId) || null; }
 
 function getChatRoomsByClient(clientId) { return MOCK_DATA.chatRooms.filter(r => r.clientIds.includes(clientId)); }
 function getChatRoomById(id) { return MOCK_DATA.chatRooms.find(r => r.id === id); }
