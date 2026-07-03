@@ -83,7 +83,7 @@ function renderManagementReportsList() {
       <table style="table-layout:fixed;">
         ${MGMT_REPORT_COLGROUP}
         <thead><tr>
-          <th>クライアント名/コード</th><th>連携状態</th><th>最新実績月</th><th>提供頻度</th><th>AI同意</th><th>操作</th>
+          <th>クライアント名/コード</th><th>連携状態</th><th>最新実績月</th><th>提供頻度</th><th>AI利用の同意</th><th>操作</th>
         </tr></thead>
         <tbody>${rows.map(r => mgmtReportRow(r.client, r.settings, r.conn)).join('')}</tbody>
       </table>
@@ -361,7 +361,7 @@ function mgmtOpenConsentModal(clientId, onDone) {
   modal.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <h3>AIレポート同意の登録</h3>
+        <h3>AI利用の同意の登録</h3>
         <button class="btn-icon" onclick="mgmtCloseConsentModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -435,7 +435,7 @@ function mgmtSubmitConsent(clientId) {
 
 function mgmtRevokeConsent(clientId) {
   const client = getClientById(clientId);
-  if (!confirm(`${client?.name || ''}のAIレポート同意を取り消しますか？\n取り消すとレポート生成ができなくなります。`)) return;
+  if (!confirm(`${client?.name || ''}のAI利用の同意を取り消しますか？\n取り消すとレポート生成ができなくなります。`)) return;
 
   const submitBtn = document.getElementById('mr-consent-submit');
   const revokeBtn = document.getElementById('mr-consent-revoke');
