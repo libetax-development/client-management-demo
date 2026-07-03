@@ -367,11 +367,11 @@ function mgmtOpenConsentModal(clientId, onDone) {
       <div class="modal-body">
         <p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">
           <strong>${escapeHtml(client?.name || '')}</strong><br>
-          契約書でAI利用の合意を締結した日を記録します。
+          契約書でAI利用の同意を締結した日を記録します。
         </p>
-        ${hasConsent ? `<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">現在の合意締結日: <strong>${formatDate(settings.aiReportConsentAt)}</strong></p>` : ''}
+        ${hasConsent ? `<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">現在の同意締結日: <strong>${formatDate(settings.aiReportConsentAt)}</strong></p>` : ''}
         <div class="form-group">
-          <label for="mr-consent-date">合意締結日</label>
+          <label for="mr-consent-date">同意締結日</label>
           <input type="date" id="mr-consent-date" value="${escapeHtml(dateValue)}">
         </div>
         <p style="font-size:11px;color:var(--gray-500);margin-top:8px;">※実運用では company_settings.ai_report_consent_at を更新します</p>
@@ -416,7 +416,7 @@ function mgmtSubmitConsent(clientId) {
 
   const dateValue = dateInput.value;
   if (!dateValue) {
-    alert('合意締結日を入力してください');
+    alert('同意締結日を入力してください');
     return;
   }
 
