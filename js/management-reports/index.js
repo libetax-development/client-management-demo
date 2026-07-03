@@ -189,13 +189,15 @@ function mgmtActionCell(client, settings, conn) {
   }
 
   // 連携済み・同意未取得: 生成不可（disabledのみでは視覚的に押せそうに見えるためopacityも付与）
+  // 不活性ボタン自体のhoverでも理由を出す（ひろFB: 注記テキストだけでなくボタン上でも）。
+  // disabledボタンはhoverイベントを拾わないため、ラッパーspan側にhas-tooltipを付ける
   if (!hasConsent) {
-    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('同意未取得', MGMT_TOOLTIP_CONSENT_MISSING, 'color:var(--gray-500);')}</div>`;
+    return `<span class="has-tooltip"><button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><span class="tooltip-bubble">${escapeHtml(MGMT_TOOLTIP_CONSENT_MISSING)}</span></span><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('同意未取得', MGMT_TOOLTIP_CONSENT_MISSING, 'color:var(--gray-500);')}</div>`;
   }
 
   // 連携済み・同意済み・実績データ不足: 生成不可
   if (!hasData) {
-    return `<button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('データ不足', MGMT_TOOLTIP_DATA_INSUFFICIENT, 'color:var(--gray-500);')}</div>`;
+    return `<span class="has-tooltip"><button class="btn btn-primary btn-sm" disabled style="opacity:.5;cursor:not-allowed;">生成</button><span class="tooltip-bubble">${escapeHtml(MGMT_TOOLTIP_DATA_INSUFFICIENT)}</span></span><div style="font-size:11px;margin-top:4px;">${mgmtTooltipSpan('データ不足', MGMT_TOOLTIP_DATA_INSUFFICIENT, 'color:var(--gray-500);')}</div>`;
   }
 
   // 生成可能: 生成ボタン + 履歴ボタン（縦積み・固定幅列に収まるコンパクト表示）
@@ -365,11 +367,11 @@ function mgmtOpenConsentModal(clientId, onDone) {
       <div class="modal-body">
         <p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">
           <strong>${escapeHtml(client?.name || '')}</strong><br>
-          顧問先からAIによる経営レポート生成の同意を得た日を記録します。
+          契約書でAI利用の合意を締結した日を記録します。
         </p>
-        ${hasConsent ? `<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">現在の同意取得日: <strong>${formatDate(settings.aiReportConsentAt)}</strong></p>` : ''}
+        ${hasConsent ? `<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;">現在の合意締結日: <strong>${formatDate(settings.aiReportConsentAt)}</strong></p>` : ''}
         <div class="form-group">
-          <label for="mr-consent-date">同意取得日</label>
+          <label for="mr-consent-date">合意締結日</label>
           <input type="date" id="mr-consent-date" value="${escapeHtml(dateValue)}">
         </div>
         <p style="font-size:11px;color:var(--gray-500);margin-top:8px;">※実運用では company_settings.ai_report_consent_at を更新します</p>
@@ -414,7 +416,7 @@ function mgmtSubmitConsent(clientId) {
 
   const dateValue = dateInput.value;
   if (!dateValue) {
-    alert('同意取得日を入力してください');
+    alert('合意締結日を入力してください');
     return;
   }
 
