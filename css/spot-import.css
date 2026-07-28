@@ -1,0 +1,453 @@
+/* Issue #763 SPOT取込 差分確認モック */
+.spot-import-admin-label {
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--gray-200);
+  color: var(--gray-500);
+  font-size: 9px;
+}
+
+.spot-import-modal {
+  width: min(1160px, calc(100vw - 40px));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.spot-import-modal .modal-header,
+.spot-import-modal .modal-footer {
+  flex-shrink: 0;
+}
+
+.spot-import-modal .modal-body {
+  overflow-y: auto;
+}
+
+.spot-import-admin-note {
+  margin-top: 3px;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.spot-import-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+.spot-import-step {
+  padding: 10px;
+  color: var(--gray-400);
+  font-size: 12px;
+  text-align: center;
+}
+
+.spot-import-step.active {
+  border-bottom: 3px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.spot-import-step.done {
+  color: #166534;
+}
+
+.spot-import-intro,
+.spot-import-diff-intro {
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: var(--gray-700);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.spot-import-month-wrap {
+  max-width: 620px;
+  margin: 18px auto;
+  transition: opacity .15s;
+}
+
+.spot-import-month-wrap.is-loading {
+  opacity: .6;
+}
+
+.spot-import-month-field {
+  max-width: 280px;
+  margin: 24px auto 4px;
+}
+
+.spot-import-field-error {
+  min-height: 18px;
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.spot-import-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.spot-import-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #bfdbfe;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spotImportSpin .7s linear infinite;
+}
+
+@keyframes spotImportSpin {
+  to { transform: rotate(360deg); }
+}
+
+.spot-import-modal .btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.spot-import-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.spot-import-summary .stat-card {
+  padding: 12px 14px;
+  box-shadow: none;
+}
+
+.spot-import-summary .stat-value {
+  font-size: 22px;
+}
+
+.spot-import-section {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.spot-import-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.spot-import-section-help {
+  margin-left: 8px;
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.spot-import-badge-new {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.spot-import-badge-change {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.spot-import-badge-match {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.spot-import-badge-protected {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.spot-import-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.spot-import-table {
+  min-width: 880px;
+}
+
+.spot-import-table th,
+.spot-import-table td {
+  white-space: nowrap;
+}
+
+.spot-import-table td:nth-child(5) {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spot-import-check-cell {
+  width: 42px;
+  text-align: center;
+}
+
+.spot-import-check-cell input,
+.spot-import-change-title input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary);
+}
+
+.spot-import-negative {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.spot-import-change-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.spot-import-change-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+}
+
+.spot-import-change-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  background: var(--gray-50);
+  cursor: pointer;
+}
+
+.spot-import-change-title span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spot-import-change-title small {
+  color: #92400e;
+  font-size: 11px;
+}
+
+.spot-import-compare-table {
+  min-width: 380px;
+  table-layout: fixed;
+}
+
+.spot-import-compare-table th,
+.spot-import-compare-table td {
+  padding: 8px 9px;
+  font-size: 11px;
+  vertical-align: top;
+}
+
+.spot-import-compare-table th:first-child {
+  width: 32%;
+}
+
+.spot-import-compare-table tbody th {
+  border-bottom: 1px solid var(--gray-100);
+  background: #fff;
+  color: var(--gray-500);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.spot-import-compare-table tr.is-different th,
+.spot-import-compare-table tr.is-different td {
+  border-bottom-color: #fde68a;
+  background: #fffbeb;
+  color: #78350f;
+  font-weight: 600;
+}
+
+.spot-import-changed-label {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 9px;
+}
+
+.spot-import-details > summary {
+  list-style-position: outside;
+  cursor: pointer;
+}
+
+.spot-import-details > summary .spot-import-section-header {
+  display: inline-flex;
+  width: calc(100% - 20px);
+  margin: 0 0 0 4px;
+  vertical-align: middle;
+}
+
+.spot-import-details[open] > summary {
+  margin-bottom: 10px;
+}
+
+.spot-import-preview-note {
+  margin-top: 8px;
+  color: var(--gray-400);
+  font-size: 11px;
+}
+
+.spot-import-protected {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.spot-import-protected-note {
+  margin-bottom: 10px;
+  padding: 9px 11px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.spot-import-selection-count {
+  margin-right: auto;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+
+.spot-import-result {
+  max-width: 720px;
+  margin: 6px auto;
+  text-align: center;
+}
+
+.spot-import-result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.spot-import-result h4 {
+  font-size: 18px;
+}
+
+.spot-import-result > p {
+  margin-top: 5px;
+  color: var(--gray-500);
+  font-size: 13px;
+}
+
+.spot-import-result-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.spot-import-result-summary div {
+  padding: 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+}
+
+.spot-import-result-summary strong,
+.spot-import-result-summary span {
+  display: block;
+}
+
+.spot-import-result-summary strong {
+  font-size: 24px;
+}
+
+.spot-import-result-summary span {
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.spot-import-retained {
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  text-align: left;
+}
+
+.spot-import-retained ul {
+  margin: 8px 0 0 18px;
+}
+
+.spot-import-retained li {
+  margin-top: 6px;
+}
+
+.spot-import-retained li span {
+  display: block;
+  color: var(--gray-500);
+}
+
+@media (max-width: 760px) {
+  .spot-import-modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .spot-import-modal .modal-header,
+  .spot-import-modal .modal-body,
+  .spot-import-modal .modal-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .spot-import-summary {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .spot-import-change-list {
+    display: block;
+  }
+
+  .spot-import-change-card + .spot-import-change-card {
+    margin-top: 10px;
+  }
+
+  .spot-import-section-header {
+    align-items: flex-start;
+  }
+
+  .spot-import-section-help {
+    display: block;
+    margin: 5px 0 0;
+  }
+
+  .spot-import-selection-count {
+    display: none;
+  }
+}

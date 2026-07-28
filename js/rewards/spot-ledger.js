@@ -31,6 +31,20 @@ function initSpotLedgerData() {
     { id: 'sr-005', clientId: 'c-005', occurredAt: '2026-03-18', amount: -20000, billing: 'adjustment', category: 'その他', description: '前月過大計上の調整', staffUserId: 'u-002', exportedAt: null, deletedAt: null },
     { id: 'sr-006', clientId: 'c-001', occurredAt: '2026-02-14', amount: 80000, billing: 'nichizei', category: '消費税申告', description: '', staffUserId: 'u-003', exportedAt: '2026-02-28', deletedAt: null },
     { id: 'sr-007', clientId: 'c-006', occurredAt: '2026-02-20', amount: 120000, billing: 'invoice', category: '相続税申告', description: '相続税申告（着手金）', staffUserId: 'u-006', exportedAt: null, deletedAt: null },
+    // Issue #763 SPOT取込モック: 2026年8月のシステム側データ
+    { id: 'sr-101', clientId: 'c-001', occurredAt: '2026-08-01', amount: 100000, billing: 'nichizei', category: '法人税申告', description: '8月申告分', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
+    { id: 'sr-102', clientId: 'c-002', occurredAt: '2026-08-03', amount: 45000, billing: 'invoice', category: '消費税申告', description: '簡易課税申告', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
+    { id: 'sr-103', clientId: 'c-003', occurredAt: '2026-08-05', amount: 30000, billing: 'invoice', category: '所得税申告', description: '修正申告対応', staffUserId: 'u-005', exportedAt: null, deletedAt: null },
+    { id: 'sr-104', clientId: 'c-004', occurredAt: '2026-08-08', amount: 150000, billing: 'nichizei', category: '相続税申告', description: '相続税申告（中間金）', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
+    { id: 'sr-105', clientId: 'c-005', occurredAt: '2026-08-10', amount: 25000, billing: 'invoice', category: '税務相談', description: '個別相談2時間', staffUserId: 'u-006', exportedAt: null, deletedAt: null },
+    { id: 'sr-106', clientId: 'c-006', occurredAt: '2026-08-12', amount: 80000, billing: 'nichizei', category: '法人税申告', description: '法人税確定申告', staffUserId: 'u-007', exportedAt: null, deletedAt: null },
+    { id: 'sr-107', clientId: 'c-007', occurredAt: '2026-08-15', amount: 60000, billing: 'invoice', category: '年末調整', description: '年調追加対応', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
+    { id: 'sr-108', clientId: 'c-009', occurredAt: '2026-08-18', amount: 40000, billing: 'nichizei', category: '記帳代行SPOT', description: '過年度記帳', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
+    { id: 'sr-109', clientId: 'c-010', occurredAt: '2026-08-20', amount: 120000, billing: 'invoice', category: '法人税申告', description: '法人税申告一式', staffUserId: 'u-006', exportedAt: null, deletedAt: null },
+    { id: 'sr-110', clientId: 'c-001', occurredAt: '2026-08-22', amount: 50000, billing: 'invoice', category: '消費税申告', description: '中間申告', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
+    { id: 'sr-111', clientId: 'c-002', occurredAt: '2026-08-25', amount: 35000, billing: 'invoice', category: '税務相談', description: '決算前相談', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
+    { id: 'sr-112', clientId: 'c-006', occurredAt: '2026-08-27', amount: -15000, billing: 'adjustment', category: 'その他', description: '画面から入力：前月過大計上の調整', staffUserId: 'u-007', exportedAt: null, deletedAt: null },
+    { id: 'sr-113', clientId: 'c-007', occurredAt: '2026-08-28', amount: 90000, billing: 'invoice', category: '税務相談', description: '画面から入力：追加税務相談', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
   ];
 }
 
@@ -75,6 +89,9 @@ function renderSpotLedgerView() {
           <input type="checkbox" id="sl-pending-only"> 日税未出力のみ
         </label>
         <div class="spacer"></div>
+        ${MOCK_DATA.currentUser.role === 'admin'
+          ? '<button class="btn btn-secondary btn-sm" onclick="openSpotImportModal()">シートから取り込む <span class="spot-import-admin-label">管理者のみ</span></button>'
+          : ''}
         <button class="btn btn-csv btn-sm" onclick="exportSpotLedgerNichizeiCSV()">日税CSV出力</button>
         <button class="btn btn-primary btn-sm" onclick="openSpotLedgerModal()">+ スポット報酬を登録</button>
       </div>`;
