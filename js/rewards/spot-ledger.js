@@ -43,6 +43,9 @@ function initSpotLedgerData() {
     { id: 'sr-109', clientId: 'c-010', occurredAt: '2026-08-20', amount: 120000, billing: 'invoice', category: '法人税申告', description: '法人税申告一式', staffUserId: 'u-006', exportedAt: null, deletedAt: null },
     { id: 'sr-110', clientId: 'c-001', occurredAt: '2026-08-22', amount: 50000, billing: 'invoice', category: '消費税申告', description: '中間申告', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
     { id: 'sr-111', clientId: 'c-002', occurredAt: '2026-08-25', amount: 35000, billing: 'invoice', category: '税務相談', description: '決算前相談', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
+    { id: 'sr-114', clientId: 'c-003', occurredAt: '2026-08-19', amount: 20000, billing: 'invoice', category: '相続税申告', description: '相続税', staffUserId: 'u-005', exportedAt: null, deletedAt: null },
+    { id: 'sr-115', clientId: 'c-004', occurredAt: '2026-08-23', amount: 80000, billing: 'invoice', category: '記帳代行SPOT', description: '過年度分を含む追加記帳について、通帳・クレジットカード・売上管理表を照合し、不明点を一覧化したうえで確認依頼まで対応', staffUserId: 'u-003', exportedAt: null, deletedAt: null },
+    { id: 'sr-116', clientId: 'c-005', occurredAt: '2026-08-24', amount: 28000, billing: 'invoice', category: '税務相談', description: '個別相談1時間', staffUserId: 'u-006', exportedAt: null, deletedAt: null },
     { id: 'sr-112', clientId: 'c-006', occurredAt: '2026-08-27', amount: -15000, billing: 'adjustment', category: 'その他', description: '画面から入力：前月過大計上の調整', staffUserId: 'u-007', exportedAt: null, deletedAt: null },
     { id: 'sr-113', clientId: 'c-007', occurredAt: '2026-08-28', amount: 90000, billing: 'invoice', category: '税務相談', description: '画面から入力：追加税務相談', staffUserId: 'u-004', exportedAt: null, deletedAt: null },
   ];

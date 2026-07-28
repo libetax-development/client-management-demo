@@ -21,6 +21,9 @@ const SPOT_IMPORT_CHANGE_ROWS = [
   { currentId: 'sr-109', sheet: { amount: 150000, billing: 'invoice', category: '法人税申告', description: '法人税申告一式' } },
   { currentId: 'sr-110', sheet: { amount: 50000, billing: 'nichizei', category: '消費税申告', description: '中間申告' } },
   { currentId: 'sr-111', sheet: { amount: 35000, billing: 'invoice', category: 'その他', description: '届出書作成' } },
+  { currentId: 'sr-114', sheetRow: 'Z270', sheet: { amount: 200000, billing: 'invoice', category: '相続税申告', description: '相続税' } },
+  { currentId: 'sr-115', sheet: { amount: 80000, billing: 'invoice', category: '記帳代行SPOT', description: '過年度分を含む追加記帳について、通帳・クレジットカード・売上管理表を照合し、不明点の確認と修正仕訳まで対応（資料の再提出分を含む）' } },
+  { currentId: 'sr-116', sheet: { amount: 28000, billing: 'nichizei', category: '税務相談', description: '個別相談1時間' } },
 ];
 
 const SPOT_IMPORT_SYSTEM_ONLY_IDS = ['sr-112', 'sr-113'];
@@ -35,6 +38,12 @@ function spotImportDisplayValue(field, value) {
   if (field === 'amount') return `${Number(value).toLocaleString()}円`;
   if (field === 'billing') return spotLedgerBillingLabel(value);
   return value || '—';
+}
+
+function spotImportAmountDelta(currentAmount, sheetAmount) {
+  const delta = Number(sheetAmount) - Number(currentAmount);
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toLocaleString()}円`;
 }
 
 function spotImportRowCells(row, includeCheck, checked) {
@@ -177,19 +186,22 @@ function renderSpotImportChangeCard(change) {
   ];
   const cells = fields.map(([field, label]) => {
     const changed = current[field] !== sheet[field];
-    return `<tr class="${changed ? 'is-different' : ''}">
+    const amountDelta = field === 'amount' && changed
+      ? `<span class="spot-import-amount-delta">差額 ${escapeHtml(spotImportAmountDelta(current[field], sheet[field]))}</span>`
+      : '';
+    return `<tr class="${changed ? `is-different${field === 'amount' ? ' is-amount-change' : ''}` : ''}">
       <th>${label}${changed ? '<span class="spot-import-changed-label">変更</span>' : ''}</th>
-      <td>${escapeHtml(spotImportDisplayValue(field, current[field]))}</td>
-      <td>${escapeHtml(spotImportDisplayValue(field, sheet[field]))}</td>
+      <td data-label="現在の値">${escapeHtml(spotImportDisplayValue(field, current[field]))}</td>
+      <td data-label="シートの値">${escapeHtml(spotImportDisplayValue(field, sheet[field]))}${amountDelta}</td>
     </tr>`;
   }).join('');
   const client = getClientById(current.clientId);
   return `<article class="spot-import-change-card">
     <label class="spot-import-change-title">
       <input type="checkbox" class="spot-import-change-check" value="${escapeHtml(current.id)}">
-      <span><strong>${escapeHtml(client?.name || '—')}</strong><small>${escapeHtml(current.occurredAt)}・このデータ取り込む？</small></span>
+      <span><strong>${change.sheetRow ? `${escapeHtml(change.sheetRow)}・` : ''}${escapeHtml(client?.name || '—')}</strong><small>${escapeHtml(current.occurredAt)}・このデータ取り込む？</small></span>
     </label>
-    <div class="spot-import-table-wrap"><table class="spot-import-compare-table">
+    <div class="spot-import-compare-wrap"><table class="spot-import-compare-table">
       <thead><tr><th>項目</th><th>現在の値</th><th>シートの値</th></tr></thead>
       <tbody>${cells}</tbody>
     </table></div>

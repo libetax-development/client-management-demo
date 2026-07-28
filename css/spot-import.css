@@ -215,14 +215,13 @@
 }
 
 .spot-import-change-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
 .spot-import-change-card {
-  min-width: 0;
-  overflow: hidden;
+  width: 100%;
   border: 1px solid var(--gray-200);
   border-radius: 8px;
 }
@@ -249,19 +248,21 @@
 }
 
 .spot-import-compare-table {
-  min-width: 380px;
+  width: 100%;
   table-layout: fixed;
 }
 
 .spot-import-compare-table th,
 .spot-import-compare-table td {
-  padding: 8px 9px;
-  font-size: 11px;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.55;
   vertical-align: top;
 }
 
 .spot-import-compare-table th:first-child {
-  width: 32%;
+  width: 22%;
 }
 
 .spot-import-compare-table tbody th {
@@ -288,6 +289,22 @@
   background: #f59e0b;
   color: #fff;
   font-size: 9px;
+}
+
+.spot-import-compare-table tr.is-amount-change td {
+  font-size: 14px;
+}
+
+.spot-import-amount-delta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #b45309;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .spot-import-details > summary {
@@ -430,12 +447,41 @@
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 
-  .spot-import-change-list {
-    display: block;
+  .spot-import-compare-table thead {
+    display: none;
   }
 
-  .spot-import-change-card + .spot-import-change-card {
-    margin-top: 10px;
+  .spot-import-compare-table,
+  .spot-import-compare-table tbody,
+  .spot-import-compare-table tr,
+  .spot-import-compare-table th:first-child,
+  .spot-import-compare-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .spot-import-compare-table tr {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .spot-import-compare-table th,
+  .spot-import-compare-table td {
+    padding: 4px 2px;
+    border: 0;
+  }
+
+  .spot-import-compare-table td::before {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--gray-500);
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .spot-import-amount-delta {
+    margin: 4px 0 0;
   }
 
   .spot-import-section-header {
